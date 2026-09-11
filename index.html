@@ -1141,7 +1141,7 @@
         <span>🎯 Practice Mode</span>
         <span style="color:var(--indigo); font-size:12px;">Start →</span>
       </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">AI-generated questions, real grading, adapts to how you're doing.</div>
+      <div style="font-size:11px; color:var(--muted); margin-top:4px;">AI-generated questions, real grading, adapts to how you're doing. <span id="practice-limit-badge"></span></div>
     </div>
 
     <!-- Mock Exam quick action -->
@@ -1150,7 +1150,7 @@
         <span>⏱️ Mock Exam</span>
         <span style="color:var(--indigo); font-size:12px;">Start →</span>
       </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Timed, multi-question simulation — no feedback until you submit.</div>
+      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Timed, multi-question simulation — no feedback until you submit. <span id="mockexam-limit-badge"></span></div>
     </div>
 
     <!-- Study Plan quick action -->
@@ -1168,7 +1168,7 @@
         <span>🗂️ Flashcards</span>
         <span style="color:var(--indigo); font-size:12px;">Open →</span>
       </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">AI-generated cards with spaced repetition, so weak ones resurface more.</div>
+      <div style="font-size:11px; color:var(--muted); margin-top:4px;">AI-generated cards with spaced repetition, so weak ones resurface more. <span id="flashcards-limit-badge"></span></div>
     </div>
 
     <!-- Teach Me quick action -->
@@ -1177,7 +1177,7 @@
         <span>🎓 Teach Me</span>
         <span style="color:var(--indigo); font-size:12px;">Open →</span>
       </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">A full guided lesson: concept → examples → practice → mini-test.</div>
+      <div style="font-size:11px; color:var(--muted); margin-top:4px;">A full guided lesson: concept → examples → practice → mini-test. <span id="teachme-limit-badge"></span></div>
     </div>
 
     <!-- Achievements quick action -->
@@ -1195,7 +1195,16 @@
         <span>📝 Study Material</span>
         <span style="color:var(--indigo); font-size:12px;">Open →</span>
       </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Your notes, plus AI-generated topic summaries.</div>
+      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Your notes, plus AI-generated topic summaries. <span id="studymaterial-limit-badge"></span></div>
+    </div>
+
+    <!-- CBT Mode quick action — JAMB simulation, Nigeria only, Premium only -->
+    <div class="quota-card" id="cbt-mode-card" style="cursor:pointer; display:none;" onclick="goScreen('cbtmode', null)">
+      <div class="quota-label" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>🖥️ CBT Mode <span style="font-size:10px; color:var(--gold);">⚡ PREMIUM</span></span>
+        <span style="color:var(--indigo); font-size:12px;">Open →</span>
+      </div>
+      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Full JAMB UTME simulation — English + 3 subjects, 180 questions, 2-hour timer.</div>
     </div>
 
     <!-- Subjects -->
@@ -1308,6 +1317,11 @@
   <!-- ACHIEVEMENTS SCREEN -->
   <div class="screen" id="screen-achievements">
     <div id="achievements-content"><!-- populated by renderAchievementsScreen() --></div>
+  </div>
+
+  <!-- CBT MODE SCREEN (JAMB simulation) -->
+  <div class="screen" id="screen-cbtmode">
+    <div id="cbtmode-content"><!-- populated by renderCbtSetup() / renderCbtQuestion() / renderCbtResults() --></div>
   </div>
 
   <!-- STUDY MATERIAL SCREEN -->
@@ -1465,17 +1479,19 @@
     <div class="modal-sub">Get unlimited access for less than a data subscription</div>
     <div class="pricing-card">
       <div class="pricing-tag">Monthly Plan</div>
-      <div class="pricing-price">₦1,500 <span>/ month</span></div>
+      <div class="pricing-price" id="pricing-price-display">₦2,000 <span>/ month</span></div>
       <div class="pricing-features">
-        <div class="pricing-feature">Unlimited questions per day</div>
-        <div class="pricing-feature">Faster AI responses</div>
-        <div class="pricing-feature">Detailed step-by-step solutions</div>
-        <div class="pricing-feature">No advertisements</div>
-        <div class="pricing-feature">Priority access to new features</div>
-        <div class="pricing-feature">Exam-board-specific practice packs</div>
+        <div class="pricing-feature">Unlimited Ask AI questions</div>
+        <div class="pricing-feature">Unlimited Practice questions</div>
+        <div class="pricing-feature">Unlimited Mock Exams</div>
+        <div class="pricing-feature">Unlimited Flashcard decks</div>
+        <div class="pricing-feature">Unlimited Teach Me lessons</div>
+        <div class="pricing-feature">Unlimited AI-generated summaries</div>
+        <div class="pricing-feature">Custom app theme &amp; icon</div>
+        <div class="pricing-feature">CBT Mode — full JAMB UTME simulation (Nigeria)</div>
       </div>
     </div>
-    <button class="subscribe-btn" onclick="activatePremium()">Subscribe Now — ₦1,500/month</button>
+    <button class="subscribe-btn" id="subscribe-btn" onclick="activatePremium()">Subscribe Now — ₦2,000/month</button>
     <button class="modal-dismiss" onclick="closePaywall()">Maybe later</button>
   </div>
 </div>
@@ -1517,7 +1533,6 @@
 <script>
   // ── STATE ──
   let state = {
-    quota: { used: 0, max: 5 },
     premium: localStorage.getItem('sm_premium') === '1',
     totalAsked: 0,
     history: [],
@@ -1685,8 +1700,10 @@
     if (name === 'flashcards') renderFlashcardsHome();
     if (name === 'teachme' && !lessonSession) renderTeachMeSetup();
     if (name === 'achievements') renderAchievementsScreen();
+    if (name === 'home') updateFeatureLimitBadges();
     if (name === 'search') renderSearchScreen();
     if (name === 'studymaterial') renderStudyMaterialHome();
+    if (name === 'cbtmode' && !cbtSession) renderCbtSetup();
   }
 
   function goAsk(subject) {
@@ -1815,10 +1832,16 @@
     renderOnboardingStep('exam');
   }
 
+  function updateCbtCardVisibility() {
+    const card = document.getElementById('cbt-mode-card');
+    if (card) card.style.display = (state.country === 'ng') ? 'block' : 'none';
+  }
+
   function selectOnboardingCountry(code) {
     state.country = code;
     localStorage.setItem('sm_country', code);
     refreshExamBoards();
+    updateCbtCardVisibility();
     renderOnboardingStep('exam');
   }
 
@@ -1994,12 +2017,97 @@
     document.getElementById('photo-input').value = '';
   }
 
+  // ── USAGE LIMITS (persistent, real reset periods) ──
+  // Backs both the Ask AI daily quota and the new weekly caps on Mock Exam,
+  // Flashcards, and Teach Me. NOTE: the old quota system (state.quota.used)
+  // lived only in memory and reset on every page reload — a free user could
+  // bypass the "5 questions/day" limit just by refreshing. This replaces
+  // that with real localStorage-backed tracking keyed to an actual
+  // calendar day/week, so the limit means what it says. Premium always
+  // bypasses every limit here — see isUsageLimitReached().
+  const USAGE_KEY = 'sm_usage_limits';
+
+  function loadUsage() {
+    try { return JSON.parse(localStorage.getItem(USAGE_KEY)) || {}; } catch { return {}; }
+  }
+  function saveUsage(u) { localStorage.setItem(USAGE_KEY, JSON.stringify(u)); }
+
+  function getPeriodKey(period) {
+    const now = new Date();
+    if (period === 'daily') return now.toISOString().slice(0, 10); // YYYY-MM-DD
+    // ISO week key (YYYY-Www) — Monday-start week, consistent regardless of
+    // what day someone happens to open the app.
+    const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    return `${d.getUTCFullYear()}-W${weekNo}`;
+  }
+
+  function getUsageCount(feature, period) {
+    const usage = loadUsage();
+    const entry = usage[feature];
+    if (!entry || entry.periodKey !== getPeriodKey(period)) return 0;
+    return entry.count;
+  }
+
+  function incrementUsage(feature, period) {
+    const usage = loadUsage();
+    const key = getPeriodKey(period);
+    if (!usage[feature] || usage[feature].periodKey !== key) usage[feature] = { periodKey: key, count: 0 };
+    usage[feature].count++;
+    saveUsage(usage);
+    return usage[feature].count;
+  }
+
+  function isUsageLimitReached(feature, period, max) {
+    if (state.premium) return false;
+    return getUsageCount(feature, period) >= max;
+  }
+
+  const USAGE_LIMITS = {
+    askAI: { period: 'daily', max: 5 },
+    mockExam: { period: 'weekly', max: 2 },
+    flashcards: { period: 'weekly', max: 2 },
+    teachMe: { period: 'weekly', max: 3 },
+    practice: { period: 'weekly', max: 15 },
+    studyMaterial: { period: 'weekly', max: 3 }
+  };
+
+  // Blocks and redirects to the paywall if the limit is hit; returns true
+  // if blocked (so callers can just `if (checkAndBlockIfLimited(...)) return;`).
+  function checkAndBlockIfLimited(feature, label) {
+    const { period, max } = USAGE_LIMITS[feature];
+    if (isUsageLimitReached(feature, period, max)) {
+      showToast(`Free plan: ${max} ${label} per ${period === 'daily' ? 'day' : 'week'} — upgrade for unlimited`);
+      showPaywall();
+      return true;
+    }
+    return false;
+  }
+
+  function updateFeatureLimitBadges() {
+    const badges = [
+      { id: 'mockexam-limit-badge', feature: 'mockExam' },
+      { id: 'flashcards-limit-badge', feature: 'flashcards' },
+      { id: 'teachme-limit-badge', feature: 'teachMe' },
+      { id: 'practice-limit-badge', feature: 'practice' },
+      { id: 'studymaterial-limit-badge', feature: 'studyMaterial' }
+    ];
+    badges.forEach(({ id, feature }) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (state.premium) { el.textContent = ''; return; }
+      const { period, max } = USAGE_LIMITS[feature];
+      const remaining = Math.max(0, max - getUsageCount(feature, period));
+      el.textContent = `· ${remaining} left this ${period === 'daily' ? 'day' : 'week'}`;
+    });
+  }
+
   // ── ASK QUESTION ──
   async function askQuestion() {
-    if (!state.premium && state.quota.used >= state.quota.max) {
-      showPaywall();
-      return;
-    }
+    if (checkAndBlockIfLimited('askAI', 'questions')) return;
 
     const q = document.getElementById('question-input').value.trim();
     const hasPhoto = !!state.photoData;
@@ -2010,7 +2118,7 @@
     }
 
     const question = q || 'Question from photo';
-    state.quota.used++;
+    incrementUsage('askAI', 'daily');
     state.totalAsked++;
     updateQuota();
 
@@ -2502,6 +2610,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   async function fetchNextPracticeQuestion() {
     const el = document.getElementById('practice-content');
     if (!el || !practiceSession) return;
+    if (checkAndBlockIfLimited('practice', 'practice questions')) return;
+    incrementUsage('practice', 'weekly');
     el.innerHTML = `
       <div style="text-align:center; padding:60px 20px; color:var(--muted);">
         <div style="font-size:32px; margin-bottom:12px;">🎯</div>
@@ -2745,6 +2855,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   }
 
   async function startMockExam() {
+    if (checkAndBlockIfLimited('mockExam', 'mock exams')) return;
+    incrementUsage('mockExam', 'weekly');
     const el = document.getElementById('mockexam-content');
     const total = mockExamSetup.numQuestions;
     const questions = [];
@@ -3342,6 +3454,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   }
 
   async function generateFlashcardDeck(subject, topic) {
+    if (checkAndBlockIfLimited('flashcards', 'new decks')) return;
+    incrementUsage('flashcards', 'weekly');
     const el = document.getElementById('flashcards-content');
     el.innerHTML = `
       <div style="text-align:center; padding:60px 20px; color:var(--muted);">
@@ -3568,6 +3682,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     const finalTopic = (topic || '').trim();
     if (!finalTopic) { showToast('Enter or pick a topic first'); return; }
     if (!subject) subject = teachMeDraft.subject;
+    if (checkAndBlockIfLimited('teachMe', 'lessons')) return;
+    incrementUsage('teachMe', 'weekly');
     goScreen('teachme', null);
     const el = document.getElementById('teachme-content');
     el.innerHTML = `
@@ -4063,10 +4179,12 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     const bodyEl = document.getElementById('note-body-input');
     const text = bodyEl ? bodyEl.value.trim() : '';
     if (!text) { showToast('Write or import something first'); return; }
+    if (checkAndBlockIfLimited('studyMaterial', 'AI summaries')) return;
     if (text.length > 8000) { showToast('That\'s a lot of text — summarizing the first part'); }
 
     const apiUrl = getAiEndpoint();
     if (!apiUrl) { showToast('AI service is not configured'); return; }
+    incrementUsage('studyMaterial', 'weekly');
     showToast('Summarizing...');
 
     try {
@@ -4159,6 +4277,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     const subject = noteEditorDraft.subject;
     const topic = (noteEditorDraft.topic || '').trim();
     if (!topic) { showToast('Enter or pick a topic first'); return; }
+    if (checkAndBlockIfLimited('studyMaterial', 'AI summaries')) return;
+    incrementUsage('studyMaterial', 'weekly');
 
     const el = document.getElementById('studymaterial-content');
     el.innerHTML = `<div style="text-align:center; padding:60px 20px; color:var(--muted);"><div style="font-size:32px; margin-bottom:12px;">📝</div><div style="font-size:13px;">Writing a summary of ${topic}...</div></div>`;
@@ -4200,6 +4320,338 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     }
   }
 
+  // ── CBT MODE (JAMB UTME simulation) ──
+  // Premium-only, Nigeria-only (see updateCbtCardVisibility()). Distinct
+  // from Mock Exam Mode: this replicates JAMB's actual format — English
+  // Language (compulsory, 60 questions) + 3 candidate-chosen subjects (40
+  // questions each) = 180 questions, single 2-hour countdown shared across
+  // all four subjects, free navigation between subjects, mark-for-review
+  // flagging. Real JAMB also ties some English questions to a set reading
+  // passage — that's NOT replicated here; English questions are standalone
+  // grammar/vocabulary/comprehension-style MCQs. Worth knowing before
+  // treating this as a full-fidelity JAMB clone.
+  //
+  // Generation is batched (≈15 questions per AI call) rather than one call
+  // per question — 180 individual calls would be slow and expensive. A
+  // full session costs roughly 13 AI calls total instead of 180.
+  const CBT_ENGLISH_SUBJECT = 'English';
+  const CBT_TOTAL_MINUTES = 120;
+  const CBT_BATCH_SIZE = 15;
+  let cbtSession = null;
+  let cbtSetupDraft = { electives: [] };
+
+  function renderCbtSetup() {
+    cbtSession = null;
+    if (!state.premium) { showPaywall(); goScreen('home', document.querySelectorAll('.nav-item')[0]); return; }
+
+    const el = document.getElementById('cbtmode-content');
+    const electiveOptions = Object.keys(SUBJECTS).filter(s => s !== CBT_ENGLISH_SUBJECT);
+
+    el.innerHTML = `
+      <div class="section-title" style="margin-bottom:6px;">CBT Mode</div>
+      <div style="font-size:12px; color:var(--muted); margin-bottom:16px;">JAMB UTME format: English (compulsory, 60 questions) + 3 subjects you pick (40 questions each). 180 questions, 2-hour timer.</div>
+      <div class="select-label">English Language</div>
+      <div class="subject-chips" style="margin-bottom:16px;">
+        <div class="chip selected" style="pointer-events:none;">✓ English (compulsory)</div>
+      </div>
+      <div class="select-label">Choose exactly 3 subjects</div>
+      <div class="subject-chips" id="cbt-elective-chips" style="margin-bottom:20px;">
+        ${electiveOptions.map(name => `<div class="chip${cbtSetupDraft.electives.includes(name) ? ' selected' : ''}" onclick="toggleCbtElective(this, '${name.replace(/'/g, "\\'")}')">${name}</div>`).join('')}
+      </div>
+      <button class="ask-btn" id="cbt-start-btn" ${cbtSetupDraft.electives.length === 3 ? '' : 'style="opacity:0.5; pointer-events:none;"'} onclick="startCbtGeneration()">🖥️ Start CBT (${cbtSetupDraft.electives.length}/3 chosen)</button>
+    `;
+  }
+
+  function toggleCbtElective(el, name) {
+    const i = cbtSetupDraft.electives.indexOf(name);
+    if (i >= 0) {
+      cbtSetupDraft.electives.splice(i, 1);
+    } else {
+      if (cbtSetupDraft.electives.length >= 3) { showToast('You can only pick 3 — remove one first'); return; }
+      cbtSetupDraft.electives.push(name);
+    }
+    renderCbtSetup(); // re-render to refresh chip states + the start button count/enabled state
+  }
+
+  function buildCbtBatchPrompt(subject, count, avoidTopics) {
+    const avoidInstruction = avoidTopics.length ? `\nDo not repeat these topics already used: ${avoidTopics.join(', ')}.` : '';
+    return `Generate ${count} original multiple-choice questions for a JAMB UTME (Nigerian university entrance exam) practice test.
+Subject: ${subject}
+Match the style, phrasing, and difficulty of real JAMB UTME questions for this subject.${avoidInstruction}
+
+Each question must have exactly one correct option among 4 choices. Cover a range of different topics within the subject rather than clustering on one.
+
+Respond ONLY in this exact JSON format (a JSON array, no markdown, no backticks, no extra text):
+[
+  {"question": "...", "options": ["A", "B", "C", "D"], "correctIndex": 0, "explanation": "...", "topic": "specific topic name"}
+]
+Return exactly ${count} items in the array.`;
+  }
+
+  function parseQuestionBatch(text) {
+    try {
+      const clean = text.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean);
+      if (!Array.isArray(parsed)) return null;
+      const valid = parsed.filter(q => q && typeof q.question === 'string' && Array.isArray(q.options) && q.options.length >= 2 && typeof q.correctIndex === 'number');
+      return valid.length ? valid : null;
+    } catch { return null; }
+  }
+
+  async function startCbtGeneration() {
+    if (cbtSetupDraft.electives.length !== 3) { showToast('Pick exactly 3 subjects'); return; }
+    const subjects = [CBT_ENGLISH_SUBJECT, ...cbtSetupDraft.electives];
+    const counts = {}; counts[CBT_ENGLISH_SUBJECT] = 60;
+    cbtSetupDraft.electives.forEach(s => { counts[s] = 40; });
+    const questionsBySubject = {};
+    const el = document.getElementById('cbtmode-content');
+    const apiUrl = getAiEndpoint();
+
+    if (!apiUrl) {
+      el.innerHTML = `<div style="text-align:center; padding:40px 20px; color:var(--muted); font-size:13px;">AI service is not configured.</div>`;
+      return;
+    }
+
+    for (const subject of subjects) {
+      questionsBySubject[subject] = [];
+      const total = counts[subject];
+      const usedTopics = [];
+
+      while (questionsBySubject[subject].length < total) {
+        const remaining = total - questionsBySubject[subject].length;
+        const batchSize = Math.min(CBT_BATCH_SIZE, remaining);
+        el.innerHTML = `
+          <div style="text-align:center; padding:60px 20px; color:var(--muted);">
+            <div style="font-size:32px; margin-bottom:12px;">🖥️</div>
+            <div style="font-size:13px;">Preparing your CBT — ${subject}: ${questionsBySubject[subject].length}/${total} questions...</div>
+            <div style="font-size:11px; margin-top:8px;">This takes a little while — 180 questions across 4 subjects.</div>
+          </div>`;
+        try {
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: buildCbtBatchPrompt(subject, batchSize, usedTopics) })
+          });
+          if (!response.ok) throw new Error('AI request failed');
+          const data = await response.json();
+          const text = data.text || data.content?.map(c => c.text || '').join('');
+          const batch = text && parseQuestionBatch(text);
+          if (!batch) throw new Error('Could not generate a valid question batch');
+          batch.forEach(q => {
+            questionsBySubject[subject].push(q);
+            if (q.topic) usedTopics.push(q.topic);
+          });
+        } catch (err) {
+          console.error(err);
+          el.innerHTML = `
+            <div style="text-align:center; padding:40px 20px;">
+              <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">Couldn't finish generating ${subject} questions — the AI service may be unavailable. Got ${questionsBySubject[subject].length} of ${total} for this subject.</div>
+              <button class="modal-dismiss" onclick="renderCbtSetup()">Back to Setup</button>
+            </div>`;
+          return;
+        }
+      }
+    }
+
+    beginCbtSession(subjects, questionsBySubject);
+  }
+
+  function beginCbtSession(subjects, questionsBySubject) {
+    const answers = {}, flagged = {};
+    subjects.forEach(s => {
+      answers[s] = new Array(questionsBySubject[s].length).fill(null);
+      flagged[s] = new Array(questionsBySubject[s].length).fill(false);
+    });
+    cbtSession = {
+      subjects, questionsBySubject, answers, flagged,
+      currentSubject: subjects[0], currentIndex: 0,
+      secondsRemaining: CBT_TOTAL_MINUTES * 60,
+      timerId: null, submitted: false
+    };
+    cbtSession.timerId = setInterval(() => {
+      cbtSession.secondsRemaining--;
+      updateCbtTimerDisplay();
+      if (cbtSession.secondsRemaining <= 0) {
+        clearInterval(cbtSession.timerId);
+        submitCbtSession();
+      }
+    }, 1000);
+    renderCbtQuestion();
+  }
+
+  function updateCbtTimerDisplay() {
+    const timerEl = document.getElementById('cbt-timer');
+    if (!timerEl || !cbtSession) return;
+    const m = Math.floor(cbtSession.secondsRemaining / 60);
+    const s = cbtSession.secondsRemaining % 60;
+    timerEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+    if (cbtSession.secondsRemaining <= 300) timerEl.style.color = '#FF6B6B'; // last 5 minutes
+  }
+
+  function renderCbtQuestion() {
+    const el = document.getElementById('cbtmode-content');
+    const s = cbtSession;
+    if (!s) return;
+    const subject = s.currentSubject;
+    const qList = s.questionsBySubject[subject];
+    const idx = s.currentIndex;
+    const q = qList[idx];
+    const selected = s.answers[subject][idx];
+    const isFlagged = s.flagged[subject][idx];
+
+    const tabsHtml = s.subjects.map(sub => {
+      const answeredCount = s.answers[sub].filter(a => a !== null).length;
+      const active = sub === subject;
+      return `<div onclick="switchCbtSubject('${sub.replace(/'/g, "\\'")}')" style="padding:8px 12px; border-radius:8px; cursor:pointer; font-size:11px; white-space:nowrap; background:${active ? 'var(--indigo)' : 'var(--navy-card2)'}; color:${active ? '#fff' : 'var(--muted)'};">${sub} (${answeredCount}/${s.questionsBySubject[sub].length})</div>`;
+    }).join('');
+
+    const navGrid = qList.map((_, i) => {
+      const ans = s.answers[subject][i] !== null;
+      const flag = s.flagged[subject][i];
+      const cur = i === idx;
+      let bg = 'var(--navy-card2)', color = 'var(--muted)';
+      if (cur) { bg = 'var(--indigo)'; color = '#fff'; }
+      else if (flag) { bg = 'rgba(255,209,102,0.25)'; color = 'var(--gold)'; }
+      else if (ans) { bg = 'rgba(100,220,100,0.2)'; color = '#64DC64'; }
+      return `<div onclick="jumpCbtQuestion(${i})" style="width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:10px; cursor:pointer; background:${bg}; color:${color};">${i + 1}</div>`;
+    }).join('');
+
+    el.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div style="font-size:11px; color:var(--muted);">Question ${idx + 1} of ${qList.length} · ${subject}</div>
+        <div id="cbt-timer" style="font-size:13px; font-weight:700; color:var(--indigo);"></div>
+      </div>
+      <div style="display:flex; gap:6px; overflow-x:auto; margin-bottom:10px; padding-bottom:4px;">${tabsHtml}</div>
+      <div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:14px; max-height:110px; overflow-y:auto;">${navGrid}</div>
+      <div class="answer-card">
+        <div style="font-size:14px; line-height:1.5; margin-bottom:14px;">${q.question}</div>
+        <div id="cbt-options">
+          ${q.options.map((opt, i) => `<div class="option-item${selected === i ? ' selected' : ''}" onclick="selectCbtOption(${i})"><div class="toggle-label">${opt}</div></div>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button class="action-btn" style="flex:1;" onclick="toggleCbtFlag()">${isFlagged ? '🚩 Unflag' : '⚑ Mark for Review'}</button>
+        <button class="action-btn" style="flex:1; ${idx === 0 ? 'opacity:0.4; pointer-events:none;' : ''}" onclick="prevCbtQuestion()">← Prev</button>
+        <button class="ask-btn" style="flex:1;" onclick="nextCbtQuestion()">Next →</button>
+      </div>
+      <button class="modal-dismiss" style="margin-top:10px; color:var(--danger);" onclick="confirmSubmitCbt()">Submit Exam</button>
+    `;
+    updateCbtTimerDisplay();
+  }
+
+  function selectCbtOption(i) {
+    cbtSession.answers[cbtSession.currentSubject][cbtSession.currentIndex] = i;
+    renderCbtQuestion();
+  }
+  function toggleCbtFlag() {
+    const s = cbtSession;
+    s.flagged[s.currentSubject][s.currentIndex] = !s.flagged[s.currentSubject][s.currentIndex];
+    renderCbtQuestion();
+  }
+  function prevCbtQuestion() {
+    if (cbtSession.currentIndex > 0) cbtSession.currentIndex--;
+    renderCbtQuestion();
+  }
+  function nextCbtQuestion() {
+    const s = cbtSession;
+    const qList = s.questionsBySubject[s.currentSubject];
+    if (s.currentIndex < qList.length - 1) {
+      s.currentIndex++;
+    } else {
+      // At the end of this subject — jump to the next subject's first
+      // question if there is one, mirroring JAMB's free subject navigation.
+      const subIdx = s.subjects.indexOf(s.currentSubject);
+      if (subIdx < s.subjects.length - 1) {
+        s.currentSubject = s.subjects[subIdx + 1];
+        s.currentIndex = 0;
+      }
+    }
+    renderCbtQuestion();
+  }
+  function jumpCbtQuestion(i) {
+    cbtSession.currentIndex = i;
+    renderCbtQuestion();
+  }
+  function switchCbtSubject(subject) {
+    cbtSession.currentSubject = subject;
+    cbtSession.currentIndex = 0;
+    renderCbtQuestion();
+  }
+
+  function confirmSubmitCbt() {
+    const s = cbtSession;
+    let unanswered = 0, flaggedCount = 0;
+    s.subjects.forEach(sub => {
+      unanswered += s.answers[sub].filter(a => a === null).length;
+      flaggedCount += s.flagged[sub].filter(Boolean).length;
+    });
+    const parts = [];
+    if (unanswered > 0) parts.push(`${unanswered} unanswered`);
+    if (flaggedCount > 0) parts.push(`${flaggedCount} marked for review`);
+    const msg = parts.length ? `You have ${parts.join(' and ')}. Submit anyway?` : 'Submit your CBT now?';
+    if (!confirm(msg)) return;
+    submitCbtSession();
+  }
+
+  function submitCbtSession() {
+    const s = cbtSession;
+    if (!s || s.submitted) return;
+    s.submitted = true;
+    if (s.timerId) clearInterval(s.timerId);
+
+    const subjectResults = {}; // subject -> { correct, total, scaledScore }
+    let totalQuestions = 0;
+
+    s.subjects.forEach(subject => {
+      const qList = s.questionsBySubject[subject];
+      let correct = 0;
+      qList.forEach((q, i) => {
+        const selected = s.answers[subject][i];
+        const isCorrect = selected === q.correctIndex;
+        if (isCorrect) correct++;
+        totalQuestions++;
+        WeaknessProfile.recordAttempt({
+          subject,
+          topic: q.topic || null,
+          level: selected === null ? 'lost' : (isCorrect ? 'knew' : 'lost'),
+          difficulty: 'CBT',
+          mistakeType: null
+        });
+      });
+      subjectResults[subject] = { correct, total: qList.length, scaledScore: Math.round((correct / qList.length) * 100) };
+    });
+
+    bumpStats({ gradedQuestionsAnswered: totalQuestions });
+    renderCbtResults(subjectResults);
+  }
+
+  function renderCbtResults(subjectResults) {
+    const el = document.getElementById('cbtmode-content');
+    const subjects = Object.keys(subjectResults);
+    const totalScore = subjects.reduce((sum, s) => sum + subjectResults[s].scaledScore, 0);
+
+    el.innerHTML = `
+      <div style="text-align:center; padding:20px 0 10px;">
+        <div style="font-size:36px; margin-bottom:8px;">${totalScore >= 250 ? '🎉' : totalScore >= 180 ? '💪' : '📚'}</div>
+        <div style="font-size:28px; font-weight:800;">${totalScore} <span style="font-size:14px; color:var(--muted); font-weight:400;">/ 400</span></div>
+        <div style="font-size:12px; color:var(--muted);">CBT Mode · JAMB UTME format</div>
+      </div>
+      <div class="section-title" style="font-size:13px; margin:18px 0 10px;">By Subject</div>
+      ${subjects.map(subject => {
+        const r = subjectResults[subject];
+        return `
+        <div style="background:var(--navy-card2); border-radius:10px; padding:12px 14px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size:13px;">${subject}</div>
+          <div style="font-size:12px; color:${r.scaledScore >= 70 ? '#64DC64' : r.scaledScore >= 40 ? '#FFD166' : '#FF6B6B'};">${r.correct}/${r.total} → ${r.scaledScore}/100</div>
+        </div>`;
+      }).join('')}
+      <div style="font-size:11px; color:var(--muted); margin-top:16px; line-height:1.5;">A question-by-question review isn't shown here — 180 questions is a lot to scroll through — but every answer has already updated your Weakness Profile, including per-topic breakdowns for each subject.</div>
+      <button class="ask-btn" style="margin-top:14px;" onclick="renderCbtSetup()">Take Another CBT</button>
+      <button class="modal-dismiss" onclick="goScreen('progress', document.querySelectorAll('.nav-item')[4])">View Progress</button>
+    `;
+    cbtSession = null;
+  }
+
   // ── RESET ASK ──
   function resetAsk() {
     document.getElementById('input-section').style.display = 'block';
@@ -4233,17 +4685,70 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   }
 
   // ── YOUTUBE: RELATED VIDEOS ──
+  function getYoutubeEndpoint() {
+    const configured = (window.STUDYMATE_API_URL || '').trim().replace(/\/$/, '');
+    if (configured) return `${configured}/api/youtube`;
+    if (/^https?:$/.test(window.location.protocol)) return `${window.location.origin}/api/youtube`;
+    return '';
+  }
+
   async function fetchRelatedVideos(query, containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = `<div class="videos-loading"><div class="videos-spinner"></div> Finding tutorial videos on YouTube...</div>`;
 
-    // No API key saved — offer a direct YouTube search instead of failing silently
-    if (!state.youtubeApiKey) {
+    // A personally-saved key (BYOK) takes priority when set — it draws on
+    // that student's own quota rather than the shared server key, so it's
+    // the more scalable path for anyone who's added one.
+    if (state.youtubeApiKey) {
+      await fetchVideosDirectWithOwnKey(query, containerId);
+      return;
+    }
+
+    // No personal key — use the shared server-side key via the backend
+    // proxy (api/youtube.js) instead of just showing a search link.
+    const endpoint = getYoutubeEndpoint();
+    if (!endpoint) {
       renderVideosFallback(query, containerId, false);
       return;
     }
 
+    try {
+      const res = await fetch(`${endpoint}?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data && data.error ? data.error : `HTTP ${res.status}`);
+      }
+      if (!data.items || !data.items.length) {
+        renderVideosFallback(query, containerId, false);
+        return;
+      }
+
+      container.innerHTML = `<div class="videos-grid">
+        ${data.items.map(item => `
+          <a class="video-card" href="https://www.youtube.com/watch?v=${item.videoId}" target="_blank" rel="noopener">
+            <div class="video-thumb-wrap">
+              <img src="${item.thumbnail || ''}" alt="${item.title}" loading="lazy">
+              <div class="video-play-badge">▶️</div>
+            </div>
+            <div class="video-meta">
+              <div class="video-title">${item.title}</div>
+              <div class="video-channel">${item.channelTitle}</div>
+            </div>
+          </a>`).join('')}
+      </div>`;
+    } catch (err) {
+      console.error('YouTube fetch error:', err);
+      renderVideosFallback(query, containerId, true, err.message);
+    }
+  }
+
+  // Preserved for anyone who's already saved their own key in Settings —
+  // unchanged from before, calls YouTube directly from the browser with
+  // that student's own key (their own quota, not the shared server one).
+  async function fetchVideosDirectWithOwnKey(query, containerId) {
+    const container = document.getElementById(containerId);
     try {
       const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=3&type=video&videoEmbeddable=true&safeSearch=strict&order=relevance&q=${encodeURIComponent(query)}&key=${encodeURIComponent(state.youtubeApiKey)}`;
       const res = await fetch(url);
@@ -4282,7 +4787,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     const container = document.getElementById(containerId);
     if (!container) return;
     const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-    let message = 'Add a free YouTube API key in Profile → Settings to see video thumbnails right here.';
+    let message = "Couldn't load video thumbnails — search directly instead:";
     if (apiFailed) {
       message = errorDetail
         ? `Couldn't load videos (${errorDetail}) — search directly instead:`
@@ -4298,7 +4803,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   function setYoutubeApiKey() {
     openSettingsModal(`
       <div class="modal-title">YouTube API Key 📺</div>
-      <div class="modal-sub">Paste a YouTube Data API v3 key to show real video thumbnails for each answer, instead of just a search link.</div>
+      <div class="modal-sub">Video thumbnails already work using StudyMate's shared key. Add your own personal key here only if you want your video searches to draw from your own quota instead of the shared one.</div>
       <input
         type="text"
         id="yt-key-input"
@@ -4340,14 +4845,16 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
 
   function updateYoutubeKeyStatus() {
     const el = document.getElementById('yt-key-status');
-    if (el) el.textContent = state.youtubeApiKey ? 'Connected ✓' : 'Not set ›';
+    if (el) el.textContent = state.youtubeApiKey ? 'Personal key set ✓' : 'Using shared key ›';
   }
 
   // ── QUOTA ──
   function updateQuota() {
-    const pct = state.premium ? 0 : Math.min((state.quota.used / state.quota.max) * 100, 100);
+    const used = getUsageCount('askAI', 'daily');
+    const max = USAGE_LIMITS.askAI.max;
+    const pct = state.premium ? 0 : Math.min((used / max) * 100, 100);
     document.getElementById('quota-bar').style.width = pct + '%';
-    document.getElementById('quota-used').textContent = state.premium ? '∞' : state.quota.used;
+    document.getElementById('quota-used').textContent = state.premium ? '∞' : used;
   }
 
   // ── HISTORY ──
@@ -4557,7 +5064,40 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   }
 
 
+  // ── PAYWALL PRICING BY COUNTRY ──
+  // Priced independently per market (not pegged to a single converted
+  // figure) — each number reflects roughly what similar low-cost student
+  // subscription apps charge in that market, adjusted for local purchasing
+  // power. These are starting-point judgment calls, not researched market
+  // data — revisit and tune per country as you learn more about your
+  // actual users. "Premium" itself is still just a local on-device toggle
+  // (see activatePremium() below) — nothing here is connected to real
+  // billing yet.
+  const PRICING_BY_COUNTRY = {
+    ng: { symbol: '₦', amount: '2,000' },
+    gh: { symbol: 'GH₵', amount: '35' },
+    ke: { symbol: 'KSh', amount: '400' },
+    za: { symbol: 'R', amount: '60' },
+    gb: { symbol: '£', amount: '2.99' },
+    us: { symbol: '$', amount: '3.99' },
+    ca: { symbol: 'CA$', amount: '4.99' },
+    in: { symbol: '₹', amount: '99' },
+    au: { symbol: 'A$', amount: '5.99' },
+    ae: { symbol: 'AED ', amount: '12' }
+  };
+  const DEFAULT_PRICING = { symbol: '$', amount: '3.99' }; // used for 'intl' and any country not listed above
+
+  function getPaywallPricing() {
+    return PRICING_BY_COUNTRY[state.country] || DEFAULT_PRICING;
+  }
+
   function showPaywall() {
+    const p = getPaywallPricing();
+    const priceText = `${p.symbol}${p.amount}`;
+    const priceEl = document.getElementById('pricing-price-display');
+    const btnEl = document.getElementById('subscribe-btn');
+    if (priceEl) priceEl.innerHTML = `${priceText} <span>/ month</span>`;
+    if (btnEl) btnEl.textContent = `Subscribe Now — ${priceText}/month`;
     document.getElementById('paywall-modal').classList.add('active');
   }
 
@@ -4574,6 +5114,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     if (quotaCard) quotaCard.style.display = 'none';
     updateThemeBadge();
     updateProfile();
+    updateFeatureLimitBadges();
   }
 
   function activatePremium() {
@@ -5311,6 +5852,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     refreshSubjects();
     renderSubjectsUI();
     applyUserName();
+    updateCbtCardVisibility();
     openExamModeSettings(); // re-render modal with the new country's exam boards
   }
 
@@ -5325,7 +5867,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
         <h4>What stays on your device</h4>
         <p>Your saved question history, quota, streak, and preferences — language, exam board, notification settings, and your YouTube API key if you add one — are stored locally on your device. Questions and attached photos are sent to StudyMate's secure AI route only when you ask for an answer.</p>
         <h4>Third-party services</h4>
-        <p>Answers are generated by Anthropic's Claude API. If you add a YouTube API key, video recommendations are fetched directly from YouTube's Data API using that key.</p>
+        <p>Answers are generated by Anthropic's Claude API. Video recommendations use YouTube's Data API — by default through StudyMate's own shared server key, or directly with your own personal key if you've added one in Settings.</p>
         <h4>Your control</h4>
         <p>You can remove your YouTube API key, turn off notifications, or clear your browser's local storage for this page at any time to erase everything stored locally.</p>
       </div>
@@ -5391,6 +5933,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   applyUserName();
   updateAppearanceBadge();
   updateAccountBadge();
+  updateFeatureLimitBadges();
+  updateCbtCardVisibility();
   initOnboarding();
   renderBackground();
   refreshAppIcon();

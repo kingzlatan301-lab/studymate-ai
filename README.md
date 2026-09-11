@@ -18,6 +18,7 @@ The browser never contains an API key. `api/ask.js` is a server-side proxy that 
 1. Import this folder into Vercel (or deploy it with the Vercel CLI).
 2. In the Vercel project settings, add `ANTHROPIC_API_KEY` as an environment variable. Optionally add `ANTHROPIC_MODEL`.
 3. Optional: add `APP_SHARED_SECRET` (any random string) to add a lightweight check that requests are coming from your own app build, not a random script that found the URL. This is not real user authentication — see the note in `api/ask.js` for what that would take.
+4. Optional: add `YOUTUBE_API_KEY` (a YouTube Data API v3 key from console.cloud.google.com) to show real video thumbnails under each Ask AI answer, via `api/youtube.js`. Without it, the app falls back to a plain "search on YouTube" link — nothing breaks, it's just less polished. This key is shared across every user of the deployed app; `api/youtube.js` checks a shared cache (see `supabase-schema-03-youtube-cache.sql`) before ever spending quota on it, which is what keeps the free tier's ~100 searches/day viable under real traffic.
 4. Deploy. The web app will automatically use its own `/api/ask` endpoint.
 
 Without that environment variable, the interface deliberately uses its built-in sample answer if the AI request cannot be completed.
