@@ -1,6 +1,9 @@
 {
   "functions": {
     "api/ask.js": { "maxDuration": 30 },
-    "api/youtube.js": { "maxDuration": 15 }
+    "api/youtube.js": { "maxDuration": 15 },
+    "api/verify-payment.js": { "maxDuration": 20 },
+    "api/paystack-webhook.js": { "maxDuration": 20 },
+    "api/analyze-paper.js": { "maxDuration": 45 }
   }
 }

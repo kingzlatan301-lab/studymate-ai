@@ -26,6 +26,9 @@
 window.CURRICULUM = (function () {
 
   // ── COUNTRIES ─────────────────────────────────────────────────────────
+  // Every country gets a '-tertiary' board appended automatically (see the
+  // loop right after this array) so university-level students are covered
+  // everywhere, not just secondary school — see TERTIARY_SUBJECTS below.
   const COUNTRIES = [
     { code: 'ng',   name: 'Nigeria',        flag: '🇳🇬', examBoards: ['waec', 'neco', 'jamb', 'nabteb'] },
     { code: 'gh',   name: 'Ghana',          flag: '🇬🇭', examBoards: ['wassce-gh'] },
@@ -39,6 +42,7 @@ window.CURRICULUM = (function () {
     { code: 'ae',   name: 'UAE',            flag: '🇦🇪', examBoards: ['igcse', 'ib'] },
     { code: 'intl', name: 'International',  flag: '🌍', examBoards: ['igcse', 'ib'] }
   ];
+  COUNTRIES.forEach(c => c.examBoards.push(`${c.code}-tertiary`));
 
   // Shared subject building blocks (kept DRY across exam boards that teach
   // near-identical syllabi). Topic depth is filled in for a representative
@@ -267,6 +271,54 @@ window.CURRICULUM = (function () {
   EXAM_BOARDS.neco.subjects = EXAM_BOARDS.waec.subjects;
   EXAM_BOARDS.jamb.subjects = EXAM_BOARDS.waec.subjects;
 
+  // ── TERTIARY / UNIVERSITY ────────────────────────────────────────────
+  // One generic tertiary board per country (auto-added to every country's
+  // examBoards list above). This is deliberately broad — a general
+  // undergraduate core subject set, not a specific university's degree
+  // curriculum, since modeling actual degree programs per country would be
+  // its own enormous project. Good enough for "help a university student
+  // studying core subjects", not a substitute for a real course syllabus.
+  const TERTIARY_SUBJECTS = [
+    { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Evaluate the integral of x²...' },
+    { name: 'Physics', emoji: '⚛️', color: '#4FC3F7', placeholder: 'e.g. Derive the work-energy theorem...' },
+    { name: 'Chemistry', emoji: '🧪', color: '#FFD166', placeholder: 'e.g. Explain the mechanism of an SN2 reaction...' },
+    { name: 'Biology', emoji: '🧬', color: '#64DC64', placeholder: 'e.g. Explain the process of cellular respiration...' },
+    { name: 'Computer Science', emoji: '💻', color: '#00D4AA', placeholder: 'e.g. Explain how a binary search tree works...' },
+    { name: 'Economics', emoji: '📊', color: '#00D4AA', placeholder: 'e.g. Explain the concept of comparative advantage...' },
+    { name: 'Business Studies', emoji: '💼', color: '#FFB74D', placeholder: 'e.g. Explain Porter\'s Five Forces...' },
+    { name: 'English / Communication', emoji: '📖', color: '#FF8A8A', placeholder: 'e.g. Explain how to structure a persuasive essay...' }
+  ];
+  COUNTRIES.forEach(c => {
+    EXAM_BOARDS[`${c.code}-tertiary`] = {
+      label: 'University / Tertiary', hint: 'General undergraduate studies — broad subject set, not degree-specific',
+      country: c.code, level: 'tertiary', subjects: TERTIARY_SUBJECTS
+    };
+  });
+
+  // ── CLASS / YEAR LEVELS ──────────────────────────────────────────────
+  // Per-country naming for "what class/year are you in" — used by
+  // onboarding instead of one hardcoded Nigerian list (JSS1–SS3) shown to
+  // every student regardless of where they actually are.
+  const CLASS_LEVELS = {
+    ng: { secondary: ['JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'], tertiary: ['100 Level', '200 Level', '300 Level', '400 Level', '500 Level'] },
+    gh: { secondary: ['JHS1', 'JHS2', 'JHS3', 'SHS1', 'SHS2', 'SHS3'], tertiary: ['Year 1', 'Year 2', 'Year 3', 'Year 4'] },
+    ke: { secondary: ['Form 1', 'Form 2', 'Form 3', 'Form 4'], tertiary: ['Year 1', 'Year 2', 'Year 3', 'Year 4'] },
+    za: { secondary: ['Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'], tertiary: ['1st Year', '2nd Year', '3rd Year', '4th Year'] },
+    gb: { secondary: ['Year 9', 'Year 10', 'Year 11', 'Year 12 (Lower Sixth)', 'Year 13 (Upper Sixth)'], tertiary: ['1st Year', '2nd Year', '3rd Year', 'Postgraduate'] },
+    us: { secondary: ['9th Grade (Freshman)', '10th Grade (Sophomore)', '11th Grade (Junior)', '12th Grade (Senior)'], tertiary: ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate'] },
+    ca: { secondary: ['Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'], tertiary: ['1st Year', '2nd Year', '3rd Year', '4th Year'] },
+    in: { secondary: ['Class 9', 'Class 10', 'Class 11', 'Class 12'], tertiary: ['1st Year', '2nd Year', '3rd Year', '4th Year'] },
+    au: { secondary: ['Year 9', 'Year 10', 'Year 11', 'Year 12'], tertiary: ['1st Year', '2nd Year', '3rd Year', '4th Year'] },
+    ae: { secondary: ['Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'], tertiary: ['1st Year', '2nd Year', '3rd Year', '4th Year'] },
+    intl: { secondary: ['Year 10', 'Year 11', 'Year 12', 'Year 13'], tertiary: ['1st Year', '2nd Year', '3rd Year', '4th Year'] }
+  };
+
+  function getClassLevels(countryCode, level) {
+    const c = CLASS_LEVELS[countryCode] || CLASS_LEVELS.intl;
+    const list = (level === 'tertiary') ? c.tertiary : c.secondary;
+    return [...list, 'Other'];
+  }
+
   // ── LOOKUP HELPERS ───────────────────────────────────────────────────
   function getCountries() {
     return COUNTRIES;
@@ -312,6 +364,7 @@ window.CURRICULUM = (function () {
     getExamBoardsForCountry,
     getExamBoard,
     getAllExamBoards,
+    getClassLevels,
     getSubjects,
     getSubject,
     getTopics,

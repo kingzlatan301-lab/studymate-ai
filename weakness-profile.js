@@ -276,6 +276,65 @@ window.WeaknessProfile = (function () {
     return insights;
   }
 
+  // ── ACADEMIC READINESS SCORE ──────────────────────────────────────────
+  // Deliberately transparent, not scientifically validated — per the spec
+  // this was built against: "the score should NOT pretend to be
+  // scientifically perfect... make it a transparent estimate." Every
+  // factor and weight below is a stated judgment call, and getReadiness()
+  // returns null (not a fabricated number) when there's not enough data,
+  // which callers must render as "not enough data yet," never a guess.
+  //
+  // Three factors, weighted:
+  //   50% recent accuracy across topics actually practiced
+  //   30% curriculum coverage (breadth — have you touched most of the
+  //       subject, or gone deep on one topic and ignored the rest?)
+  //   20% consistency (are practiced topics holding steady/improving, or
+  //       is more than half of them declining?)
+  // curriculumTopicCount is optional — pass the subject's total known
+  // topic count from the curriculum model if available; if omitted,
+  // coverage is treated as 100% (not penalized) rather than guessed.
+  const READINESS_WEIGHTS = { accuracy: 0.5, coverage: 0.3, consistency: 0.2 };
+
+  function getReadiness(subject, curriculumTopicCount) {
+    const topics = getTopics(subject).filter(t => t.attempts > 0);
+    if (!topics.length) return null;
+
+    const avgAccuracy = topics.reduce((s, t) => s + t.accuracyPct, 0) / topics.length;
+
+    const coveragePct = curriculumTopicCount
+      ? Math.min(100, Math.round((topics.length / curriculumTopicCount) * 100))
+      : 100;
+
+    const nonDecliningCount = topics.filter(t => t.trend !== 'declining').length;
+    const consistencyPct = Math.round((nonDecliningCount / topics.length) * 100);
+
+    const readinessPct = Math.round(
+      avgAccuracy * READINESS_WEIGHTS.accuracy +
+      coveragePct * READINESS_WEIGHTS.coverage +
+      consistencyPct * READINESS_WEIGHTS.consistency
+    );
+
+    return {
+      readinessPct,
+      factors: { avgAccuracy: Math.round(avgAccuracy), coveragePct, consistencyPct },
+      topicsWithData: topics.length,
+      curriculumTopicCount: curriculumTopicCount || null
+    };
+  }
+
+  // A plain-language "why this number" explanation built entirely from the
+  // factors above — no AI call, and no claim stronger than the data
+  // supports (never "you will score X", always "based on Y so far").
+  function explainReadiness(subject, curriculumTopicCount) {
+    const r = getReadiness(subject, curriculumTopicCount);
+    if (!r) return `Not enough practice data in ${subject} yet for a reliable estimate.`;
+    const { avgAccuracy, coveragePct, consistencyPct } = r.factors;
+    const coverageNote = r.curriculumTopicCount
+      ? `covering ${coveragePct}% of ${subject}'s topics`
+      : `across ${r.topicsWithData} topic${r.topicsWithData === 1 ? '' : 's'}`;
+    return `Your ${subject} readiness is an estimated ${r.readinessPct}% — based on ${avgAccuracy}% average accuracy ${coverageNote}, with ${consistencyPct}% of those topics stable or improving rather than declining.`;
+  }
+
   function reset() {
     localStorage.removeItem(STORAGE_KEY);
   }
@@ -289,6 +348,8 @@ window.WeaknessProfile = (function () {
     getWeakestTopics,
     getAllAttempts,
     getInsights,
+    getReadiness,
+    explainReadiness,
     hasAnyData,
     reset
   };

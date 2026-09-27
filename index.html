@@ -1125,14 +1125,28 @@
     <p class="greeting">Good day 👋</p>
     <h1 class="greeting-name">Ready to study?</h1>
 
+    <!-- Academic Intelligence dashboard card — Premium only, populated by
+         renderHomeIntelligenceDashboard(); stays empty/hidden for free
+         users and for anyone without enough data yet. -->
+    <div id="intelligence-dashboard-card"></div>
+
     <!-- Quota Card -->
     <div class="quota-card">
       <div class="quota-label">Daily Questions Used</div>
       <div class="quota-bar-wrap">
         <div class="quota-bar" id="quota-bar" style="width: 0%"></div>
       </div>
-      <div class="quota-count"><span id="quota-used">0</span> of <span>5</span> questions used today</div>
+      <div class="quota-count"><span id="quota-used">0</span> of <span id="quota-max">3</span> questions used today</div>
       <button class="upgrade-btn" onclick="showPaywall()">⚡ Upgrade for Unlimited Questions</button>
+    </div>
+
+    <!-- Academic Intelligence Report quick action — free, everyone -->
+    <div class="quota-card" style="cursor:pointer;" onclick="goScreen('progress', document.querySelectorAll('.nav-item')[4]); showAcademicIntelligenceReport();">
+      <div class="quota-label" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>🧠 Academic Intelligence Report</span>
+        <span style="color:var(--indigo); font-size:12px;">Open →</span>
+      </div>
+      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Your readiness, strongest subject, and biggest opportunity — from your real data.</div>
     </div>
 
     <!-- Practice Mode quick action -->
@@ -1205,6 +1219,24 @@
         <span style="color:var(--indigo); font-size:12px;">Open →</span>
       </div>
       <div style="font-size:11px; color:var(--muted); margin-top:4px;">Full JAMB UTME simulation — English + 3 subjects, 180 questions, 2-hour timer.</div>
+    </div>
+
+    <!-- What Should I Study Right Now? quick action — Premium only -->
+    <div class="quota-card" style="cursor:pointer;" onclick="goScreen('mission', null)">
+      <div class="quota-label" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>🎯 What Should I Study Right Now? <span style="font-size:10px; color:var(--gold);">⚡ PREMIUM</span></span>
+        <span style="color:var(--indigo); font-size:12px;">Open →</span>
+      </div>
+      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Tell me how many minutes you've got — I'll plan the highest-impact session.</div>
+    </div>
+
+    <!-- Past-Paper Intelligence quick action — Premium only -->
+    <div class="quota-card" style="cursor:pointer;" onclick="goScreen('pastpaper', null)">
+      <div class="quota-label" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>📄 Past-Paper Intelligence <span style="font-size:10px; color:var(--gold);">⚡ PREMIUM</span></span>
+        <span style="color:var(--indigo); font-size:12px;">Open →</span>
+      </div>
+      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Upload past papers — see what's actually tested most, and where that overlaps with your weak spots.</div>
     </div>
 
     <!-- Subjects -->
@@ -1324,6 +1356,16 @@
     <div id="cbtmode-content"><!-- populated by renderCbtSetup() / renderCbtQuestion() / renderCbtResults() --></div>
   </div>
 
+  <!-- MISSION SCREEN ("What Should I Study Right Now?") -->
+  <div class="screen" id="screen-mission">
+    <div id="mission-content"><!-- populated by renderMissionSetup() / buildMission() --></div>
+  </div>
+
+  <!-- PAST-PAPER INTELLIGENCE SCREEN -->
+  <div class="screen" id="screen-pastpaper">
+    <div id="pastpaper-content"><!-- populated by renderPastPaperSetup() / renderPastPaperResults() --></div>
+  </div>
+
   <!-- STUDY MATERIAL SCREEN -->
   <div class="screen" id="screen-studymaterial">
     <div id="studymaterial-content"><!-- populated by renderStudyMaterialHome() / renderNoteEditor() / renderAiSummarySetup() --></div>
@@ -1340,6 +1382,7 @@
 
   <!-- PROGRESS SCREEN (Weakness Profile Dashboard) -->
   <div class="screen" id="screen-progress">
+    <div id="academic-intelligence-report-container"><!-- populated by showAcademicIntelligenceReport() --></div>
     <div class="section-title" style="margin-bottom:14px;">Your Weakness Profile</div>
     <div id="progress-content"><!-- populated by renderProgressScreen() --></div>
   </div>
@@ -1491,7 +1534,7 @@
         <div class="pricing-feature">CBT Mode — full JAMB UTME simulation (Nigeria)</div>
       </div>
     </div>
-    <button class="subscribe-btn" id="subscribe-btn" onclick="activatePremium()">Subscribe Now — ₦2,000/month</button>
+    <button class="subscribe-btn" id="subscribe-btn" onclick="startCheckout()">Subscribe Now — ₦2,000/month</button>
     <button class="modal-dismiss" onclick="closePaywall()">Maybe later</button>
   </div>
 </div>
@@ -1521,10 +1564,21 @@
   </div>
 </div>
 
+<!-- SIGN-IN GATE — blocks the whole app until the student is signed in.
+     Always on top (z-index 9999, above every other modal); not
+     dismissible (no close/back affordance) since an account is now
+     required to use StudyMate at all, not just for Premium/sync. -->
+<div class="modal-overlay" id="auth-gate-modal" style="z-index:9999; align-items:center;" role="dialog" aria-modal="true" aria-label="Sign in to StudyMate">
+  <div class="modal" style="position:relative;">
+    <div id="auth-gate-content"></div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
 <script src="app-config.js"></script>
 <script src="supabase-client.js"></script>
 <script src="curriculum-data.js"></script>
@@ -1533,7 +1587,12 @@
 <script>
   // ── STATE ──
   let state = {
-    premium: localStorage.getItem('sm_premium') === '1',
+    // Premium is no longer a local flag anyone could fake from dev tools —
+    // it's set only after refreshPremiumStatus() confirms a real, active
+    // subscription row in Supabase (see the Paystack section below).
+    // Starts false; resolves shortly after load once auth/subscription
+    // status is known.
+    premium: false,
     totalAsked: 0,
     history: [],
     selectedSubject: 'Mathematics',
@@ -1593,13 +1652,30 @@
     none:  { label: 'Silent', notes: [] }
   };
 
+  // Covers every country currently in the curriculum, plus a broad set of
+  // majorly-spoken world languages — not just West Africa, which is what
+  // this list used to be limited to.
   const LANGUAGES = [
     { code: 'en', label: 'English', hint: 'Standard exam English' },
-    { code: 'pcm', label: 'Nigerian Pidgin', hint: 'Explained the Naija way' },
+    { code: 'fr', label: 'French', hint: 'For French-speaking exam boards' },
+    { code: 'es', label: 'Spanish', hint: '' },
+    { code: 'pt', label: 'Portuguese', hint: '' },
+    { code: 'ar', label: 'Arabic', hint: '' },
+    { code: 'zh', label: 'Mandarin Chinese', hint: '' },
+    { code: 'hi', label: 'Hindi', hint: '' },
+    { code: 'ur', label: 'Urdu', hint: '' },
+    { code: 'bn', label: 'Bengali', hint: '' },
+    { code: 'sw', label: 'Swahili', hint: '' },
     { code: 'ha', label: 'Hausa', hint: '' },
     { code: 'yo', label: 'Yoruba', hint: '' },
     { code: 'ig', label: 'Igbo', hint: '' },
-    { code: 'fr', label: 'French', hint: 'For French-speaking exam boards' }
+    { code: 'pcm', label: 'Nigerian Pidgin', hint: 'Explained the Naija way' },
+    { code: 'zu', label: 'Zulu', hint: '' },
+    { code: 'af', label: 'Afrikaans', hint: '' },
+    { code: 'am', label: 'Amharic', hint: '' },
+    { code: 'de', label: 'German', hint: '' },
+    { code: 'fa', label: 'Persian (Farsi)', hint: '' },
+    { code: 'ta', label: 'Tamil', hint: '' }
   ];
 
   // ── GLOBAL CURRICULUM: derived, refreshable state ──
@@ -1638,7 +1714,9 @@
     }
   }
 
-  const CLASS_OPTIONS = ['JSS1 – JSS3', 'SS1', 'SS2', 'SS3', 'Tertiary / Other'];
+  // Class/year options are now generated per-country (and per secondary vs
+  // tertiary) via CURRICULUM.getClassLevels() at render time — see the
+  // 'class' step below. This hardcoded Nigerian-only list is gone.
 
   const ROUTINE_OPTIONS = [
     { key: 'daily',    label: 'I study daily',          hint: 'Disciplined. Respect.' },
@@ -1693,17 +1771,19 @@
 
     if (name === 'history') renderHistory();
     if (name === 'profile') updateProfile();
-    if (name === 'progress') renderProgressScreen();
+    if (name === 'progress') { renderProgressScreen(); maybeSnapshotReadiness(); }
     if (name === 'practice' && !practiceSession) renderPracticeSetup();
     if (name === 'mockexam' && !mockExam) renderMockExamSetup();
     if (name === 'studyplan') renderStudyPlanScreen();
     if (name === 'flashcards') renderFlashcardsHome();
     if (name === 'teachme' && !lessonSession) renderTeachMeSetup();
     if (name === 'achievements') renderAchievementsScreen();
-    if (name === 'home') updateFeatureLimitBadges();
+    if (name === 'home') { updateFeatureLimitBadges(); renderHomeIntelligenceDashboard(); }
     if (name === 'search') renderSearchScreen();
     if (name === 'studymaterial') renderStudyMaterialHome();
     if (name === 'cbtmode' && !cbtSession) renderCbtSetup();
+    if (name === 'mission') renderMissionSetup();
+    if (name === 'pastpaper') renderPastPaperSetup();
   }
 
   function goAsk(subject) {
@@ -1782,12 +1862,15 @@
       `;
 
     } else if (step === 'class') {
+      const board = CURRICULUM.getExamBoard(state.examMode.board);
+      const levelKind = (board && board.level === 'tertiary') ? 'tertiary' : 'secondary';
+      const classOptions = CURRICULUM.getClassLevels(state.country, levelKind);
       content.innerHTML = `
         <div class="modal-title">Noted 🎒</div>
-        <div class="modal-sub">What class are you in right now?</div>
+        <div class="modal-sub">What class/year are you in right now?</div>
         <div class="option-list">
-          ${CLASS_OPTIONS.map(c => `
-            <div class="option-item" onclick="selectOnboardingClass('${c}')">
+          ${classOptions.map(c => `
+            <div class="option-item" onclick="selectOnboardingClass('${c.replace(/'/g, "\\'")}')">
               <div class="toggle-label">${c}</div>
             </div>`).join('')}
         </div>
@@ -1829,7 +1912,7 @@
     state.userName = name;
     localStorage.setItem('sm_user_name', name);
     applyUserName();
-    renderOnboardingStep('exam');
+    renderOnboardingStep('country');
   }
 
   function updateCbtCardVisibility() {
@@ -2067,12 +2150,12 @@
   }
 
   const USAGE_LIMITS = {
-    askAI: { period: 'daily', max: 5 },
-    mockExam: { period: 'weekly', max: 2 },
-    flashcards: { period: 'weekly', max: 2 },
-    teachMe: { period: 'weekly', max: 3 },
-    practice: { period: 'weekly', max: 15 },
-    studyMaterial: { period: 'weekly', max: 3 }
+    askAI: { period: 'daily', max: 3 },
+    mockExam: { period: 'weekly', max: 1 },
+    flashcards: { period: 'weekly', max: 1 },
+    teachMe: { period: 'weekly', max: 1 },
+    practice: { period: 'weekly', max: 6 },
+    studyMaterial: { period: 'weekly', max: 1 }
   };
 
   // Blocks and redirects to the paywall if the limit is hit; returns true
@@ -2145,27 +2228,11 @@
           ]
         : prompt;
 
-      const apiUrl = getAiEndpoint();
-      if (!apiUrl) {
-        throw new Error('AI service is not configured. Set STUDYMATE_API_URL in app-config.js before building the native app.');
-      }
-
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: messageContent
-        })
-      });
+      const text = await callAskApi(messageContent, 'askAI');
 
       clearInterval(interval);
       document.getElementById('thinking-overlay').classList.remove('active');
 
-      if (!response.ok) throw new Error('AI request failed: ' + response.status);
-
-      const data = await response.json();
-      const text = data.text || data.content?.map(c => c.text || '').join('');
-      if (!text) throw new Error('AI service returned an empty response');
       const parsed = parseAnswer(text);
 
       state.currentAnswer = { question, subject: state.selectedSubject, ...parsed, time: new Date() };
@@ -2176,6 +2243,12 @@
       clearInterval(interval);
       document.getElementById('thinking-overlay').classList.remove('active');
       console.error(err);
+
+      const code = err && err.code;
+      // Already handled (toast + paywall shown, or the sign-in gate is up) —
+      // showing a fake demo answer on top would undercut that messaging.
+      if (code === 'FREE_LIMIT_REACHED' || code === 'PREMIUM_REQUIRED' || code === 'AUTH_REQUIRED') return;
+      if (code === 'PROVIDER_BUSY') { showToast(err.message); return; }
 
       showToast('Using a sample answer while the AI service is unavailable');
       // Offline fallback keeps the app useful during setup or poor connectivity.
@@ -2192,6 +2265,87 @@
     // an explicit deployed URL because their origin is the device itself.
     if (/^https?:$/.test(window.location.protocol)) return `${window.location.origin}/api/ask`;
     return '';
+  }
+
+  // ── SHARED AI CALL HELPER ──
+  // Every feature that talks to /api/ask goes through this one function so
+  // that (a) the server always gets the signed-in student's own Supabase
+  // access token — that's what lets it tell Free from Premium and route to
+  // Gemini/Claude accordingly, without trusting anything the client claims
+  // about its own plan — and (b) the server's authoritative "limit reached"
+  // / "requires Premium" / "provider busy" responses are handled the same
+  // way everywhere instead of being re-implemented at each call site.
+  //
+  // `feature` must match a key the backend recognizes (see
+  // FREE_FEATURE_LIMITS in api/ask.js): 'askAI', 'mockExam', 'flashcards',
+  // 'teachMe', 'practice', 'studyMaterial'. Anything else is treated by the
+  // server as Premium-only, matching the ⚡ PREMIUM features gated above by
+  // showPaywall() (CBT Mode, "What Should I Study", etc.).
+  class AiApiError extends Error {
+    constructor(message, code) { super(message); this.code = code; }
+  }
+
+  async function callAskApi(content, feature) {
+    const apiUrl = getAiEndpoint();
+    if (!apiUrl) {
+      throw new AiApiError('AI service is not configured. Set STUDYMATE_API_URL in app-config.js before building the native app.', 'NOT_CONFIGURED');
+    }
+    if (!window.sbClient || !window.sbAuthSession) {
+      throw new AiApiError('Please sign in to use StudyMate AI.', 'AUTH_REQUIRED');
+    }
+
+    let response;
+    try {
+      response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${window.sbAuthSession.access_token}`
+        },
+        body: JSON.stringify({ content, feature })
+      });
+    } catch (err) {
+      throw new AiApiError('AI request failed — check your connection.', 'NETWORK_ERROR');
+    }
+
+    let data = null;
+    try { data = await response.json(); } catch { /* non-JSON error body, fall through */ }
+
+    if (!response.ok) {
+      const message = (data && data.error) || ('AI request failed: ' + response.status);
+      const code = data && data.code;
+      // These two are shown to the student here, once, so every call site
+      // doesn't need to duplicate the "you're blocked, here's why" UI.
+      if (code === 'FREE_LIMIT_REACHED' || code === 'PREMIUM_REQUIRED') {
+        showToast(message);
+        showPaywall();
+      }
+      // Sync the server's authoritative count into the same local usage
+      // shape the UI already reads, so badges/quota don't show stale
+      // numbers after a server-side block (e.g. first load on a new device).
+      if (code === 'FREE_LIMIT_REACHED' && data && typeof data.count === 'number' && typeof data.max === 'number') {
+        syncUsageFromServer(feature, data.count, data.max);
+      }
+      throw new AiApiError(message, code);
+    }
+
+    if (data && data.usage) syncUsageFromServer(data.usage.feature, data.usage.count, data.usage.max);
+
+    const text = (data && data.text) || (data && data.content && data.content.map(c => c.text || '').join(''));
+    if (!text) throw new AiApiError('AI service returned an empty response', 'EMPTY');
+    return text;
+  }
+
+  // Overwrites the local usage cache with the server's real count, so
+  // updateQuota()/updateFeatureLimitBadges() (which read via getUsageCount)
+  // reflect the truth instead of an optimistic client-side guess.
+  function syncUsageFromServer(feature, count, max) {
+    if (!USAGE_LIMITS[feature]) return;
+    const usage = loadUsage();
+    usage[feature] = { periodKey: getPeriodKey(USAGE_LIMITS[feature].period), count };
+    saveUsage(usage);
+    updateQuota();
+    updateFeatureLimitBadges();
   }
 
   // ── AI MEMORY: PERSONALIZATION CONTEXT ──
@@ -2265,6 +2419,38 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   "tip": "A quick exam tip or memory trick for this topic",
   "videoSearchQuery": "A short, specific YouTube search phrase (3-6 words) that would find a good tutorial video on this exact concept"
 }`;
+  }
+
+  // Escapes AI-generated and user-typed text before it's interpolated into
+  // an innerHTML template literal. AI responses (Gemini/Claude) and raw
+  // user input (search queries, custom topics) are both untrusted content
+  // as far as the DOM is concerned — this stops either one from being
+  // able to inject markup/script into the page. Structural HTML written
+  // by this app itself (the surrounding <div>, <button>, etc. in each
+  // template) is not run through this — only the dynamic values dropped
+  // into it.
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // For dynamic text embedded inside an inline event handler attribute,
+  // e.g. onclick="fn('${...}')" — needs BOTH JS-string escaping (so the
+  // value can't close the JS string early) AND HTML-attribute escaping
+  // (so it can't close the surrounding double-quoted attribute early).
+  // Order matters: JS-escape first, then HTML-escape the result, so the
+  // backslash sequences survive the browser's attribute-decoding step
+  // intact and still mean what they're supposed to mean to the JS parser.
+  function escapeForInlineHandler(str) {
+    const jsEscaped = String(str === null || str === undefined ? '' : str)
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'");
+    return escapeHtml(jsEscaped);
   }
 
   function parseAnswer(text) {
@@ -2346,7 +2532,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     conceptContainer.innerHTML = parsed.concept ? `
       <div class="concept-box">
         <div class="concept-label">💡 The Concept</div>
-        <div class="concept-text">${parsed.concept}</div>
+        <div class="concept-text">${escapeHtml(parsed.concept)}</div>
       </div>` : '';
 
     // Steps
@@ -2358,9 +2544,9 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
         <div class="step" style="animation-delay:${delay}ms">
           <div class="step-num">${i + 1}</div>
           <div class="step-content">
-            <div class="step-title">${step.title || ''}</div>
-            <div class="step-desc">${step.explanation || ''}</div>
-            ${step.math ? `<div class="math-display">${step.math}</div>` : ''}
+            <div class="step-title">${escapeHtml(step.title)}</div>
+            <div class="step-desc">${escapeHtml(step.explanation)}</div>
+            ${step.math ? `<div class="math-display">${escapeHtml(step.math)}</div>` : ''}
           </div>
         </div>`;
     });
@@ -2369,7 +2555,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
       container.innerHTML += `
         <div style="margin-top:12px; background:rgba(255,209,102,0.1); border:1px solid rgba(255,209,102,0.3); border-radius:10px; padding:12px;">
           <div style="font-size:11px; color:var(--gold); font-weight:600; margin-bottom:4px;">💡 EXAM TIP</div>
-          <div style="font-size:13px; color:var(--muted); line-height:1.5;">${parsed.tip}</div>
+          <div style="font-size:13px; color:var(--muted); line-height:1.5;">${escapeHtml(parsed.tip)}</div>
         </div>`;
     }
 
@@ -2380,8 +2566,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
       <div class="term-list">
         ${parsed.keyTerms.map(t => `
           <div class="term-item">
-            <div class="term-name">${t.term}</div>
-            <div class="term-def">${t.definition}</div>
+            <div class="term-name">${escapeHtml(t.term)}</div>
+            <div class="term-def">${escapeHtml(t.definition)}</div>
           </div>`).join('')}
       </div>` : '';
 
@@ -2390,7 +2576,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     relatedContainer.innerHTML = (parsed.relatedTopics && parsed.relatedTopics.length) ? `
       <div class="related-title">🔗 Related Topics to Explore</div>
       <div class="related-topics">
-        ${parsed.relatedTopics.map(t => `<div class="topic-chip" onclick="askRelatedTopic('${t.replace(/'/g, "\\'")}')">${t}</div>`).join('')}
+        ${parsed.relatedTopics.map(t => `<div class="topic-chip" onclick="askRelatedTopic('${escapeForInlineHandler(t)}')">${escapeHtml(t)}</div>`).join('')}
       </div>` : '';
 
     document.getElementById('input-section').style.display = 'none';
@@ -2410,12 +2596,24 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   // After each answer, ask the student how it actually went. This is the
   // real signal feeding the Weakness Profile today (see weakness-profile.js
   // header for how this upgrades once graded Practice/Quiz modes exist).
+  // This taxonomy is used two ways: (1) as manual self-tag options in Ask
+  // AI's confidence check, and (2) as the fixed vocabulary the AI is asked
+  // to classify wrong answers into during Practice/Mock Exam/CBT grading
+  // (see distractorRationale in buildPracticePrompt/buildMockQuestionPrompt/
+  // buildCbtBatchPrompt) — a real implementation of the Academic
+  // Intelligence spec's "why did they likely fail" classification, without
+  // adding a single extra AI call (the classification rides along in the
+  // same response that already generates the question).
   const MISTAKE_TYPES = [
-    'Misunderstood the concept',
+    'Conceptual misunderstanding',
+    'Formula selection',
     'Calculation error',
-    'Forgot a formula',
+    'Unit conversion',
+    'Careless mistake',
     'Misread the question',
-    'Question was too hard for me right now'
+    'Multi-step reasoning failure',
+    'Vocabulary misunderstanding',
+    'Weak prerequisite knowledge'
   ];
   let pendingSelfCheck = null;
 
@@ -2586,14 +2784,18 @@ Difficulty: ${practiceSession.difficulty}${languageInstruction}${examInstruction
 
 Make exactly one option correct. Wrong options should reflect realistic student mistakes for this topic (not random nonsense) — if the student context above names a recent mistake pattern relevant to this question, prefer a distractor that matches it, so a wrong answer is diagnostic rather than random.
 
+For each WRONG option, classify what picking it would most likely reveal about the student's error, using ONLY one of these exact labels: ${MISTAKE_TYPES.join(', ')}.
+
 Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text):
 {
   "question": "The question text",
   "options": ["Option A", "Option B", "Option C", "Option D"],
   "correctIndex": 0,
   "explanation": "2-3 sentence explanation of why the correct answer is right and briefly why the others are wrong",
-  "topic": "The specific topic this question actually tests (be specific, e.g. 'Quadratic Equations' not just 'Algebra')"
-}`;
+  "topic": "The specific topic this question actually tests (be specific, e.g. 'Quadratic Equations' not just 'Algebra')",
+  "distractorRationale": [null, "one of the exact labels above", "one of the exact labels above", "one of the exact labels above"]
+}
+The distractorRationale array must be the same length as options, with null in the position matching correctIndex and a label in every other position.`;
   }
 
   function parsePracticeQuestion(text) {
@@ -2601,10 +2803,21 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
       const clean = text.replace(/```json|```/g, '').trim();
       const parsed = JSON.parse(clean);
       if (!parsed.question || !Array.isArray(parsed.options) || parsed.options.length < 2 || typeof parsed.correctIndex !== 'number') return null;
+      if (!Array.isArray(parsed.distractorRationale)) parsed.distractorRationale = []; // tolerate older/partial responses — see mistakeLabelFor()
       return parsed;
     } catch {
       return null;
     }
+  }
+
+  // Looks up the AI's pre-generated classification for a wrong answer —
+  // zero extra AI calls, since it was already returned alongside the
+  // question itself. Falls back to null (no guess) if the AI response
+  // didn't include one, which callers must handle by leaving mistakeType
+  // unset rather than inventing a label.
+  function mistakeLabelFor(question, selectedIndex) {
+    const label = question.distractorRationale && question.distractorRationale[selectedIndex];
+    return (typeof label === 'string' && MISTAKE_TYPES.includes(label)) ? label : null;
   }
 
   async function fetchNextPracticeQuestion() {
@@ -2618,21 +2831,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
         <div style="font-size:13px;">Generating your next question...</div>
       </div>`;
 
-    const apiUrl = getAiEndpoint();
-    if (!apiUrl) {
-      el.innerHTML = `<div style="text-align:center; padding:40px 20px; color:var(--muted); font-size:13px;">AI service is not configured. Set STUDYMATE_API_URL in app-config.js.</div>`;
-      return;
-    }
-
     try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: buildPracticePrompt() })
-      });
-      if (!response.ok) throw new Error('AI request failed: ' + response.status);
-      const data = await response.json();
-      const text = data.text || data.content?.map(c => c.text || '').join('');
+      const text = await callAskApi(buildPracticePrompt(), 'practice');
       const parsed = text && parsePracticeQuestion(text);
       if (!parsed) throw new Error('Could not generate a valid question');
 
@@ -2644,7 +2844,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
       console.error(err);
       el.innerHTML = `
         <div style="text-align:center; padding:40px 20px;">
-          <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">Couldn't generate a question — the AI service may be unavailable.</div>
+          <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">${err.message || "Couldn't generate a question — the AI service may be unavailable."}</div>
           <button class="action-btn" onclick="fetchNextPracticeQuestion()">Try Again</button>
           <button class="modal-dismiss" onclick="renderPracticeSetup()">Back to Setup</button>
         </div>`;
@@ -2662,11 +2862,11 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
         <div style="font-size:11px; color:var(--muted);">Score: ${practiceSession.correctCount}/${practiceSession.questionsAnswered}</div>
       </div>
       <div class="answer-card">
-        <div class="final-answer-value" style="font-size:15px; line-height:1.5; margin-bottom:16px;">${q.question}</div>
+        <div class="final-answer-value" style="font-size:15px; line-height:1.5; margin-bottom:16px;">${escapeHtml(q.question)}</div>
         <div id="practice-options">
           ${q.options.map((opt, i) => `
             <div class="option-item" id="practice-opt-${i}" onclick="selectPracticeOption(${i})">
-              <div class="toggle-label">${opt}</div>
+              <div class="toggle-label">${escapeHtml(opt)}</div>
             </div>`).join('')}
         </div>
         <button class="ask-btn" id="practice-submit-btn" style="margin-top:16px; opacity:0.5; pointer-events:none;" onclick="submitPracticeAnswer()">Submit Answer</button>
@@ -2706,30 +2906,35 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     document.getElementById('practice-submit-btn').style.display = 'none';
 
     // Record objectively-graded result — real accuracy data, not self-report.
+    // mistakeType is auto-classified by the AI that generated this question
+    // (see distractorRationale in buildPracticePrompt) at zero extra AI
+    // cost — the manual chips below let the student correct it if it's wrong.
     const topicForProfile = (q.topic || practiceSession.topic || 'General');
     const profileTopic = topicForProfile === 'General' ? null : topicForProfile;
+    const autoMistakeLabel = correct ? null : mistakeLabelFor(q, practiceSession.selectedIndex);
     const attemptTs = WeaknessProfile.recordAttempt({
       subject: practiceSession.subject,
       topic: profileTopic,
       level: correct ? 'knew' : 'lost',
       difficulty: practiceSession.difficulty,
-      mistakeType: null
+      mistakeType: autoMistakeLabel
     });
     bumpStats({ gradedQuestionsAnswered: 1 });
+    markMissionProgress('practice', practiceSession.subject);
 
     adaptPracticeDifficulty();
 
     const mistakeChips = (!correct) ? `
-      <div style="font-size:11px; color:var(--muted); margin:10px 0 6px;">What went wrong? (optional — helps sharpen your Weakness Profile)</div>
+      <div style="font-size:11px; color:var(--muted); margin:10px 0 6px;">${autoMistakeLabel ? `Looks like: <strong style="color:var(--indigo);">${autoMistakeLabel}</strong> — tap below if that's not quite right:` : 'What went wrong? (optional — helps sharpen your Weakness Profile)'}</div>
       <div id="practice-mistake-chips" class="subject-chips">
-        ${MISTAKE_TYPES.map(m => `<div class="chip" onclick="tagPracticeMistake(this, '${practiceSession.subject.replace(/'/g, "\\'")}', ${profileTopic ? `'${profileTopic.replace(/'/g, "\\'")}'` : 'null'}, ${attemptTs}, '${m.replace(/'/g, "\\'")}')">${m}</div>`).join('')}
+        ${MISTAKE_TYPES.map(m => `<div class="chip${m === autoMistakeLabel ? ' selected' : ''}" onclick="tagPracticeMistake(this, '${practiceSession.subject.replace(/'/g, "\\'")}', ${profileTopic ? `'${profileTopic.replace(/'/g, "\\'")}'` : 'null'}, ${attemptTs}, '${m.replace(/'/g, "\\'")}')">${m}</div>`).join('')}
       </div>` : '';
 
     const resultArea = document.getElementById('practice-result-area');
     resultArea.innerHTML = `
       <div style="margin-top:14px; background:${correct ? 'rgba(100,220,100,0.08)' : 'rgba(255,107,107,0.08)'}; border:1px solid ${correct ? 'rgba(100,220,100,0.3)' : 'rgba(255,107,107,0.3)'}; border-radius:10px; padding:12px;">
         <div style="font-size:13px; font-weight:600; margin-bottom:6px;">${correct ? '✅ Correct' : '❌ Not quite'}</div>
-        <div style="font-size:12px; color:var(--muted); line-height:1.5;">${q.explanation || ''}</div>
+        <div style="font-size:12px; color:var(--muted); line-height:1.5;">${escapeHtml(q.explanation)}</div>
         ${mistakeChips}
       </div>
       <button class="ask-btn" style="margin-top:12px;" onclick="fetchNextPracticeQuestion()">Next Question →</button>
@@ -2844,14 +3049,18 @@ Difficulty: ${difficulty}${languageInstruction}${examInstruction}${avoidInstruct
 
 Cover a different topic within the subject than already used, so the exam samples broadly. Make exactly one option correct.
 
+For each WRONG option, classify what picking it would most likely reveal about the student's error, using ONLY one of these exact labels: ${MISTAKE_TYPES.join(', ')}.
+
 Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text):
 {
   "question": "The question text",
   "options": ["Option A", "Option B", "Option C", "Option D"],
   "correctIndex": 0,
   "explanation": "2-3 sentence explanation of the correct answer",
-  "topic": "The specific topic this question tests"
-}`;
+  "topic": "The specific topic this question tests",
+  "distractorRationale": [null, "one of the exact labels above", "one of the exact labels above", "one of the exact labels above"]
+}
+The distractorRationale array must be the same length as options, with null in the position matching correctIndex and a label in every other position.`;
   }
 
   async function startMockExam() {
@@ -2869,24 +3078,17 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
           <div style="font-size:13px;">Preparing your mock exam — question ${i + 1} of ${total}...</div>
         </div>`;
       try {
-        const apiUrl = getAiEndpoint();
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: buildMockQuestionPrompt(mockExamSetup.subject, mockExamSetup.difficulty, usedTopics) })
-        });
-        if (!response.ok) throw new Error('AI request failed');
-        const data = await response.json();
-        const text = data.text || data.content?.map(c => c.text || '').join('');
+        const text = await callAskApi(buildMockQuestionPrompt(mockExamSetup.subject, mockExamSetup.difficulty, usedTopics), 'mockExam');
         const parsed = text && parsePracticeQuestion(text);
         if (!parsed) throw new Error('Invalid question');
         questions.push(parsed);
         if (parsed.topic) usedTopics.push(parsed.topic);
       } catch (err) {
         console.error(err);
+        if (err && (err.code === 'FREE_LIMIT_REACHED' || err.code === 'PREMIUM_REQUIRED' || err.code === 'AUTH_REQUIRED')) return;
         el.innerHTML = `
           <div style="text-align:center; padding:40px 20px;">
-            <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">Couldn't finish generating the exam — the AI service may be unavailable. ${questions.length ? `Got ${questions.length} of ${total} questions.` : ''}</div>
+            <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">${err.message || "Couldn't finish generating the exam — the AI service may be unavailable."} ${questions.length ? `Got ${questions.length} of ${total} questions.` : ''}</div>
             ${questions.length >= 2 ? `<button class="action-btn" onclick="beginMockExam(${JSON.stringify(questions).replace(/"/g, '&quot;')})">Start with ${questions.length} Questions</button>` : ''}
             <button class="modal-dismiss" onclick="renderMockExamSetup()">Back to Setup</button>
           </div>`;
@@ -2950,11 +3152,11 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
             border:1px solid ${idx === i ? 'var(--indigo)' : 'transparent'};">${idx + 1}</div>`).join('')}
       </div>
       <div class="answer-card">
-        <div class="final-answer-value" style="font-size:15px; line-height:1.5; margin-bottom:16px;">${q.question}</div>
+        <div class="final-answer-value" style="font-size:15px; line-height:1.5; margin-bottom:16px;">${escapeHtml(q.question)}</div>
         <div id="mock-options">
           ${q.options.map((opt, idx) => `
             <div class="option-item${selected === idx ? ' selected' : ''}" onclick="selectMockOption(${idx})">
-              <div class="toggle-label">${opt}</div>
+              <div class="toggle-label">${escapeHtml(opt)}</div>
             </div>`).join('')}
         </div>
       </div>
@@ -3010,18 +3212,20 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
       if (correct) topicBreakdown[topic].correct++;
 
       const profileTopic = topic === 'General' ? null : topic;
+      const autoMistakeLabel = (selected !== null && !correct) ? mistakeLabelFor(q, selected) : null;
       const attemptTs = WeaknessProfile.recordAttempt({
         subject: mockExam.subject,
         topic: profileTopic,
         level: selected === null ? 'lost' : (correct ? 'knew' : 'lost'),
         difficulty: mockExam.difficulty,
-        mistakeType: null
+        mistakeType: autoMistakeLabel
       });
 
-      reviewItems.push({ ...q, selected, correct, weaknessSubject: mockExam.subject, weaknessTopic: profileTopic, weaknessTs: attemptTs });
+      reviewItems.push({ ...q, selected, correct, autoMistakeLabel, weaknessSubject: mockExam.subject, weaknessTopic: profileTopic, weaknessTs: attemptTs });
     });
 
     bumpStats({ gradedQuestionsAnswered: mockExam.questions.length, mockExamsCompleted: 1 });
+    markMissionProgress('mockexam', mockExam.subject);
     renderMockExamResults(correctCount, topicBreakdown, reviewItems);
   }
 
@@ -3044,20 +3248,20 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
       <div class="section-title" style="font-size:13px; margin:18px 0 10px;">Breakdown by Topic</div>
       ${topics.map(t => `
         <div style="background:var(--navy-card2); border-radius:10px; padding:10px 14px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
-          <div style="font-size:12px;">${t.topic}</div>
+          <div style="font-size:12px;">${escapeHtml(t.topic)}</div>
           <div style="font-size:12px; color:${t.pct >= 70 ? '#64DC64' : t.pct >= 40 ? '#FFD166' : '#FF6B6B'};">${t.correct}/${t.total} (${t.pct}%)</div>
         </div>`).join('')}
       <div class="section-title" style="font-size:13px; margin:18px 0 10px;">Question Review</div>
       ${reviewItems.map((q, idx) => `
         <div style="background:var(--navy-card2); border-radius:10px; padding:12px 14px; margin-bottom:8px;">
-          <div style="font-size:12px; font-weight:600; margin-bottom:4px;">${idx + 1}. ${q.correct ? '✅' : '❌'} ${q.question}</div>
-          <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">Your answer: ${q.selected !== null ? q.options[q.selected] : '(unanswered)'}${!q.correct ? ` · Correct: ${q.options[q.correctIndex]}` : ''}</div>
-          <div style="font-size:11px; color:var(--muted); line-height:1.5;">${q.explanation || ''}</div>
+          <div style="font-size:12px; font-weight:600; margin-bottom:4px;">${idx + 1}. ${q.correct ? '✅' : '❌'} ${escapeHtml(q.question)}</div>
+          <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">Your answer: ${q.selected !== null ? escapeHtml(q.options[q.selected]) : '(unanswered)'}${!q.correct ? ` · Correct: ${escapeHtml(q.options[q.correctIndex])}` : ''}</div>
+          <div style="font-size:11px; color:var(--muted); line-height:1.5;">${escapeHtml(q.explanation)}</div>
           ${(!q.correct && q.weaknessTs) ? `
           <div id="mock-mistake-chips-${idx}" style="margin-top:8px;">
-            <div style="font-size:10px; color:var(--muted); margin-bottom:4px;">What went wrong? (optional)</div>
+            <div style="font-size:10px; color:var(--muted); margin-bottom:4px;">${q.autoMistakeLabel ? `Looks like: <strong style="color:var(--indigo);">${q.autoMistakeLabel}</strong> — tap below if that's not right:` : 'What went wrong? (optional)'}</div>
             <div class="subject-chips">
-              ${MISTAKE_TYPES.map(m => `<div class="chip" onclick="tagMockMistake(${idx}, '${q.weaknessSubject.replace(/'/g, "\\'")}', ${q.weaknessTopic ? `'${q.weaknessTopic.replace(/'/g, "\\'")}'` : 'null'}, ${q.weaknessTs}, '${m.replace(/'/g, "\\'")}')">${m}</div>`).join('')}
+              ${MISTAKE_TYPES.map(m => `<div class="chip${m === q.autoMistakeLabel ? ' selected' : ''}" onclick="tagMockMistake(${idx}, '${q.weaknessSubject.replace(/'/g, "\\'")}', ${q.weaknessTopic ? `'${q.weaknessTopic.replace(/'/g, "\\'")}'` : 'null'}, ${q.weaknessTs}, '${m.replace(/'/g, "\\'")}')">${m}</div>`).join('')}
             </div>
           </div>` : ''}
         </div>`).join('')}
@@ -3463,18 +3667,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
         <div style="font-size:13px;">Generating flashcards for ${subject}${topic !== 'General' ? ' · ' + topic : ''}...</div>
       </div>`;
 
-    const apiUrl = getAiEndpoint();
-    if (!apiUrl) { el.innerHTML = `<div style="text-align:center; padding:40px 20px; color:var(--muted); font-size:13px;">AI service is not configured.</div>`; return; }
-
     try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: buildFlashcardPrompt(subject, topic) })
-      });
-      if (!response.ok) throw new Error('AI request failed');
-      const data = await response.json();
-      const text = data.text || data.content?.map(c => c.text || '').join('');
+      const text = await callAskApi(buildFlashcardPrompt(subject, topic), 'flashcards');
       const cards = text && parseFlashcards(text);
       if (!cards) throw new Error('Could not generate flashcards');
 
@@ -3495,9 +3689,10 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
       startFlashcardReview(key);
     } catch (err) {
       console.error(err);
+      if (err && (err.code === 'FREE_LIMIT_REACHED' || err.code === 'PREMIUM_REQUIRED' || err.code === 'AUTH_REQUIRED')) return;
       el.innerHTML = `
         <div style="text-align:center; padding:40px 20px;">
-          <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">Couldn't generate flashcards — the AI service may be unavailable.</div>
+          <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">${err.message || "Couldn't generate flashcards — the AI service may be unavailable."}</div>
           <button class="action-btn" onclick="generateFlashcardDeck('${subject.replace(/'/g, "\\'")}', '${topic.replace(/'/g, "\\'")}')">Try Again</button>
           <button class="modal-dismiss" onclick="renderFlashcardsHome()">Back</button>
         </div>`;
@@ -3531,7 +3726,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     el.innerHTML = `
       <div style="font-size:11px; color:var(--muted); margin-bottom:14px;">Card ${s.index + 1} of ${s.queue.length}</div>
       <div class="answer-card" style="min-height:160px; display:flex; align-items:center; justify-content:center; text-align:center; cursor:pointer;" onclick="flipFlashcard()">
-        <div style="font-size:15px; line-height:1.6;">${s.showingBack ? card.back : card.front}</div>
+        <div style="font-size:15px; line-height:1.6;">${escapeHtml(s.showingBack ? card.back : card.front)}</div>
       </div>
       <div style="text-align:center; font-size:11px; color:var(--muted); margin:10px 0;">${s.showingBack ? '' : 'Tap the card to reveal the answer'}</div>
       ${s.showingBack ? `
@@ -3692,18 +3887,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
         <div style="font-size:13px;">Building your lesson on ${finalTopic}...</div>
       </div>`;
 
-    const apiUrl = getAiEndpoint();
-    if (!apiUrl) { el.innerHTML = `<div style="text-align:center; padding:40px 20px; color:var(--muted); font-size:13px;">AI service is not configured.</div>`; return; }
-
     try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: buildTeachMePrompt(subject, finalTopic) })
-      });
-      if (!response.ok) throw new Error('AI request failed');
-      const data = await response.json();
-      const text = data.text || data.content?.map(c => c.text || '').join('');
+      const text = await callAskApi(buildTeachMePrompt(subject, finalTopic), 'teachMe');
       const lesson = text && parseLesson(text);
       if (!lesson) throw new Error('Could not build a valid lesson');
 
@@ -3711,9 +3896,10 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
       renderLessonStage();
     } catch (err) {
       console.error(err);
+      if (err && (err.code === 'FREE_LIMIT_REACHED' || err.code === 'PREMIUM_REQUIRED' || err.code === 'AUTH_REQUIRED')) return;
       el.innerHTML = `
         <div style="text-align:center; padding:40px 20px;">
-          <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">Couldn't build the lesson — the AI service may be unavailable.</div>
+          <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">${err.message || "Couldn't build the lesson — the AI service may be unavailable."}</div>
           <button class="action-btn" onclick="startTeachMeLesson('${subject.replace(/'/g, "\\'")}', '${finalTopic.replace(/'/g, "\\'")}')">Try Again</button>
           <button class="modal-dismiss" onclick="renderTeachMeSetup()">Back</button>
         </div>`;
@@ -3739,15 +3925,15 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
 
     if (s.stage === 'concept') {
       el.innerHTML = `${header}
-        <div class="answer-card"><div style="font-size:14px; line-height:1.6;">${lesson.concept}</div></div>
+        <div class="answer-card"><div style="font-size:14px; line-height:1.6;">${escapeHtml(lesson.concept)}</div></div>
         <button class="ask-btn" style="margin-top:14px;" onclick="advanceLessonStage('explanation')">Next →</button>`;
     } else if (s.stage === 'explanation') {
       el.innerHTML = `${header}
-        <div class="answer-card"><div style="font-size:14px; line-height:1.6;">${lesson.explanation}</div></div>
+        <div class="answer-card"><div style="font-size:14px; line-height:1.6;">${escapeHtml(lesson.explanation)}</div></div>
         <button class="ask-btn" style="margin-top:14px;" onclick="advanceLessonStage('examples')">Next →</button>`;
     } else if (s.stage === 'examples') {
       el.innerHTML = `${header}
-        ${lesson.examples.map((ex, i) => `<div class="answer-card" style="margin-bottom:10px;"><div style="font-size:11px; color:var(--muted); margin-bottom:4px;">Example ${i + 1}</div><div style="font-size:13px; line-height:1.6;">${ex}</div></div>`).join('')}
+        ${lesson.examples.map((ex, i) => `<div class="answer-card" style="margin-bottom:10px;"><div style="font-size:11px; color:var(--muted); margin-bottom:4px;">Example ${i + 1}</div><div style="font-size:13px; line-height:1.6;">${escapeHtml(ex)}</div></div>`).join('')}
         <button class="ask-btn" style="margin-top:4px;" onclick="advanceLessonStage('guided')">Try a Guided Question →</button>`;
     } else if (s.stage === 'guided' || s.stage === 'independent') {
       renderLessonQuestion(s.stage === 'guided' ? lesson.guidedQuestion : lesson.independentQuestion, s.stage);
@@ -3770,14 +3956,14 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     const el = document.getElementById('teachme-content');
     const s = lessonSession;
     const header = `<div style="font-size:11px; color:var(--muted); margin-bottom:6px;">${s.subject} · ${s.topic}</div>${lessonProgressBar(s.stage)}<div class="section-title" style="font-size:14px; margin-bottom:12px;">${LESSON_STAGE_LABEL[s.stage]}${stageType === 'test' ? ` (${s.testIndex + 1}/${s.lesson.miniTest.length})` : ''}</div>`;
-    const hint = (stageType === 'guided' && q.hint && !s.answered) ? `<div style="font-size:11px; color:var(--indigo); margin-bottom:10px;">💡 Hint: ${q.hint}</div>` : '';
+    const hint = (stageType === 'guided' && q.hint && !s.answered) ? `<div style="font-size:11px; color:var(--indigo); margin-bottom:10px;">💡 Hint: ${escapeHtml(q.hint)}</div>` : '';
 
     el.innerHTML = `${header}
       <div class="answer-card">
-        <div style="font-size:14px; line-height:1.5; margin-bottom:12px;">${q.question}</div>
+        <div style="font-size:14px; line-height:1.5; margin-bottom:12px;">${escapeHtml(q.question)}</div>
         ${hint}
         <div id="lesson-options">
-          ${q.options.map((opt, i) => `<div class="option-item${s.selectedIndex === i ? ' selected' : ''}" onclick="selectLessonOption(${i})"><div class="toggle-label">${opt}</div></div>`).join('')}
+          ${q.options.map((opt, i) => `<div class="option-item${s.selectedIndex === i ? ' selected' : ''}" onclick="selectLessonOption(${i})"><div class="toggle-label">${escapeHtml(opt)}</div></div>`).join('')}
         </div>
         <button class="ask-btn" id="lesson-submit-btn" style="margin-top:14px; ${s.selectedIndex === null ? 'opacity:0.5; pointer-events:none;' : ''}" onclick="submitLessonAnswer()">Submit</button>
         <div id="lesson-result-area"></div>
@@ -3848,6 +4034,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
       });
     });
     bumpStats({ gradedQuestionsAnswered: s.lesson.miniTest.length, teachMeLessonsCompleted: 1 });
+    markMissionProgress('teachme', s.subject);
     s.stage = 'summary';
     renderLessonStage();
   }
@@ -4008,7 +4195,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
 
     const totalCount = subjectMatches.length + topicMatches.length + examMatches.length + historyMatches.length + noteMatches.length;
     if (totalCount === 0) {
-      results.innerHTML = `<div style="text-align:center; padding:30px 20px; color:var(--muted); font-size:12px;">No matches for "${query}".</div>`;
+      results.innerHTML = `<div style="text-align:center; padding:30px 20px; color:var(--muted); font-size:12px;">No matches for "${escapeHtml(query)}".</div>`;
       return;
     }
 
@@ -4045,7 +4232,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
             <span class="history-subject">${h.subject}</span>
             <span class="history-time">${formatTime(h.time)}</span>
           </div>
-          <div class="history-q">${h.question.length > 80 ? h.question.slice(0, 80) + '…' : h.question}</div>
+          <div class="history-q">${escapeHtml(h.question.length > 80 ? h.question.slice(0, 80) + '…' : h.question)}</div>
         </div>`).join('');
     }
     if (noteMatches.length) {
@@ -4107,11 +4294,11 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
       ${notes.length ? notes.map(n => `
         <div style="background:var(--navy-card2); border-radius:12px; padding:12px 14px; margin-bottom:8px; cursor:pointer;" onclick="renderNoteEditor('${n.id}')">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-            <div style="font-size:13px; font-weight:600;">${n.title || '(untitled)'}</div>
+            <div style="font-size:13px; font-weight:600;">${n.title ? escapeHtml(n.title) : '(untitled)'}</div>
             ${n.aiGenerated ? '<span style="font-size:10px; color:var(--indigo);">🤖 AI</span>' : ''}
           </div>
           <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">${n.subject}${n.topic ? ' · ' + n.topic : ''}</div>
-          <div style="font-size:11px; color:var(--muted); line-height:1.4;">${(n.body || '').slice(0, 100)}${(n.body || '').length > 100 ? '…' : ''}</div>
+          <div style="font-size:11px; color:var(--muted); line-height:1.4;">${escapeHtml((n.body || '').slice(0, 100))}${(n.body || '').length > 100 ? '…' : ''}</div>
         </div>`).join('') : `<div style="text-align:center; padding:30px 20px; color:var(--muted); font-size:12px;">No notes yet — write one, import a .txt file, or generate an AI summary of a topic.</div>`}
     `;
   }
@@ -4128,8 +4315,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
       <div class="subject-chips" id="note-subject-chips" style="margin-bottom:14px;">
         ${subjectNames.map(name => `<div class="chip${(note ? note.subject : subjectNames[0]) === name ? ' selected' : ''}" onclick="pickNoteSubject(this, '${name.replace(/'/g, "\\'")}')">${name}</div>`).join('')}
       </div>
-      <input type="text" id="note-title-input" aria-label="Note title" placeholder="Title" value="${note ? (note.title || '').replace(/"/g, '&quot;') : ''}" style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:10px;">
-      <textarea id="note-body-input" aria-label="Note content" placeholder="Write or paste your notes here..." style="width:100%; box-sizing:border-box; min-height:160px; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:10px; resize:vertical;">${note ? (note.body || '') : ''}</textarea>
+      <input type="text" id="note-title-input" aria-label="Note title" placeholder="Title" value="${note ? escapeHtml(note.title) : ''}" style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:10px;">
+      <textarea id="note-body-input" aria-label="Note content" placeholder="Write or paste your notes here..." style="width:100%; box-sizing:border-box; min-height:160px; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:10px; resize:vertical;">${note ? escapeHtml(note.body) : ''}</textarea>
       <div style="display:flex; gap:8px; align-items:center; margin-bottom:16px;">
         <label class="action-btn" style="flex:1; text-align:center; cursor:pointer;">
           📎 Import .txt/.md
@@ -4182,26 +4369,17 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     if (checkAndBlockIfLimited('studyMaterial', 'AI summaries')) return;
     if (text.length > 8000) { showToast('That\'s a lot of text — summarizing the first part'); }
 
-    const apiUrl = getAiEndpoint();
-    if (!apiUrl) { showToast('AI service is not configured'); return; }
     incrementUsage('studyMaterial', 'weekly');
     showToast('Summarizing...');
 
     try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: `Condense the following study notes into a clear, well-organized summary (use short paragraphs or bullet points, keep all the important facts, cut repetition and filler). Respond with ONLY the summary text, no preamble.\n\n${text.slice(0, 8000)}` })
-      });
-      if (!response.ok) throw new Error('AI request failed');
-      const data = await response.json();
-      const summary = data.text || data.content?.map(c => c.text || '').join('');
-      if (!summary) throw new Error('No summary returned');
+      const summary = await callAskApi(`Condense the following study notes into a clear, well-organized summary (use short paragraphs or bullet points, keep all the important facts, cut repetition and filler). Respond with ONLY the summary text, no preamble.\n\n${text.slice(0, 8000)}`, 'studyMaterial');
       if (bodyEl) bodyEl.value = summary.trim();
       showToast('Summarized');
     } catch (err) {
       console.error(err);
-      showToast('Could not summarize — AI service may be unavailable');
+      if (err && (err.code === 'FREE_LIMIT_REACHED' || err.code === 'PREMIUM_REQUIRED' || err.code === 'AUTH_REQUIRED')) return;
+      showToast(err.message || 'Could not summarize — AI service may be unavailable');
     }
   }
 
@@ -4283,24 +4461,13 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     const el = document.getElementById('studymaterial-content');
     el.innerHTML = `<div style="text-align:center; padding:60px 20px; color:var(--muted);"><div style="font-size:32px; margin-bottom:12px;">📝</div><div style="font-size:13px;">Writing a summary of ${topic}...</div></div>`;
 
-    const apiUrl = getAiEndpoint();
-    if (!apiUrl) { el.innerHTML = `<div style="text-align:center; padding:40px 20px; color:var(--muted); font-size:13px;">AI service is not configured.</div>`; return; }
-
     const lang = LANGUAGES.find(l => l.code === state.language) || LANGUAGES[0];
     const languageInstruction = lang.code === 'en' ? '' : `\nWrite in ${lang.label}.`;
     const board = EXAM_BOARDS.find(b => b.code === state.examMode.board);
     const examInstruction = (state.examMode.enabled && board && board.code !== 'none') ? `\nPitch it at ${board.label} level.` : '';
 
     try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: `Write a clear, well-organized revision summary of "${topic}" in ${subject} for a student. Cover the key facts, definitions, and any important formulas or processes. Use short paragraphs or bullet points.${languageInstruction}${examInstruction}${buildPersonalizationContext(subject)}\n\nRespond with ONLY the summary text, no preamble.` })
-      });
-      if (!response.ok) throw new Error('AI request failed');
-      const data = await response.json();
-      const summary = data.text || data.content?.map(c => c.text || '').join('');
-      if (!summary) throw new Error('No summary returned');
+      const summary = await callAskApi(`Write a clear, well-organized revision summary of "${topic}" in ${subject} for a student. Cover the key facts, definitions, and any important formulas or processes. Use short paragraphs or bullet points.${languageInstruction}${examInstruction}${buildPersonalizationContext(subject)}\n\nRespond with ONLY the summary text, no preamble.`, 'studyMaterial');
 
       const notes = loadNotes();
       const now = Date.now();
@@ -4311,9 +4478,10 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
       renderNoteEditor(newNote.id);
     } catch (err) {
       console.error(err);
+      if (err && (err.code === 'FREE_LIMIT_REACHED' || err.code === 'PREMIUM_REQUIRED' || err.code === 'AUTH_REQUIRED')) return;
       el.innerHTML = `
         <div style="text-align:center; padding:40px 20px;">
-          <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">Couldn't generate a summary — the AI service may be unavailable.</div>
+          <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">${err.message || "Couldn't generate a summary — the AI service may be unavailable."}</div>
           <button class="action-btn" onclick="generateAiSummary()">Try Again</button>
           <button class="modal-dismiss" onclick="renderStudyMaterialHome()">Back</button>
         </div>`;
@@ -4381,11 +4549,13 @@ Match the style, phrasing, and difficulty of real JAMB UTME questions for this s
 
 Each question must have exactly one correct option among 4 choices. Cover a range of different topics within the subject rather than clustering on one.
 
+For each WRONG option in every question, classify what picking it would most likely reveal about the student's error, using ONLY one of these exact labels: ${MISTAKE_TYPES.join(', ')}.
+
 Respond ONLY in this exact JSON format (a JSON array, no markdown, no backticks, no extra text):
 [
-  {"question": "...", "options": ["A", "B", "C", "D"], "correctIndex": 0, "explanation": "...", "topic": "specific topic name"}
+  {"question": "...", "options": ["A", "B", "C", "D"], "correctIndex": 0, "explanation": "...", "topic": "specific topic name", "distractorRationale": [null, "label", "label", "label"]}
 ]
-Return exactly ${count} items in the array.`;
+Each distractorRationale array must be the same length as options, with null in the position matching correctIndex and a label (from the exact list above) in every other position. Return exactly ${count} items in the array.`;
   }
 
   function parseQuestionBatch(text) {
@@ -4394,6 +4564,7 @@ Return exactly ${count} items in the array.`;
       const parsed = JSON.parse(clean);
       if (!Array.isArray(parsed)) return null;
       const valid = parsed.filter(q => q && typeof q.question === 'string' && Array.isArray(q.options) && q.options.length >= 2 && typeof q.correctIndex === 'number');
+      valid.forEach(q => { if (!Array.isArray(q.distractorRationale)) q.distractorRationale = []; });
       return valid.length ? valid : null;
     } catch { return null; }
   }
@@ -4427,14 +4598,7 @@ Return exactly ${count} items in the array.`;
             <div style="font-size:11px; margin-top:8px;">This takes a little while — 180 questions across 4 subjects.</div>
           </div>`;
         try {
-          const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: buildCbtBatchPrompt(subject, batchSize, usedTopics) })
-          });
-          if (!response.ok) throw new Error('AI request failed');
-          const data = await response.json();
-          const text = data.text || data.content?.map(c => c.text || '').join('');
+          const text = await callAskApi(buildCbtBatchPrompt(subject, batchSize, usedTopics), 'cbtMode');
           const batch = text && parseQuestionBatch(text);
           if (!batch) throw new Error('Could not generate a valid question batch');
           batch.forEach(q => {
@@ -4443,9 +4607,10 @@ Return exactly ${count} items in the array.`;
           });
         } catch (err) {
           console.error(err);
+          if (err && (err.code === 'FREE_LIMIT_REACHED' || err.code === 'PREMIUM_REQUIRED' || err.code === 'AUTH_REQUIRED')) return;
           el.innerHTML = `
             <div style="text-align:center; padding:40px 20px;">
-              <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">Couldn't finish generating ${subject} questions — the AI service may be unavailable. Got ${questionsBySubject[subject].length} of ${total} for this subject.</div>
+              <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">${err.message || `Couldn't finish generating ${subject} questions — the AI service may be unavailable.`} Got ${questionsBySubject[subject].length} of ${total} for this subject.</div>
               <button class="modal-dismiss" onclick="renderCbtSetup()">Back to Setup</button>
             </div>`;
           return;
@@ -4524,9 +4689,9 @@ Return exactly ${count} items in the array.`;
       <div style="display:flex; gap:6px; overflow-x:auto; margin-bottom:10px; padding-bottom:4px;">${tabsHtml}</div>
       <div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:14px; max-height:110px; overflow-y:auto;">${navGrid}</div>
       <div class="answer-card">
-        <div style="font-size:14px; line-height:1.5; margin-bottom:14px;">${q.question}</div>
+        <div style="font-size:14px; line-height:1.5; margin-bottom:14px;">${escapeHtml(q.question)}</div>
         <div id="cbt-options">
-          ${q.options.map((opt, i) => `<div class="option-item${selected === i ? ' selected' : ''}" onclick="selectCbtOption(${i})"><div class="toggle-label">${opt}</div></div>`).join('')}
+          ${q.options.map((opt, i) => `<div class="option-item${selected === i ? ' selected' : ''}" onclick="selectCbtOption(${i})"><div class="toggle-label">${escapeHtml(opt)}</div></div>`).join('')}
         </div>
       </div>
       <div style="display:flex; gap:8px; margin-top:12px;">
@@ -4610,12 +4775,13 @@ Return exactly ${count} items in the array.`;
         const isCorrect = selected === q.correctIndex;
         if (isCorrect) correct++;
         totalQuestions++;
+        const autoMistakeLabel = (selected !== null && !isCorrect) ? mistakeLabelFor(q, selected) : null;
         WeaknessProfile.recordAttempt({
           subject,
           topic: q.topic || null,
           level: selected === null ? 'lost' : (isCorrect ? 'knew' : 'lost'),
           difficulty: 'CBT',
-          mistakeType: null
+          mistakeType: autoMistakeLabel
         });
       });
       subjectResults[subject] = { correct, total: qList.length, scaledScore: Math.round((correct / qList.length) * 100) };
@@ -4650,6 +4816,661 @@ Return exactly ${count} items in the array.`;
       <button class="modal-dismiss" onclick="goScreen('progress', document.querySelectorAll('.nav-item')[4])">View Progress</button>
     `;
     cbtSession = null;
+  }
+
+  // ── READINESS SNAPSHOTS (Premium, cloud) ──
+  // Deterministic, no AI — just periodically saves the current Readiness
+  // Score per subject so the dashboard can show real trend ("↑6% this
+  // month") instead of only ever showing a single point-in-time number.
+  // Capped at one snapshot per subject per day so this can't spam the
+  // table even if the dashboard is viewed constantly.
+  async function maybeSnapshotReadiness() {
+    if (!state.premium || !window.sbClient || !window.sbAuthSession) return;
+    const today = todayISO();
+    if (localStorage.getItem('sm_last_readiness_snapshot_date') === today) return;
+
+    const uid = window.sbAuthSession.user.id;
+    const subjects = WeaknessProfile.getAllSubjects();
+    for (const subject of subjects) {
+      const curriculumCount = (SUBJECTS[subject] && SUBJECTS[subject].topics) ? SUBJECTS[subject].topics.length : null;
+      const r = WeaknessProfile.getReadiness(subject, curriculumCount);
+      if (!r) continue;
+      try {
+        await window.sbClient.from('readiness_snapshots').insert({
+          user_id: uid, subject, readiness_pct: r.readinessPct
+        });
+      } catch (err) {
+        console.error('[StudyMate] readiness snapshot failed (non-fatal):', err && err.message);
+      }
+    }
+    localStorage.setItem('sm_last_readiness_snapshot_date', today);
+  }
+
+  // Returns { current, delta } where delta is the change since roughly a
+  // month ago, or null if there isn't at least two snapshots to compare —
+  // never fabricates a trend from a single data point.
+  async function getReadinessTrend(subject) {
+    if (!window.sbClient || !window.sbAuthSession) return null;
+    try {
+      const { data, error } = await window.sbClient
+        .from('readiness_snapshots')
+        .select('readiness_pct, computed_at')
+        .eq('user_id', window.sbAuthSession.user.id)
+        .eq('subject', subject)
+        .order('computed_at', { ascending: true });
+      if (error || !data || data.length < 2) return null;
+      const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const monthAgoSnapshot = data.find(d => new Date(d.computed_at) >= monthAgo) || data[0];
+      const newest = data[data.length - 1];
+      return { current: newest.readiness_pct, delta: newest.readiness_pct - monthAgoSnapshot.readiness_pct };
+    } catch (err) {
+      console.error('[StudyMate] readiness trend fetch failed:', err && err.message);
+      return null;
+    }
+  }
+
+  // ── "WHAT SHOULD I STUDY RIGHT NOW?" (Premium) ──
+  // Fully deterministic — no AI call. Reuses the same weak-topic ranking
+  // and exam-date phase logic already built for Study Plan, just applied
+  // to "I have N minutes right now" instead of a weekly schedule. This is
+  // exactly the kind of calculation the spec's own cost-control section
+  // asks to keep out of the AI layer.
+  const MISSION_MINUTE_OPTIONS = [15, 25, 35, 50];
+  let missionMinutesDraft = 25;
+
+  function renderMissionSetup() {
+    if (!state.premium) { showPaywall(); goScreen('home', document.querySelectorAll('.nav-item')[0]); return; }
+    const el = document.getElementById('mission-content');
+    el.innerHTML = `
+      <div class="section-title" style="margin-bottom:6px;">What Should I Study Right Now?</div>
+      <div style="font-size:12px; color:var(--muted); margin-bottom:16px;">Tell me how long you've got — I'll plan the highest-impact session from your actual weak spots.</div>
+      <div class="select-label">Available time</div>
+      <div class="subject-chips" id="mission-minutes-chips" style="margin-bottom:20px;">
+        ${MISSION_MINUTE_OPTIONS.map(m => `<div class="chip${m === missionMinutesDraft ? ' selected' : ''}" onclick="pickMissionMinutes(this, ${m})">${m} min</div>`).join('')}
+      </div>
+      <button class="ask-btn" onclick="buildMission()">🎯 Build My Mission</button>
+    `;
+  }
+
+  function pickMissionMinutes(el, m) {
+    document.querySelectorAll('#mission-minutes-chips .chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    missionMinutesDraft = m;
+  }
+
+  function buildMission() {
+    const el = document.getElementById('mission-content');
+    const weakest = WeaknessProfile.getWeakestTopics(3);
+
+    if (!weakest.length) {
+      el.innerHTML = `
+        <div style="text-align:center; padding:40px 20px; color:var(--muted);">
+          <div style="font-size:32px; margin-bottom:12px;">🎯</div>
+          <div style="font-size:13px; margin-bottom:16px;">Not enough practice data yet to target a session — try some Practice questions or a Teach Me lesson first, then come back.</div>
+          <button class="modal-dismiss" onclick="goScreen('home', document.querySelectorAll('.nav-item')[0])">Back to Home</button>
+        </div>`;
+      return;
+    }
+
+    const target = weakest[0]; // the single highest-priority gap right now
+    const minutes = missionMinutesDraft;
+
+    // Split time into phases. Below 15 minutes there isn't enough room to
+    // meaningfully do three distinct phases, so it collapses to one.
+    let phases;
+    if (minutes < 15) {
+      phases = [{ label: 'Targeted Questions', minutes, type: 'practice' }];
+    } else {
+      const conceptMin = Math.round(minutes * 0.3);
+      const reviewMin = Math.round(minutes * 0.25);
+      const practiceMin = minutes - conceptMin - reviewMin;
+      phases = [
+        { label: 'Concept Repair', minutes: conceptMin, type: 'teachme' },
+        { label: 'Targeted Practice', minutes: practiceMin, type: 'practice' },
+        { label: 'Mistake Review', minutes: reviewMin, type: 'review' }
+      ];
+    }
+
+    const mistakeNote = target.recentMistakes && target.recentMistakes.length
+      ? `Recent pattern: ${target.recentMistakes[target.recentMistakes.length - 1]}.`
+      : '';
+
+    el.innerHTML = `
+      <div style="text-align:center; padding:10px 0 16px;">
+        <div style="font-size:13px; color:var(--muted);">Your ${minutes}-Minute Mission</div>
+        <div style="font-size:18px; font-weight:700; margin-top:4px;">${target.subject} — ${target.topic}</div>
+      </div>
+      <div style="background:rgba(108,99,255,0.08); border:1px solid rgba(108,99,255,0.25); border-radius:12px; padding:12px 14px; margin-bottom:16px; font-size:12px; line-height:1.5;">
+        Why this? This topic is currently your largest gap — ${target.accuracyPct}% accuracy${target.trend !== 'not enough data' ? `, trending ${target.trend}` : ''}. ${mistakeNote}
+      </div>
+      ${phases.map((p, i) => `
+        <div style="display:flex; gap:12px; align-items:center; background:var(--navy-card2); border-radius:10px; padding:12px 14px; margin-bottom:8px;">
+          <div style="font-size:16px; font-weight:800; color:var(--indigo); min-width:36px;">${p.minutes}m</div>
+          <div style="flex:1;">
+            <div style="font-size:13px; font-weight:600;">${p.label}</div>
+            <div style="font-size:11px; color:var(--muted);">${target.subject} · ${target.topic}</div>
+          </div>
+          <button class="action-btn" onclick="startMissionPhase('${p.type}', '${target.subject.replace(/'/g, "\\'")}', '${target.topic.replace(/'/g, "\\'")}')">Start</button>
+        </div>`).join('')}
+      <button class="modal-dismiss" style="margin-top:8px;" onclick="renderMissionSetup()">Build a Different Mission</button>
+    `;
+  }
+
+  function startMissionPhase(type, subject, topic) {
+    if (type === 'teachme') {
+      startTeachMeLesson(subject, topic);
+    } else if (type === 'practice') {
+      practiceSetup = { subject, topic, difficulty: 'Medium' };
+      goScreen('practice', document.querySelectorAll('.nav-item')[2]);
+      startPracticeSession();
+    } else {
+      // "Mistake Review" has no dedicated screen of its own yet — route
+      // into Practice on the same topic, which is the closest existing
+      // reinforcement mechanism, rather than inventing a screen that just
+      // re-displays the same insight text already shown above.
+      practiceSetup = { subject, topic, difficulty: 'Medium' };
+      goScreen('practice', document.querySelectorAll('.nav-item')[2]);
+      startPracticeSession();
+    }
+  }
+
+  // ── ACADEMIC INTELLIGENCE REPORT (the "wow moment") ──
+  // Fully deterministic, zero AI cost — combines Readiness Score, weakest
+  // topics, and most-common-mistake data (all already computed elsewhere)
+  // into one narrative summary. This is the free teaser: available to
+  // everyone, always recomputed fresh from real data (never fabricated,
+  // and explicitly says so when there isn't enough yet), but it's a static
+  // snapshot — no trend history, no auto-updating dashboard, no daily
+  // missions wired in. That richer, continuously-live version is the
+  // Premium dashboard (see renderHomeIntelligenceDashboard() below).
+  function computeAcademicIntelligenceReport() {
+    const subjects = WeaknessProfile.getAllSubjects();
+    const weakest = WeaknessProfile.getWeakestTopics(3);
+    if (!subjects.length || !weakest.length) return null;
+
+    const summaries = subjects
+      .map(s => ({ subject: s, ...WeaknessProfile.getSubjectSummary(s) }))
+      .filter(s => s.attempts > 0);
+    if (!summaries.length) return null;
+
+    const strongest = [...summaries].sort((a, b) => b.accuracyPct - a.accuracyPct)[0];
+    const opportunity = [...summaries].sort((a, b) => a.accuracyPct - b.accuracyPct)[0];
+
+    // Overall readiness: mean of each subject's own Readiness Score (not
+    // just raw accuracy) — reuses the same three-factor calculation used
+    // everywhere else, so this number and the per-subject ones never
+    // contradict each other.
+    const readinessScores = subjects
+      .map(s => {
+        const curriculumCount = (SUBJECTS[s] && SUBJECTS[s].topics) ? SUBJECTS[s].topics.length : null;
+        return WeaknessProfile.getReadiness(s, curriculumCount);
+      })
+      .filter(Boolean);
+    const overallReadiness = readinessScores.length
+      ? Math.round(readinessScores.reduce((sum, r) => sum + r.readinessPct, 0) / readinessScores.length)
+      : null;
+
+    // Most common mistake across everything tagged so far (see the
+    // mistake-classification work — this is now mostly AI-auto-tagged,
+    // not just self-reported).
+    const allAttempts = WeaknessProfile.getAllAttempts();
+    const mistakeCounts = {};
+    allAttempts.forEach(a => { if (a.mistakeType) mistakeCounts[a.mistakeType] = (mistakeCounts[a.mistakeType] || 0) + 1; });
+    const topMistakeEntries = Object.keys(mistakeCounts).sort((a, b) => mistakeCounts[b] - mistakeCounts[a]);
+    const mainIssue = topMistakeEntries[0] || null;
+
+    // A deliberately wide, honestly-framed range — never a single
+    // "you will score X" number, per the spec's own explicit instruction.
+    const examRangeLow = overallReadiness !== null ? Math.max(0, overallReadiness - 8) : null;
+    const examRangeHigh = overallReadiness !== null ? Math.min(100, overallReadiness + 8) : null;
+
+    const pathTopics = weakest.map(w => w.topic);
+    const recommendedMinutes = Math.min(45, Math.max(15, weakest.length * 12));
+
+    return {
+      overallReadiness, examRangeLow, examRangeHigh,
+      strongestSubject: strongest.subject,
+      opportunitySubject: opportunity.subject,
+      mainIssue,
+      mostUrgentTopic: weakest[0].topic,
+      mostUrgentSubject: weakest[0].subject,
+      improvementPath: pathTopics,
+      recommendedMinutes
+    };
+  }
+
+  function showAcademicIntelligenceReport() {
+    const el = document.getElementById('academic-intelligence-report-container');
+    if (!el) return;
+    const r = computeAcademicIntelligenceReport();
+
+    if (!r) {
+      el.innerHTML = `
+        <div style="background:rgba(108,99,255,0.06); border:1px solid rgba(108,99,255,0.2); border-radius:12px; padding:16px; margin-bottom:16px; text-align:center;">
+          <div style="font-size:28px; margin-bottom:8px;">🧠</div>
+          <div style="font-size:13px; font-weight:600; margin-bottom:4px;">Not enough data yet for your Academic Intelligence Report</div>
+          <div style="font-size:12px; color:var(--muted); line-height:1.5;">Answer some Practice questions or try a Teach Me lesson first — this report is built entirely from your real activity, never guessed.</div>
+        </div>`;
+      return;
+    }
+
+    el.innerHTML = `
+      <div style="background:linear-gradient(135deg, rgba(108,99,255,0.12), rgba(0,212,170,0.08)); border:1px solid rgba(108,99,255,0.3); border-radius:14px; padding:18px; margin-bottom:20px;">
+        <div style="font-size:11px; color:var(--indigo); font-weight:700; letter-spacing:0.5px; margin-bottom:10px;">🧠 YOUR ACADEMIC INTELLIGENCE REPORT</div>
+        <div style="font-size:32px; font-weight:800; margin-bottom:2px;">${r.overallReadiness !== null ? r.overallReadiness + '%' : '—'}</div>
+        <div style="font-size:11px; color:var(--muted); margin-bottom:16px;">Overall estimated readiness${r.examRangeLow !== null ? ` · projected range ${r.examRangeLow}–${r.examRangeHigh}%` : ''}</div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+          <div style="background:rgba(0,0,0,0.15); border-radius:10px; padding:10px 12px;">
+            <div style="font-size:10px; color:var(--muted);">Strongest Subject</div>
+            <div style="font-size:13px; font-weight:600; margin-top:2px;">${r.strongestSubject}</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.15); border-radius:10px; padding:10px 12px;">
+            <div style="font-size:10px; color:var(--muted);">Biggest Opportunity</div>
+            <div style="font-size:13px; font-weight:600; margin-top:2px;">${r.opportunitySubject}</div>
+          </div>
+        </div>
+
+        ${r.mainIssue ? `<div style="font-size:12px; margin-bottom:8px;"><span style="color:var(--muted);">Main issue:</span> <strong>${r.mainIssue}</strong></div>` : ''}
+        <div style="font-size:12px; margin-bottom:8px;"><span style="color:var(--muted);">Most urgent topic:</span> <strong>${r.mostUrgentTopic}</strong> (${r.mostUrgentSubject})</div>
+        <div style="font-size:12px; margin-bottom:14px;"><span style="color:var(--muted);">Highest-impact path:</span> ${r.improvementPath.join(' → ')}</div>
+
+        <div style="font-size:11px; color:var(--muted); line-height:1.5; border-top:1px solid rgba(255,255,255,0.1); padding-top:12px;">
+          These are estimates based on your recent answers, question difficulty, and topic coverage so far — not a guarantee of any exam result. They'll sharpen the more you practice.
+        </div>
+
+        ${!state.premium ? `<button class="ask-btn" style="margin-top:14px;" onclick="showPaywall()">⚡ Unlock the live version — trend history, daily missions & more</button>` : ''}
+      </div>`;
+  }
+
+  // ── PREMIUM HOME DASHBOARD ("Adaptive Exam Twin") ──
+  // The live, continuously-updating counterpart to the free report above —
+  // same underlying numbers, but with real trend history (via
+  // readiness_snapshots) and a direct link into today's mission. Hidden
+  // entirely for free users or anyone without enough data, rather than
+  // showing a half-empty or misleading card.
+  async function renderHomeIntelligenceDashboard() {
+    const el = document.getElementById('intelligence-dashboard-card');
+    if (!el) return;
+    if (!state.premium) { el.innerHTML = ''; return; }
+
+    const r = computeAcademicIntelligenceReport();
+    if (!r) { el.innerHTML = ''; return; }
+
+    const trend = await getReadinessTrend(r.opportunitySubject);
+    const trendHtml = trend
+      ? `<span style="color:${trend.delta >= 0 ? '#64DC64' : '#FF6B6B'};">${trend.delta >= 0 ? '↑' : '↓'} ${Math.abs(trend.delta)}% this month</span>`
+      : `<span style="color:var(--muted);">Trend builds up as you keep practicing</span>`;
+
+    el.innerHTML = `
+      <div style="background:linear-gradient(135deg, rgba(108,99,255,0.14), rgba(0,212,170,0.08)); border:1px solid rgba(108,99,255,0.3); border-radius:14px; padding:18px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+          <div>
+            <div style="font-size:11px; color:var(--muted);">Academic Readiness</div>
+            <div style="font-size:30px; font-weight:800;">${r.overallReadiness}%</div>
+            <div style="font-size:11px; margin-top:2px;">${trendHtml}</div>
+          </div>
+          <span style="font-size:10px; color:var(--gold); background:rgba(255,209,102,0.15); padding:4px 8px; border-radius:20px;">⚡ PREMIUM</span>
+        </div>
+        <div style="background:rgba(0,0,0,0.15); border-radius:10px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:10px; color:var(--muted); margin-bottom:2px;">Your biggest opportunity</div>
+          <div style="font-size:13px; font-weight:600;">${r.mostUrgentSubject} — ${r.mostUrgentTopic}</div>
+        </div>
+        <button class="ask-btn" onclick="goScreen('mission', null)">🎯 Start Today's Mission</button>
+        ${renderDailyMissionsHtml()}
+      </div>`;
+  }
+
+  // ── PAST-PAPER INTELLIGENCE (Premium, capped even on Premium) ──
+  // The AI's only job is extracting what topics appear in the uploaded
+  // papers and how often — see api/analyze-paper.js for why that's the
+  // deliberate split. Everything below (the HIGH/MEDIUM/LOW priority map)
+  // is pure client-side arithmetic crossing that frequency data with the
+  // student's own WeaknessProfile — zero additional AI cost per view.
+  const PAST_PAPER_WEEKLY_LIMIT = 5; // even for Premium — see api/analyze-paper.js header for why
+  const PAST_PAPER_ALLOWED_TYPES = 'application/pdf,image/jpeg,image/png,image/webp';
+  let pastPaperDraft = { subject: null, files: [] }; // files: [{name, media_type, data}]
+
+  function getAnalyzePaperEndpoint() {
+    const configured = (window.STUDYMATE_API_URL || '').trim().replace(/\/$/, '');
+    if (configured) return `${configured}/api/analyze-paper`;
+    if (/^https?:$/.test(window.location.protocol)) return `${window.location.origin}/api/analyze-paper`;
+    return '';
+  }
+
+  function checkPastPaperLimit() {
+    if (!state.premium) { showPaywall(); return true; }
+    const used = getUsageCount('pastPaper', 'weekly');
+    if (used >= PAST_PAPER_WEEKLY_LIMIT) {
+      showToast(`Past-Paper Intelligence is capped at ${PAST_PAPER_WEEKLY_LIMIT}/week even on Premium — each analysis is genuinely expensive to run. Try again next week.`);
+      return true;
+    }
+    return false;
+  }
+
+  function renderPastPaperSetup() {
+    if (!state.premium) { showPaywall(); goScreen('home', document.querySelectorAll('.nav-item')[0]); return; }
+    pastPaperDraft = { subject: pastPaperDraft.subject || Object.keys(SUBJECTS)[0], files: [] };
+    const el = document.getElementById('pastpaper-content');
+    const subjectNames = Object.keys(SUBJECTS);
+    const remaining = Math.max(0, PAST_PAPER_WEEKLY_LIMIT - getUsageCount('pastPaper', 'weekly'));
+
+    el.innerHTML = `
+      <div class="section-title" style="margin-bottom:6px;">Past-Paper Intelligence</div>
+      <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">Upload past papers — I'll find what's actually tested most, and cross-check it against your own weak spots.</div>
+      <div style="font-size:11px; color:var(--gold); margin-bottom:16px;">${remaining} of ${PAST_PAPER_WEEKLY_LIMIT} analyses left this week.</div>
+      <div class="select-label">Subject</div>
+      <div class="subject-chips" id="pastpaper-subject-chips" style="margin-bottom:16px;">
+        ${subjectNames.map((name, i) => `<div class="chip${name === pastPaperDraft.subject ? ' selected' : ''}" onclick="pickPastPaperSubject(this, '${name.replace(/'/g, "\\'")}')">${name}</div>`).join('')}
+      </div>
+      <div class="select-label">Upload up to 3 papers (PDF, JPEG, PNG, or WebP)</div>
+      <label class="action-btn" style="display:block; text-align:center; cursor:pointer; margin:8px 0 4px;">
+        📎 Choose Files
+        <input type="file" accept="${PAST_PAPER_ALLOWED_TYPES}" multiple onchange="handlePastPaperFiles(event)" style="display:none;">
+      </label>
+      <div id="pastpaper-file-list" style="margin-bottom:16px;"></div>
+      <button class="ask-btn" id="pastpaper-analyze-btn" style="opacity:0.5; pointer-events:none;" onclick="startPastPaperAnalysis()">🔍 Analyze Papers</button>
+      <div id="pastpaper-history"><!-- populated by loadPastPaperHistory() --></div>
+    `;
+    loadPastPaperHistory();
+  }
+
+  function pickPastPaperSubject(el, name) {
+    document.querySelectorAll('#pastpaper-subject-chips .chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    pastPaperDraft.subject = name;
+  }
+
+  function handlePastPaperFiles(e) {
+    const files = Array.from(e.target.files || []);
+    if (pastPaperDraft.files.length + files.length > 3) {
+      showToast('Up to 3 files total');
+      e.target.value = '';
+      return;
+    }
+    files.forEach(file => {
+      if (file.size > 15_000_000) { showToast(`${file.name} is too large (15MB limit)`); return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        // reader.result is "data:<mime>;base64,<data>" — strip the prefix
+        const base64 = reader.result.split(',')[1];
+        pastPaperDraft.files.push({ name: file.name, media_type: file.type, data: base64 });
+        renderPastPaperFileList();
+      };
+      reader.onerror = () => showToast(`Could not read ${file.name}`);
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  }
+
+  function renderPastPaperFileList() {
+    const el = document.getElementById('pastpaper-file-list');
+    if (!el) return;
+    el.innerHTML = pastPaperDraft.files.map((f, i) => `
+      <div style="display:flex; justify-content:space-between; align-items:center; background:var(--navy-card2); border-radius:8px; padding:8px 12px; margin-bottom:6px; font-size:12px;">
+        <span>📄 ${f.name}</span>
+        <span onclick="removePastPaperFile(${i})" style="cursor:pointer; color:var(--danger);">✕</span>
+      </div>`).join('');
+    const btn = document.getElementById('pastpaper-analyze-btn');
+    if (btn) btn.style.cssText = pastPaperDraft.files.length ? '' : 'opacity:0.5; pointer-events:none;';
+  }
+
+  function removePastPaperFile(i) {
+    pastPaperDraft.files.splice(i, 1);
+    renderPastPaperFileList();
+  }
+
+  async function startPastPaperAnalysis() {
+    if (!pastPaperDraft.files.length) { showToast('Add at least one file first'); return; }
+    if (checkPastPaperLimit()) return;
+
+    const el = document.getElementById('pastpaper-content');
+    el.innerHTML = `
+      <div style="text-align:center; padding:60px 20px; color:var(--muted);">
+        <div style="font-size:32px; margin-bottom:12px;">📄</div>
+        <div style="font-size:13px;">Reading your papers — this can take a little while for larger files...</div>
+      </div>`;
+
+    const endpoint = getAnalyzePaperEndpoint();
+    if (!endpoint) { el.innerHTML = `<div style="text-align:center; padding:40px 20px; color:var(--muted); font-size:13px;">AI service is not configured.</div>`; return; }
+
+    if (!window.sbClient || !window.sbAuthSession) {
+      el.innerHTML = `<div style="text-align:center; padding:40px 20px; color:var(--muted); font-size:13px;">Please sign in to use Past-Paper Intelligence.</div>`;
+      return;
+    }
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${window.sbAuthSession.access_token}`
+        },
+        body: JSON.stringify({
+          subject: pastPaperDraft.subject,
+          documents: pastPaperDraft.files.map(f => ({ media_type: f.media_type, data: f.data }))
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Analysis failed');
+
+      const text = data.content?.map(c => c.text || '').join('');
+      const parsed = parsePastPaperResponse(text);
+      if (!parsed) throw new Error('Could not read the analysis result');
+
+      incrementUsage('pastPaper', 'weekly');
+      const priorityMap = buildPastPaperPriorityMap(pastPaperDraft.subject, parsed.topicFrequency);
+      await savePastPaperAnalysis(pastPaperDraft.subject, pastPaperDraft.files.length, parsed, priorityMap);
+      renderPastPaperResults(pastPaperDraft.subject, parsed, priorityMap, pastPaperDraft.files.length);
+
+    } catch (err) {
+      console.error(err);
+      el.innerHTML = `
+        <div style="text-align:center; padding:40px 20px;">
+          <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">Couldn't analyze those papers — ${err.message || 'the AI service may be unavailable'}.</div>
+          <button class="modal-dismiss" onclick="renderPastPaperSetup()">Back</button>
+        </div>`;
+    }
+  }
+
+  function parsePastPaperResponse(text) {
+    try {
+      const clean = text.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean);
+      if (!Array.isArray(parsed.topicFrequency)) return null;
+      return { topicFrequency: parsed.topicFrequency.filter(t => t && typeof t.topic === 'string' && typeof t.count === 'number'), notes: parsed.notes || '' };
+    } catch { return null; }
+  }
+
+  // Deterministic — no AI call. Matches the spec's own HIGH definition
+  // exactly: "frequently tested + currently weak." Topics with no
+  // WeaknessProfile data yet get a neutral mid-weight rather than being
+  // assumed either weak or mastered.
+  function buildPastPaperPriorityMap(subject, topicFrequency) {
+    const profileTopics = WeaknessProfile.getTopics(subject);
+    const scored = topicFrequency.map(tf => {
+      const match = profileTopics.find(pt =>
+        pt.topic.toLowerCase().includes(tf.topic.toLowerCase()) || tf.topic.toLowerCase().includes(pt.topic.toLowerCase())
+      );
+      const accuracyPct = (match && match.attempts > 0) ? match.accuracyPct : null;
+      const weaknessWeight = accuracyPct === null ? 60 : (100 - accuracyPct); // null = no data yet, treated as moderate concern, not assumed weak or strong
+      return { topic: tf.topic, count: tf.count, accuracyPct, priorityScore: tf.count * weaknessWeight };
+    }).sort((a, b) => b.priorityScore - a.priorityScore);
+
+    const n = scored.length;
+    const highCut = Math.max(1, Math.ceil(n / 3));
+    const medCut = Math.ceil((n * 2) / 3);
+    return { high: scored.slice(0, highCut), medium: scored.slice(highCut, medCut), low: scored.slice(medCut) };
+  }
+
+  async function savePastPaperAnalysis(subject, papersAnalyzed, parsed, priorityMap) {
+    if (!window.sbClient || !window.sbAuthSession) return; // local-only session — nothing to persist across devices, results still render this session
+    try {
+      await window.sbClient.from('past_paper_analyses').insert({
+        user_id: window.sbAuthSession.user.id,
+        subject,
+        papers_analyzed: papersAnalyzed,
+        analysis: { topicFrequency: parsed.topicFrequency, notes: parsed.notes, priorityMap }
+      });
+    } catch (err) {
+      console.error('[StudyMate] Could not save past-paper analysis (non-fatal):', err && err.message);
+    }
+  }
+
+  let pastPaperHistoryCache = []; // avoids embedding raw JSON in onclick attributes, which breaks on apostrophes in AI-generated topic names
+
+  async function loadPastPaperHistory() {
+    const el = document.getElementById('pastpaper-history');
+    if (!el || !window.sbClient || !window.sbAuthSession) return;
+    try {
+      const { data, error } = await window.sbClient
+        .from('past_paper_analyses')
+        .select('id, subject, papers_analyzed, analysis, created_at')
+        .eq('user_id', window.sbAuthSession.user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      if (error || !data || !data.length) return;
+
+      pastPaperHistoryCache = data;
+      el.innerHTML = `
+        <div class="section-title" style="font-size:13px; margin:18px 0 10px;">Previous Analyses</div>
+        ${data.map((row, i) => `
+          <div style="background:var(--navy-card2); border-radius:10px; padding:10px 14px; margin-bottom:6px; cursor:pointer;" onclick="viewPastPaperHistoryItem(${i})">
+            <div style="font-size:12px; font-weight:600;">${row.subject}</div>
+            <div style="font-size:11px; color:var(--muted);">${row.papers_analyzed} paper${row.papers_analyzed === 1 ? '' : 's'} · ${new Date(row.created_at).toLocaleDateString()}</div>
+          </div>`).join('')}
+      `;
+    } catch (err) {
+      console.error('[StudyMate] Could not load past-paper history:', err && err.message);
+    }
+  }
+
+  function viewPastPaperHistoryItem(i) {
+    const row = pastPaperHistoryCache[i];
+    if (!row) return;
+    renderPastPaperResults(row.subject, { topicFrequency: row.analysis.topicFrequency, notes: row.analysis.notes }, row.analysis.priorityMap, row.papers_analyzed);
+  }
+
+  function renderPastPaperResults(subject, parsed, priorityMap, papersAnalyzed) {
+    const el = document.getElementById('pastpaper-content');
+    const section = (label, items, color) => !items.length ? '' : `
+      <div style="font-size:12px; font-weight:700; color:${color}; margin:14px 0 8px;">${label}</div>
+      ${items.map(t => `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--navy-card2); border-radius:8px; padding:10px 12px; margin-bottom:6px;">
+          <div style="font-size:12px;">${t.topic}</div>
+          <div style="font-size:11px; color:var(--muted);">Appeared ${t.count}× ${t.accuracyPct !== null ? `· your accuracy: ${t.accuracyPct}%` : '· not tested by you yet'}</div>
+        </div>`).join('')}`;
+
+    el.innerHTML = `
+      <div class="section-title" style="margin-bottom:4px;">${subject} — Exam Priority Map</div>
+      <div style="font-size:11px; color:var(--muted); margin-bottom:12px;">From ${papersAnalyzed} paper${papersAnalyzed === 1 ? '' : 's'} you provided. This reflects what's actually IN those papers, not a prediction of future exams.</div>
+      ${parsed.notes ? `<div style="background:rgba(108,99,255,0.08); border:1px solid rgba(108,99,255,0.2); border-radius:10px; padding:10px 12px; font-size:12px; margin-bottom:8px;">${parsed.notes}</div>` : ''}
+      ${section('🔴 HIGH PRIORITY — frequently tested + currently weak', priorityMap.high, '#FF6B6B')}
+      ${section('🟡 MEDIUM PRIORITY', priorityMap.medium, '#FFD166')}
+      ${section('🟢 LOWER PRIORITY — less frequent or already strong', priorityMap.low, '#64DC64')}
+      <button class="ask-btn" style="margin-top:16px;" onclick="renderPastPaperSetup()">Analyze More Papers</button>
+      <button class="modal-dismiss" onclick="goScreen('home', document.querySelectorAll('.nav-item')[0])">Back to Home</button>
+    `;
+  }
+
+  // ── DAILY MISSIONS (Premium) ──
+  // Deterministic, zero AI cost — a small daily checklist across a
+  // student's neediest subjects, deliberately kept light per the spec's
+  // own instruction ("do not make gamification distracting"). Reuses the
+  // EXISTING streak/achievement system rather than inventing a parallel
+  // one: completing a mission just means doing real Practice/Teach
+  // Me/Mock Exam activity, which already calls bumpStats() and advances
+  // the streak on its own. This only tracks which of today's specific
+  // tasks that activity satisfies.
+  const DAILY_MISSIONS_KEY = 'sm_daily_missions';
+
+  function getTodayMissions() {
+    let stored = null;
+    try { stored = JSON.parse(localStorage.getItem(DAILY_MISSIONS_KEY)); } catch { /* ignore */ }
+    const today = todayISO();
+    if (stored && stored.date === today) return stored;
+    return generateDailyMissions(today);
+  }
+
+  function generateDailyMissions(today) {
+    const subjectsWithData = WeaknessProfile.getAllSubjects();
+    const candidates = subjectsWithData.length ? subjectsWithData : Object.keys(SUBJECTS);
+
+    // Rank by lowest accuracy (most need first) — subjects with no data
+    // yet are treated as mid-priority (50%), not assumed weak or strong.
+    const ranked = candidates
+      .map(s => ({ subject: s, accuracyPct: WeaknessProfile.getSubjectSummary(s).accuracyPct }))
+      .sort((a, b) => (a.accuracyPct ?? 50) - (b.accuracyPct ?? 50))
+      .slice(0, 2);
+
+    const missions = ranked.map((r, i) => {
+      const topics = WeaknessProfile.getTopics(r.subject).filter(t => t.attempts > 0);
+      const weakest = topics.sort((a, b) => a.accuracyPct - b.accuracyPct)[0];
+      if (weakest && weakest.mastery === 'Beginner') {
+        return { id: `m${i}`, icon: '🎯', subject: r.subject, topic: weakest.topic, label: 'Repair one misconception', type: 'teachme', targetCount: 1, progressCount: 0, completed: false };
+      }
+      return { id: `m${i}`, icon: '🧠', subject: r.subject, topic: weakest ? weakest.topic : null, label: '5 adaptive questions', type: 'practice', targetCount: 5, progressCount: 0, completed: false };
+    });
+
+    missions.push({
+      id: 'challenge', icon: '🏆', subject: ranked[0] ? ranked[0].subject : candidates[0], topic: null,
+      label: 'Complete a timed mini-exam', type: 'mockexam', targetCount: 1, progressCount: 0, completed: false
+    });
+
+    const data = { date: today, missions };
+    localStorage.setItem(DAILY_MISSIONS_KEY, JSON.stringify(data));
+    return data;
+  }
+
+  // Called from finishLesson(), submitPracticeAnswer(), and
+  // submitMockExam() — never invents new tracking, just checks whether
+  // real activity that already happened satisfies one of today's tasks.
+  function markMissionProgress(type, subject) {
+    if (!state.premium) return; // missions are a Premium surface — no reason to track silently for free users
+    const data = getTodayMissions();
+    let changed = false;
+    data.missions.forEach(m => {
+      if (m.completed || m.type !== type) return;
+      if (m.subject && subject && m.subject !== subject) return;
+      m.progressCount++;
+      if (m.progressCount >= m.targetCount) m.completed = true;
+      changed = true;
+    });
+    if (changed) {
+      localStorage.setItem(DAILY_MISSIONS_KEY, JSON.stringify(data));
+      renderHomeIntelligenceDashboard();
+      if (data.missions.every(m => m.completed)) showToast("🎉 All of today's missions complete!");
+    }
+  }
+
+  function startMissionTask(type, subject, topic) {
+    if (type === 'teachme') {
+      startTeachMeLesson(subject, topic || `the basics of ${subject}`);
+    } else if (type === 'practice') {
+      practiceSetup = { subject, topic: topic || 'General', difficulty: 'Medium' };
+      goScreen('practice', document.querySelectorAll('.nav-item')[2]);
+      startPracticeSession();
+    } else if (type === 'mockexam') {
+      mockExamSetup.subject = subject;
+      goScreen('mockexam', null);
+    }
+  }
+
+  function renderDailyMissionsHtml() {
+    const data = getTodayMissions();
+    return `
+      <div style="margin-top:14px; border-top:1px solid rgba(255,255,255,0.1); padding-top:12px;">
+        <div style="font-size:11px; color:var(--muted); margin-bottom:8px;">Today's Missions</div>
+        ${data.missions.map(m => `
+          <div style="display:flex; align-items:center; gap:10px; padding:6px 0;">
+            <div style="font-size:16px; opacity:${m.completed ? '1' : '0.6'};">${m.completed ? '✅' : m.icon}</div>
+            <div style="flex:1;">
+              <div style="font-size:12px; ${m.completed ? 'text-decoration:line-through; color:var(--muted);' : ''}">${m.subject} — ${m.label}</div>
+              ${m.targetCount > 1 && !m.completed ? `<div style="font-size:10px; color:var(--muted);">${m.progressCount}/${m.targetCount}</div>` : ''}
+            </div>
+            ${!m.completed ? `<button class="action-btn" style="padding:4px 10px; font-size:11px;" onclick="startMissionTask('${m.type}', '${m.subject.replace(/'/g, "\\'")}', ${m.topic ? `'${m.topic.replace(/'/g, "\\'")}'` : 'null'})">Go</button>` : ''}
+          </div>`).join('')}
+      </div>`;
   }
 
   // ── RESET ASK ──
@@ -4855,6 +5676,8 @@ Return exactly ${count} items in the array.`;
     const pct = state.premium ? 0 : Math.min((used / max) * 100, 100);
     document.getElementById('quota-bar').style.width = pct + '%';
     document.getElementById('quota-used').textContent = state.premium ? '∞' : used;
+    const maxEl = document.getElementById('quota-max');
+    if (maxEl) maxEl.textContent = max;
   }
 
   // ── HISTORY ──
@@ -4876,8 +5699,8 @@ Return exactly ${count} items in the array.`;
           <span class="history-subject">${h.subject}</span>
           <span class="history-time">${formatTime(h.time)}</span>
         </div>
-        <div class="history-q">${h.question.length > 80 ? h.question.slice(0,80) + '…' : h.question}</div>
-        <div class="history-answer-preview">Answer: ${h.answer}</div>
+        <div class="history-q">${escapeHtml(h.question.length > 80 ? h.question.slice(0,80) + '…' : h.question)}</div>
+        <div class="history-answer-preview">Answer: ${escapeHtml(h.answer)}</div>
       </div>`).join('');
   }
 
@@ -4889,16 +5712,16 @@ Return exactly ${count} items in the array.`;
       <div class="step">
         <div class="step-num">${i + 1}</div>
         <div class="step-content">
-          <div class="step-title">${s.title}</div>
-          <div class="step-desc">${s.explanation}</div>
-          ${s.math ? `<div class="math-display">${s.math}</div>` : ''}
+          <div class="step-title">${escapeHtml(s.title)}</div>
+          <div class="step-desc">${escapeHtml(s.explanation)}</div>
+          ${s.math ? `<div class="math-display">${escapeHtml(s.math)}</div>` : ''}
         </div>
       </div>`).join('');
 
     const conceptHtml = h.concept ? `
       <div class="concept-box" style="margin-top:16px;">
         <div class="concept-label">💡 The Concept</div>
-        <div class="concept-text">${h.concept}</div>
+        <div class="concept-text">${escapeHtml(h.concept)}</div>
       </div>` : '';
 
     const termsHtml = (h.keyTerms && h.keyTerms.length) ? `
@@ -4906,19 +5729,19 @@ Return exactly ${count} items in the array.`;
       <div class="term-list">
         ${h.keyTerms.map(t => `
           <div class="term-item">
-            <div class="term-name">${t.term}</div>
-            <div class="term-def">${t.definition}</div>
+            <div class="term-name">${escapeHtml(t.term)}</div>
+            <div class="term-def">${escapeHtml(t.definition)}</div>
           </div>`).join('')}
       </div>` : '';
 
     document.getElementById('demo-modal-content').innerHTML = `
       <div style="margin-bottom:16px;">
         <div class="history-subject" style="display:inline-block; margin-bottom:8px;">${h.subject}</div>
-        <div style="font-size:14px; font-weight:500; margin-bottom:8px;">${h.question}</div>
-        ${h.bagleyRemark ? `<div class="bagley-remark">🤖 ${h.bagleyRemark}</div>` : ''}
+        <div style="font-size:14px; font-weight:500; margin-bottom:8px;">${escapeHtml(h.question)}</div>
+        ${h.bagleyRemark ? `<div class="bagley-remark">🤖 ${escapeHtml(h.bagleyRemark)}</div>` : ''}
         <div class="final-answer">
           <div class="final-answer-label">Answer</div>
-          <div class="final-answer-value">${h.answer}</div>
+          <div class="final-answer-value">${escapeHtml(h.answer)}</div>
         </div>
         ${conceptHtml}
         <div class="steps-title" style="margin-top:16px;">Step-by-Step Solution</div>
@@ -5065,14 +5888,21 @@ Return exactly ${count} items in the array.`;
 
 
   // ── PAYWALL PRICING BY COUNTRY ──
-  // Priced independently per market (not pegged to a single converted
-  // figure) — each number reflects roughly what similar low-cost student
-  // subscription apps charge in that market, adjusted for local purchasing
-  // power. These are starting-point judgment calls, not researched market
-  // data — revisit and tune per country as you learn more about your
-  // actual users. "Premium" itself is still just a local on-device toggle
-  // (see activatePremium() below) — nothing here is connected to real
-  // billing yet.
+  // Priced independently per market — each number reflects roughly what
+  // similar low-cost student subscription apps charge in that market,
+  // adjusted for local purchasing power. Starting-point judgment calls,
+  // not researched market data — revisit and tune per country as you
+  // learn more about your actual users.
+  //
+  // IMPORTANT — display currency vs. charge currency: Paystack only
+  // processes NGN, GHS, ZAR, KES (and USD, only if explicitly enabled on
+  // the account) — it cannot charge GBP, CAD, AUD, INR, or AED at all,
+  // full stop, regardless of any setting. So every price below is still
+  // DISPLAYED in local currency for the student, but the actual Paystack
+  // charge always happens in NGN, using NGN_CHARGE_KOBO — converted at the
+  // rates in place when this was set up. Revisit both tables together if
+  // exchange rates drift a lot, or once other currencies are enabled on
+  // the Paystack account.
   const PRICING_BY_COUNTRY = {
     ng: { symbol: '₦', amount: '2,000' },
     gh: { symbol: 'GH₵', amount: '35' },
@@ -5086,6 +5916,17 @@ Return exactly ${count} items in the array.`;
     ae: { symbol: 'AED ', amount: '12' }
   };
   const DEFAULT_PRICING = { symbol: '$', amount: '3.99' }; // used for 'intl' and any country not listed above
+
+  // Actual Paystack charge amount in kobo (NGN's smallest unit — ₦1 = 100
+  // kobo), one per country, matching the NGN-equivalent of the displayed
+  // price above at today's exchange rate.
+  const NGN_CHARGE_KOBO = {
+    ng: 200000, gh: 430000, ke: 440000, za: 535000, gb: 580000,
+    us: 570000, ca: 520000, in: 150000, au: 615000, ae: 470000
+  };
+  const DEFAULT_CHARGE_KOBO = 570000; // matches DEFAULT_PRICING
+
+  const PAYSTACK_PUBLIC_KEY = 'pk_test_243ce26d5c666c1a015841c05e9ac3b920198594'; // TEST key — swap for the live pk_ once ready to charge real money
 
   function getPaywallPricing() {
     return PRICING_BY_COUNTRY[state.country] || DEFAULT_PRICING;
@@ -5115,14 +5956,113 @@ Return exactly ${count} items in the array.`;
     updateThemeBadge();
     updateProfile();
     updateFeatureLimitBadges();
+    renderHomeIntelligenceDashboard();
   }
 
-  function activatePremium() {
-    state.premium = true;
-    localStorage.setItem('sm_premium', '1');
-    applyPremiumUI();
-    closePaywall();
-    showToast('🎉 Welcome to Premium — Bagley says the quota nagging stops now.');
+  // Called when Premium turns off (expired, or was never active) — undoes
+  // applyPremiumUI() so the app correctly reverts to the free experience
+  // rather than staying stuck showing Premium UI after a subscription lapses.
+  function resetPremiumUI() {
+    const badge = document.getElementById('plan-badge');
+    if (badge) { badge.textContent = 'Free Plan'; badge.classList.remove('premium'); }
+    const quotaCard = document.querySelector('.quota-card');
+    if (quotaCard) quotaCard.style.display = '';
+    updateThemeBadge();
+    updateProfile();
+    updateFeatureLimitBadges();
+    updateCbtCardVisibility();
+    renderHomeIntelligenceDashboard(); // clears the card now that Premium is off
+  }
+
+  // ── REAL SUBSCRIPTION STATUS (Paystack + Supabase) ──
+  // Premium is no longer a local flag — this is the only function that
+  // sets state.premium, and it only does so after reading a real row from
+  // the subscriptions table (which only api/verify-payment.js and
+  // api/paystack-webhook.js can ever write to — see supabase-schema-04).
+  // Requires being signed in: an anonymous device has no account for a
+  // payment to be tied to, so Premium is unavailable until sign-in.
+  async function refreshPremiumStatus() {
+    const wasPremium = state.premium;
+    if (!window.sbClient || !window.sbAuthSession) {
+      state.premium = false;
+    } else {
+      try {
+        const { data, error } = await window.sbClient
+          .from('subscriptions')
+          .select('status, current_period_end')
+          .eq('user_id', window.sbAuthSession.user.id)
+          .maybeSingle();
+        if (error) throw error;
+        state.premium = !!(data && data.status === 'active' && new Date(data.current_period_end) > new Date());
+      } catch (err) {
+        console.error('[StudyMate] Could not check subscription status:', err && err.message);
+        state.premium = false; // fail closed — never grant Premium on an error
+      }
+    }
+    if (state.premium && !wasPremium) applyPremiumUI();
+    else if (!state.premium && wasPremium) resetPremiumUI();
+    updateFeatureLimitBadges();
+  }
+
+  // Kicks off Paystack's checkout popup. Requires sign-in first, since a
+  // payment has to be tied to a real account for expiry/renewal to mean
+  // anything (see the file header notes in api/verify-payment.js).
+  function startCheckout() {
+    if (!window.sbClient || !window.sbAuthSession) {
+      closePaywall();
+      showToast('Sign in first — Premium needs an account so it can renew correctly');
+      openAccountSettings();
+      return;
+    }
+    if (typeof PaystackPop === 'undefined') {
+      showToast('Payment service failed to load — check your connection and try again');
+      return;
+    }
+
+    const amountKobo = NGN_CHARGE_KOBO[state.country] || DEFAULT_CHARGE_KOBO;
+    const email = window.sbAuthSession.user.email;
+
+    const handler = PaystackPop.setup({
+      key: PAYSTACK_PUBLIC_KEY,
+      email: email,
+      amount: amountKobo,
+      currency: 'NGN',
+      ref: `studymate_${window.sbAuthSession.user.id.slice(0, 8)}_${Date.now()}`,
+      metadata: { user_id: window.sbAuthSession.user.id, country: state.country }, // for logging/cross-reference only — the backend never trusts this for authorization, see api/verify-payment.js
+      callback: function (response) {
+        verifyPaymentWithBackend(response.reference);
+      },
+      onClose: function () {
+        showToast('Checkout cancelled');
+      }
+    });
+    handler.openIframe();
+  }
+
+  async function verifyPaymentWithBackend(reference) {
+    showToast('Confirming your payment...');
+    const apiUrl = getAiEndpoint().replace(/\/api\/ask$/, '/api/verify-payment');
+    try {
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${window.sbAuthSession.access_token}`
+        },
+        body: JSON.stringify({ reference })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        showToast(data.error || 'Could not confirm payment — contact support with your reference: ' + reference);
+        return;
+      }
+      await refreshPremiumStatus();
+      closePaywall();
+      showToast('🎉 Welcome to Premium — Bagley says the quota nagging stops now.');
+    } catch (err) {
+      console.error('verifyPaymentWithBackend error', err);
+      showToast('Network error confirming payment — contact support with your reference: ' + reference);
+    }
   }
 
   // ── SETTINGS MODAL (generic) ──
@@ -5138,20 +6078,17 @@ Return exactly ${count} items in the array.`;
   }
 
   // ── ACCOUNT / AUTH (Supabase) ──
-  // This app works fully on local storage with no account at all — signing
-  // in is an upgrade (cross-device sync), never a requirement to use the
-  // app. See supabase-client.js for the client setup and auth-state layer
-  // this section reads from (window.sbClient, window.sbAuthSession).
-  //
-  // MIGRATION NOTE: local → cloud data migration (moving existing
-  // localStorage progress into Supabase on first sign-in) is intentionally
-  // NOT implemented yet — that needs the exact weakness_profiles table
-  // schema to write correct upsert code against, which hasn't been
-  // provided. Signing in right now authenticates the student but does not
-  // yet move or sync any of their data; local storage keeps working exactly
-  // as before regardless of sign-in state.
+  // A signed-in account is now REQUIRED to use StudyMate at all — see
+  // enforceAuthGate() below. (Previously this app worked fully on local
+  // storage with no account, and sign-in was optional — needed only for
+  // Premium and cross-device sync. That local-only mode has been
+  // deliberately removed per product decision.) See supabase-client.js for
+  // the client setup and auth-state layer this section reads from
+  // (window.sbClient, window.sbAuthSession).
   document.addEventListener('sb-auth-change', () => {
     updateAccountBadge();
+    refreshPremiumStatus();
+    enforceAuthGate();
     // If the Account modal happens to be open when auth state changes
     // (e.g. right after a successful sign-in), refresh it in place.
     if (document.getElementById('settings-modal').classList.contains('active') &&
@@ -5159,6 +6096,150 @@ Return exactly ${count} items in the array.`;
       openAccountSettings();
     }
   });
+
+  // ── SIGN-IN GATE ──
+  // Shows a full-screen, non-dismissible modal (on top of everything else,
+  // including onboarding) whenever there is no verified Supabase session,
+  // and hides it the moment one exists. Runs off the same 'sb-auth-change'
+  // event that supabase-client.js already fires once on initial load and
+  // again on every sign-in/out, so this always reflects the true state
+  // without polling.
+  function enforceAuthGate() {
+    const modal = document.getElementById('auth-gate-modal');
+    if (!modal) return;
+
+    if (!window.sbClient) {
+      // Supabase isn't configured on this build at all — there is no way
+      // to satisfy "must be signed in", so block with an explanation
+      // instead of silently letting the app through.
+      renderAuthGateContent(`
+        <div class="modal-title">Accounts unavailable ⚠️</div>
+        <div class="modal-sub">This build isn't connected to an account system yet, so it can't verify sign-in. Please contact the app administrator.</div>
+      `);
+      modal.classList.add('active');
+      return;
+    }
+
+    if (!window.sbAuthReady) {
+      // Still checking for an existing session — show a minimal loading
+      // state rather than flashing the sign-in form for a signed-in user.
+      renderAuthGateContent(`
+        <div class="modal-title">StudyMate AI</div>
+        <div class="modal-sub">Checking your session…</div>
+      `);
+      modal.classList.add('active');
+      return;
+    }
+
+    if (!window.sbAuthSession) {
+      renderGateSignInForm();
+      modal.classList.add('active');
+      return;
+    }
+
+    modal.classList.remove('active');
+  }
+
+  function renderAuthGateContent(html) {
+    const el = document.getElementById('auth-gate-content');
+    if (el) el.innerHTML = html;
+  }
+
+  function renderGateSignInForm() {
+    renderAuthGateContent(`
+      <div class="modal-title">Welcome to StudyMate AI 🎓</div>
+      <div class="modal-sub">Sign in or create a free account to get started — this keeps your progress safe and is how Premium gets activated correctly.</div>
+      <div id="auth-gate-error" style="display:none; font-size:12px; color:var(--danger); margin-bottom:10px;"></div>
+      <input type="email" id="auth-gate-email" aria-label="Email" placeholder="Email" autocomplete="email" style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:10px;">
+      <input type="password" id="auth-gate-password" aria-label="Password" placeholder="Password (min 6 characters)" autocomplete="current-password" style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:16px;">
+      <button class="ask-btn" id="auth-gate-signin-btn" onclick="gateSignIn()">Sign In</button>
+      <button class="action-btn" style="width:100%; margin-top:8px;" id="auth-gate-signup-btn" onclick="gateSignUp()">Create Account</button>
+      <div style="display:flex; align-items:center; gap:10px; margin:16px 0; color:var(--muted); font-size:11px;">
+        <div style="flex:1; height:1px; background:var(--border-1);"></div>OR<div style="flex:1; height:1px; background:var(--border-1);"></div>
+      </div>
+      <button class="action-btn" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="continueWithGoogle()">
+        <span style="display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:var(--white); color:#111; font-size:12px; font-weight:700;">G</span>
+        Continue with Google
+      </button>
+    `);
+  }
+
+  function showGateError(message) {
+    const el = document.getElementById('auth-gate-error');
+    if (!el) return;
+    el.textContent = message;
+    el.style.display = 'block';
+  }
+
+  function getGateFormFields() {
+    const email = (document.getElementById('auth-gate-email') || {}).value || '';
+    const password = (document.getElementById('auth-gate-password') || {}).value || '';
+    return { email: email.trim(), password };
+  }
+
+  // Shared by both the sign-in gate and Account settings — redirects to
+  // Google, then back to this same page. Requires the Google provider to
+  // be enabled in Supabase (Authentication → Sign In / Providers → Google)
+  // with OAuth credentials from Google Cloud Console.
+  async function continueWithGoogle() {
+    if (!window.sbClient) return;
+    const { error } = await window.sbClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + window.location.pathname }
+    });
+    // On success the browser navigates away to Google immediately — no
+    // further code here runs until the redirect back. Only errors
+    // (e.g. provider not enabled) return without leaving the page.
+    if (error) {
+      const gateErr = document.getElementById('auth-gate-error');
+      const accountErr = document.getElementById('account-form-error');
+      const target = gateErr && gateErr.offsetParent !== null ? gateErr : accountErr;
+      if (target) { target.textContent = error.message; target.style.display = 'block'; }
+    }
+  }
+
+  async function gateSignIn() {
+    const { email, password } = getGateFormFields();
+    if (!email || !password) { showGateError('Enter both email and password.'); return; }
+    const btn = document.getElementById('auth-gate-signin-btn');
+    if (btn) { btn.textContent = 'Signing in...'; btn.style.pointerEvents = 'none'; }
+
+    const { error } = await window.sbClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      showGateError(error.message);
+      if (btn) { btn.textContent = 'Sign In'; btn.style.pointerEvents = 'auto'; }
+      return;
+    }
+    // 'sb-auth-change' fires from here and enforceAuthGate() takes it from there.
+  }
+
+  async function gateSignUp() {
+    const { email, password } = getGateFormFields();
+    if (!email || !password) { showGateError('Enter both email and password.'); return; }
+    if (password.length < 6) { showGateError('Password needs at least 6 characters.'); return; }
+    const btn = document.getElementById('auth-gate-signup-btn');
+    if (btn) { btn.textContent = 'Creating account...'; btn.style.pointerEvents = 'none'; }
+
+    const { data, error } = await window.sbClient.auth.signUp({ email, password });
+    if (error) {
+      showGateError(error.message);
+      if (btn) { btn.textContent = 'Create Account'; btn.style.pointerEvents = 'auto'; }
+      return;
+    }
+    // Supabase's default setup requires email confirmation before a
+    // session exists — data.session is null in that case, so tell the
+    // student clearly rather than leaving them stuck on a form that looks
+    // like it did nothing.
+    if (!data.session) {
+      renderAuthGateContent(`
+        <div class="modal-title">Check your email 📬</div>
+        <div class="modal-sub">We've sent a confirmation link to ${email} — click it, then come back and sign in here.</div>
+        <button class="settings-save-btn" onclick="renderGateSignInForm()">Back to Sign In</button>
+      `);
+    }
+    // If data.session DID come back (email confirmation disabled on this
+    // Supabase project), 'sb-auth-change' fires and closes the gate.
+  }
 
   function updateAccountBadge() {
     const el = document.getElementById('account-badge');
@@ -5182,9 +6263,13 @@ Return exactly ${count} items in the array.`;
 
     if (window.sbAuthSession) {
       const email = window.sbAuthSession.user.email;
+      const premiumStatusHtml = state.premium
+        ? `<div style="background:rgba(255,209,102,0.1); border:1px solid rgba(255,209,102,0.3); border-radius:10px; padding:12px 14px; margin-bottom:12px; font-size:12px; color:var(--gold);">⚡ Premium is active on this account.</div>`
+        : `<button class="ask-btn" style="width:100%; margin-bottom:12px;" onclick="closeSettingsModal(); showPaywall();">⚡ Upgrade to Premium</button>`;
       openSettingsModal(`
         <div class="modal-title">Account 👤</div>
         <div class="modal-sub">Signed in as ${email}</div>
+        ${premiumStatusHtml}
         <div style="background:var(--navy-card2); border-radius:10px; padding:12px 14px; margin-bottom:12px; font-size:12px; color:var(--muted); line-height:1.5;">
           New progress (Practice, Mock Exams, Flashcards, Teach Me, Ask AI check-ins) now syncs to the cloud automatically as it happens. This uploads whatever was already on this device <em>before</em> you signed in — safe to run more than once, it won't create duplicates.
         </div>
@@ -5203,6 +6288,13 @@ Return exactly ${count} items in the array.`;
       <input type="password" id="account-password" aria-label="Password" placeholder="Password (min 6 characters)" style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:16px;">
       <button class="ask-btn" id="account-signin-btn" onclick="signInWithEmail()">Sign In</button>
       <button class="action-btn" style="width:100%; margin-top:8px;" id="account-signup-btn" onclick="signUpWithEmail()">Create Account</button>
+      <div style="display:flex; align-items:center; gap:10px; margin:16px 0; color:var(--muted); font-size:11px;">
+        <div style="flex:1; height:1px; background:var(--border-1);"></div>OR<div style="flex:1; height:1px; background:var(--border-1);"></div>
+      </div>
+      <button class="action-btn" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="continueWithGoogle()">
+        <span style="display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:var(--white); color:#111; font-size:12px; font-weight:700;">G</span>
+        Continue with Google
+      </button>
     `);
   }
 
@@ -5933,6 +7025,7 @@ Return exactly ${count} items in the array.`;
   applyUserName();
   updateAppearanceBadge();
   updateAccountBadge();
+  enforceAuthGate();
   updateFeatureLimitBadges();
   updateCbtCardVisibility();
   initOnboarding();

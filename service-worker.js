@@ -1,4 +1,4 @@
-const CACHE = 'studymate-v26';
+const CACHE = 'studymate-v34';
 const APP_FILES = ['/', '/index.html', '/app-config.js', '/supabase-client.js', '/weakness-sync.js', '/curriculum-data.js', '/weakness-profile.js', '/manifest.webmanifest', '/icons/icon.svg'];
 
 self.addEventListener('install', (event) => {
