@@ -1,9 +1,0 @@
-{
-  "appId": "com.studymate.ai",
-  "appName": "StudyMate AI",
-  "webDir": ".",
-  "bundledWebRuntime": false,
-  "server": {
-    "androidScheme": "https"
-  }
-}
