@@ -1,13 +1,15 @@
 {
   "name": "studymate-ai",
   "version": "1.0.0",
-  "description": "StudyMate AI — global AI-powered exam prep for students worldwide",
+  "description": "StudyMate AI \u2014 global AI-powered exam prep for students worldwide",
   "scripts": {
     "serve": "npx serve . -l 5173",
-    "sync": "npx cap sync",
-    "android": "npx cap run android",
-    "open:android": "npx cap open android",
-    "open:ios": "npx cap open ios"
+    "sync": "npm run build && cap sync",
+    "android": "npm run build && cap sync android && cap run android",
+    "open:android": "cap open android",
+    "open:ios": "cap open ios",
+    "test": "node tests/bagley-context.test.js && node --test tests/pricing-integrity.test.js tests/quota.test.js tests/curriculum-security.test.js tests/audit-regressions.test.js",
+    "build": "node scripts/build-web.js"
   },
   "dependencies": {
     "@capacitor/core": "^6.0.0",
@@ -16,5 +18,8 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^6.0.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

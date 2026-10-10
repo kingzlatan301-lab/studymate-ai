@@ -13,7 +13,7 @@
  * recordAttempt() too (same shape, level: 'knew'|'shaky'|'lost' maps
  * naturally from correct/partial/incorrect) and this file needs no changes.
  *
- * STORAGE: localStorage today (per-device). The shape below is exactly
+ * STORAGE: per-account localStorage cache of the cloud table (see setAccount()). The shape below is exactly
  * what a `weakness_attempts` table would look like, so moving to a real
  * backend later is a lift-and-shift, not a redesign.
  *
@@ -23,7 +23,30 @@
  */
 
 window.WeaknessProfile = (function () {
-  const STORAGE_KEY = 'sm_weakness_profile';
+  // AUTHORITY: for a signed-in student the cloud table (weakness_profiles, RLS-
+  // scoped to their account — see weakness-sync.js) is the source of truth;
+  // localStorage below is a per-ACCOUNT cache of it so the app stays instant and
+  // offline-capable. The cache key includes the account id, so two students
+  // sharing a device never see (or upload) each other's progress.
+  const LEGACY_KEY = 'sm_weakness_profile';   // pre-account-scoping key (one shared blob per device)
+  let accountId = null;
+  function storageKey() { return LEGACY_KEY + ':' + (accountId || 'signed-out'); }
+  const BAD_NAMES = new Set(['__proto__', 'constructor', 'prototype']);
+  const okName = n => typeof n === 'string' && n.length > 0 && n.length <= 120 && !BAD_NAMES.has(n);
+
+  // Selects which account's cache is active. The first account to sign in on a
+  // device adopts any legacy (pre-scoping) data once, then the legacy key is removed.
+  function setAccount(uid) {
+    accountId = uid || null;
+    if (!accountId) return;
+    try {
+      const legacy = localStorage.getItem(LEGACY_KEY);
+      if (legacy) {
+        if (!localStorage.getItem(storageKey())) localStorage.setItem(storageKey(), legacy);
+        localStorage.removeItem(LEGACY_KEY);
+      }
+    } catch (_) { /* cache only */ }
+  }
   const RECENT_WINDOW = 10;     // attempts considered for the current mastery score
   const MIN_FOR_MASTERED = 5;   // don't call something "Mastered" off 1-2 lucky attempts
   const MIN_FOR_TREND = 4;
@@ -32,14 +55,14 @@ window.WeaknessProfile = (function () {
 
   function load() {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { subjects: {} };
+      return JSON.parse(localStorage.getItem(storageKey())) || { subjects: {} };
     } catch {
       return { subjects: {} };
     }
   }
 
   function save(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    try { localStorage.setItem(storageKey(), JSON.stringify(data)); } catch (_) { /* cache only */ }
   }
 
   function getTopicBucket(data, subject, topic) {
@@ -49,8 +72,9 @@ window.WeaknessProfile = (function () {
   }
 
   function recordAttempt({ subject, topic, level, difficulty, mistakeType }) {
-    if (!subject || !LEVEL_SCORE.hasOwnProperty(level)) return null;
+    if (!okName(subject) || !LEVEL_SCORE.hasOwnProperty(level)) return null;
     const t = topic || 'General';
+    if (!okName(t)) return null;
     const data = load();
     const bucket = getTopicBucket(data, subject, t);
     // Guard against timestamp collisions when several attempts are recorded
@@ -86,6 +110,42 @@ window.WeaknessProfile = (function () {
     attempt.mistakeType = mistakeType;
     save(data);
     return true;
+  }
+
+  // Merges attempts that came from the cloud (or another device) into this
+  // account's cache. Idempotent: an attempt already present (same subject,
+  // topic and timestamp) is never duplicated. Returns how many were added.
+  // Each topic keeps its 50 most recent attempts, same cap as recordAttempt.
+  function importAttempts(rows) {
+    if (!Array.isArray(rows) || !rows.length) return 0;
+    const data = load();
+    const touched = new Set();
+    const incoming = [];
+    rows.forEach(r => {
+      if (!r || !okName(r.subject) || !LEVEL_SCORE.hasOwnProperty(r.level)) return;
+      const t = r.topic || 'General';
+      if (!okName(t) || !Number.isFinite(r.ts)) return;
+      const bucket = getTopicBucket(data, r.subject, t);
+      const existing = bucket.attempts.find(a => a.ts === r.ts);
+      if (existing) {
+        if (!existing.mistakeType && r.mistakeType) existing.mistakeType = r.mistakeType;
+        return;
+      }
+      const attempt = { ts: r.ts, level: r.level, difficulty: r.difficulty || null, mistakeType: r.mistakeType || null };
+      bucket.attempts.push(attempt);
+      touched.add(bucket);
+      incoming.push({ bucket, attempt });
+    });
+    touched.forEach(b => {
+      b.attempts.sort((a, c) => a.ts - c.ts);
+      if (b.attempts.length > 50) b.attempts = b.attempts.slice(-50);
+    });
+    // Count only attempts that SURVIVED the per-topic cap. Older cloud history
+    // that is trimmed straight away is not "added" (and must not force a save
+    // on every sync).
+    const added = incoming.filter(x => x.bucket.attempts.includes(x.attempt)).length;
+    if (added) save(data);
+    return added;
   }
 
   function scoreToMastery(score, attemptCount) {
@@ -336,10 +396,12 @@ window.WeaknessProfile = (function () {
   }
 
   function reset() {
-    localStorage.removeItem(STORAGE_KEY);
+    try { localStorage.removeItem(storageKey()); } catch (_) { /* cache only */ }
   }
 
   return {
+    setAccount,
+    importAttempts,
     recordAttempt,
     tagMistake,
     getTopics,

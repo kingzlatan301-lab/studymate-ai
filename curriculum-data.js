@@ -57,6 +57,18 @@ window.CURRICULUM = (function () {
     { name: 'Calculus', subtopics: ['Differentiation', 'Integration'] }
   ];
 
+  // NEUTRAL / GENERAL topic structure — used for boards where StudyMate does
+  // not (yet) have a board-specific breakdown. It is a broad, commonly taught
+  // grouping of secondary-school maths and is deliberately NOT presented as
+  // any board's official syllabus. Boards that use it are flagged with
+  // `topicsNote` below so the UI can say "general topic coverage".
+  const MATH_TOPICS_GENERAL = [
+    { name: 'Number', subtopics: ['Fractions & Decimals', 'Percentages', 'Ratio & Proportion', 'Indices'] },
+    { name: 'Algebra', subtopics: ['Linear Equations', 'Quadratic Equations', 'Simultaneous Equations', 'Inequalities'] },
+    { name: 'Geometry & Measurement', subtopics: ['Angles & Shapes', 'Area & Volume', 'Circle Theorems', 'Trigonometry'] },
+    { name: 'Statistics & Probability', subtopics: ['Averages', 'Probability', 'Data Presentation'] }
+  ];
+
   const MATH_TOPICS_GCSE = [
     { name: 'Number', subtopics: ['Fractions', 'Percentages', 'Standard Form'] },
     { name: 'Algebra', subtopics: ['Linear Equations', 'Quadratic Equations', 'Simultaneous Equations', 'Sequences'] },
@@ -77,7 +89,7 @@ window.CURRICULUM = (function () {
 
     // Nigeria
     waec: {
-      label: 'WAEC', hint: 'West African Examinations Council', country: 'ng', level: 'secondary',
+      label: 'WAEC', hint: 'West African Examinations Council', country: 'ng', level: 'secondary', topicsNote: 'Topic outline, not the official syllabus',
       subjects: [
         { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Find the value of x if 2x + 5 = 13...', topics: MATH_TOPICS_WAEC },
         { name: 'Physics',     emoji: '⚛️', color: '#4FC3F7', placeholder: 'e.g. A car accelerates from rest at 5 m/s² for 6 seconds. Find its final velocity...' },
@@ -89,18 +101,40 @@ window.CURRICULUM = (function () {
         { name: 'Literature',  emoji: '📚', color: '#FFB74D', placeholder: 'e.g. Discuss the theme of ambition in Macbeth...' }
       ]
     },
+    // NECO and JAMB are separate Nigerian bodies. They used to be silent aliases
+    // of WAEC (same subject list AND WAEC's maths topic outline); that implied
+    // WAEC's syllabus was theirs. They now have their own subject lists with a
+    // neutral, clearly-labelled general topic breakdown instead.
     neco: {
-      label: 'NECO', hint: 'National Examinations Council', country: 'ng', level: 'secondary',
-      subjects: [] // intentionally mirrors WAEC's subject list at runtime — see resolveSubjects()
+      label: 'NECO', hint: 'National Examinations Council', country: 'ng', level: 'secondary', topicsNote: 'General topic coverage',
+      subjects: [
+        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Find the value of x if 2x + 5 = 13...', topics: MATH_TOPICS_GENERAL },
+        { name: 'Physics',     emoji: '⚛️', color: '#4FC3F7', placeholder: 'e.g. A car accelerates from rest at 5 m/s² for 6 seconds. Find its final velocity...' },
+        { name: 'Chemistry',   emoji: '🧪', color: '#FFD166', placeholder: 'e.g. Balance the equation: Fe + O2 → Fe2O3...' },
+        { name: 'Biology',     emoji: '🧬', color: '#64DC64', placeholder: 'e.g. Describe the process of osmosis in plant cells...' },
+        { name: 'English',     emoji: '📖', color: '#FF8A8A', placeholder: 'e.g. Identify the figure of speech in "The wind whispered through the trees"...' },
+        { name: 'Economics',   emoji: '📊', color: '#00D4AA', placeholder: 'e.g. Explain the law of diminishing marginal utility...' },
+        { name: 'Government',  emoji: '🏛️', color: '#B39DDB', placeholder: 'e.g. State three functions of the legislature...' },
+        { name: 'Literature',  emoji: '📚', color: '#FFB74D', placeholder: 'e.g. Discuss the theme of ambition in Macbeth...' }
+      ]
     },
     jamb: {
-      label: 'JAMB / UTME', hint: 'Joint Admissions and Matriculation Board', country: 'ng', level: 'secondary',
-      subjects: []
+      label: 'JAMB / UTME', hint: 'Joint Admissions and Matriculation Board', country: 'ng', level: 'college admissions', topicsNote: 'General topic coverage',
+      subjects: [
+        { name: 'English', emoji: '📖', color: '#FF8A8A', placeholder: 'e.g. Choose the option that best completes the sentence...' },
+        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Find the value of x if 2x + 5 = 13...', topics: MATH_TOPICS_GENERAL },
+        { name: 'Physics',     emoji: '⚛️', color: '#4FC3F7', placeholder: 'e.g. A car accelerates from rest at 5 m/s² for 6 seconds. Find its final velocity...' },
+        { name: 'Chemistry',   emoji: '🧪', color: '#FFD166', placeholder: 'e.g. Balance the equation: Fe + O2 → Fe2O3...' },
+        { name: 'Biology',     emoji: '🧬', color: '#64DC64', placeholder: 'e.g. Describe the process of osmosis in plant cells...' },
+        { name: 'Economics',   emoji: '📊', color: '#00D4AA', placeholder: 'e.g. Explain the law of diminishing marginal utility...' },
+        { name: 'Government',  emoji: '🏛️', color: '#B39DDB', placeholder: 'e.g. State three functions of the legislature...' },
+        { name: 'Literature in English', emoji: '📚', color: '#FFB74D', placeholder: 'e.g. Discuss the theme of ambition in Macbeth...' }
+      ]
     },
     nabteb: {
-      label: 'NABTEB', hint: 'National Business and Technical Examinations Board', country: 'ng', level: 'secondary',
+      label: 'NABTEB', hint: 'National Business and Technical Examinations Board', country: 'ng', level: 'secondary', topicsNote: 'General topic coverage',
       subjects: [
-        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Find the value of x if 2x + 5 = 13...', topics: MATH_TOPICS_WAEC },
+        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Find the value of x if 2x + 5 = 13...', topics: MATH_TOPICS_GENERAL },
         { name: 'English',     emoji: '📖', color: '#FF8A8A', placeholder: 'e.g. Identify the figure of speech...' },
         { name: 'Technical Drawing', emoji: '📏', color: '#4FC3F7', placeholder: 'e.g. Describe orthographic projection...' },
         { name: 'Bookkeeping', emoji: '📒', color: '#00D4AA', placeholder: 'e.g. Explain the double-entry principle...' }
@@ -109,9 +143,9 @@ window.CURRICULUM = (function () {
 
     // Ghana
     'wassce-gh': {
-      label: 'WASSCE', hint: 'West African Senior School Certificate Examination', country: 'gh', level: 'secondary',
+      label: 'WASSCE', hint: 'West African Senior School Certificate Examination', country: 'gh', level: 'secondary', topicsNote: 'General topic coverage',
       subjects: [
-        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Find the value of x if 2x + 5 = 13...', topics: MATH_TOPICS_WAEC },
+        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Find the value of x if 2x + 5 = 13...', topics: MATH_TOPICS_GENERAL },
         { name: 'Integrated Science', emoji: '🔬', color: '#64DC64', placeholder: 'e.g. Explain the water cycle...' },
         { name: 'English', emoji: '📖', color: '#FF8A8A', placeholder: 'e.g. Identify the figure of speech...' },
         { name: 'Social Studies', emoji: '🌍', color: '#FFD166', placeholder: 'e.g. Discuss the causes of rural-urban migration...' }
@@ -120,9 +154,9 @@ window.CURRICULUM = (function () {
 
     // Kenya
     kcse: {
-      label: 'KCSE', hint: 'Kenya Certificate of Secondary Education', country: 'ke', level: 'secondary',
+      label: 'KCSE', hint: 'Kenya Certificate of Secondary Education', country: 'ke', level: 'secondary', topicsNote: 'General topic coverage',
       subjects: [
-        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Solve for x: 3x - 7 = 11...', topics: MATH_TOPICS_WAEC },
+        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Solve for x: 3x - 7 = 11...', topics: MATH_TOPICS_GENERAL },
         { name: 'Physics', emoji: '⚛️', color: '#4FC3F7', placeholder: 'e.g. Define moment of a force...' },
         { name: 'Chemistry', emoji: '🧪', color: '#FFD166', placeholder: 'e.g. Explain the mole concept...' },
         { name: 'Biology', emoji: '🧬', color: '#64DC64', placeholder: 'e.g. Describe mitosis...' },
@@ -133,9 +167,9 @@ window.CURRICULUM = (function () {
 
     // South Africa
     nsc: {
-      label: 'NSC (Matric)', hint: 'National Senior Certificate', country: 'za', level: 'secondary',
+      label: 'NSC (Matric)', hint: 'National Senior Certificate', country: 'za', level: 'secondary', topicsNote: 'General topic coverage',
       subjects: [
-        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Solve for x: 3x - 7 = 11...', topics: MATH_TOPICS_WAEC },
+        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Solve for x: 3x - 7 = 11...', topics: MATH_TOPICS_GENERAL },
         { name: 'Physical Sciences', emoji: '⚛️', color: '#4FC3F7', placeholder: 'e.g. State Newton\'s second law...' },
         { name: 'Life Sciences', emoji: '🧬', color: '#64DC64', placeholder: 'e.g. Describe the process of photosynthesis...' },
         { name: 'English Home Language', emoji: '📖', color: '#FF8A8A', placeholder: 'e.g. Analyse the tone of this poem...' },
@@ -145,7 +179,7 @@ window.CURRICULUM = (function () {
 
     // United Kingdom
     gcse: {
-      label: 'GCSE', hint: 'General Certificate of Secondary Education', country: 'gb', level: 'secondary',
+      label: 'GCSE', hint: 'General Certificate of Secondary Education', country: 'gb', level: 'secondary', topicsNote: 'Topic outline, not the official syllabus',
       subjects: [
         { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Solve 2x + 5 = 13...', topics: MATH_TOPICS_GCSE },
         { name: 'Physics', emoji: '⚛️', color: '#4FC3F7', placeholder: 'e.g. Explain how a transformer works...' },
@@ -156,7 +190,7 @@ window.CURRICULUM = (function () {
       ]
     },
     alevel: {
-      label: 'A-Level', hint: 'Advanced Level', country: 'gb', level: 'senior secondary',
+      label: 'A-Level', hint: 'Advanced Level', country: 'gb', level: 'senior secondary', topicsNote: 'Topic outline, not the official syllabus',
       subjects: [
         { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Differentiate y = 3x² + 2x...', topics: [
           { name: 'Pure Mathematics', subtopics: ['Algebra', 'Trigonometry', 'Differentiation', 'Integration', 'Vectors'] },
@@ -172,7 +206,7 @@ window.CURRICULUM = (function () {
 
     // United States
     sat: {
-      label: 'SAT', hint: 'Scholastic Assessment Test', country: 'us', level: 'college admissions',
+      label: 'SAT', hint: 'Scholastic Assessment Test', country: 'us', level: 'college admissions', topicsNote: 'Topic outline, not the official syllabus',
       subjects: [
         { name: 'Math', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. If 3x + 7 = 22, what is x?', topics: MATH_TOPICS_SAT },
         { name: 'Reading', emoji: '📖', color: '#FF8A8A', placeholder: 'e.g. What is the main idea of this passage?' },
@@ -180,9 +214,9 @@ window.CURRICULUM = (function () {
       ]
     },
     act: {
-      label: 'ACT', hint: 'American College Testing', country: 'us', level: 'college admissions',
+      label: 'ACT', hint: 'American College Testing', country: 'us', level: 'college admissions', topicsNote: 'General topic coverage',
       subjects: [
-        { name: 'Math', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Solve for x: 2x + 5 = 13...', topics: MATH_TOPICS_SAT },
+        { name: 'Math', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Solve for x: 2x + 5 = 13...', topics: MATH_TOPICS_GENERAL },
         { name: 'English', emoji: '📖', color: '#FF8A8A', placeholder: 'e.g. Which choice is most concise?' },
         { name: 'Science', emoji: '🔬', color: '#64DC64', placeholder: 'e.g. Interpret this experiment\'s data table...' },
         { name: 'Reading', emoji: '📘', color: '#FFD166', placeholder: 'e.g. What can be inferred about the narrator?' }
@@ -201,9 +235,9 @@ window.CURRICULUM = (function () {
 
     // Canada
     'ca-provincial': {
-      label: 'Provincial Diploma', hint: 'e.g. Ontario, Alberta, BC high school diplomas', country: 'ca', level: 'secondary',
+      label: 'Provincial Diploma', hint: 'e.g. Ontario, Alberta, BC high school diplomas', country: 'ca', level: 'secondary', topicsNote: 'General topic coverage',
       subjects: [
-        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Solve 2x + 5 = 13...', topics: MATH_TOPICS_GCSE },
+        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Solve 2x + 5 = 13...', topics: MATH_TOPICS_GENERAL },
         { name: 'Physics', emoji: '⚛️', color: '#4FC3F7', placeholder: 'e.g. Explain Newton\'s laws of motion...' },
         { name: 'Chemistry', emoji: '🧪', color: '#FFD166', placeholder: 'e.g. Balance this chemical equation...' },
         { name: 'Biology', emoji: '🧬', color: '#64DC64', placeholder: 'e.g. Explain cellular respiration...' },
@@ -213,9 +247,9 @@ window.CURRICULUM = (function () {
 
     // India
     cbse: {
-      label: 'CBSE (Class 10/12)', hint: 'Central Board of Secondary Education', country: 'in', level: 'secondary',
+      label: 'CBSE (Class 10/12)', hint: 'Central Board of Secondary Education', country: 'in', level: 'secondary', topicsNote: 'General topic coverage',
       subjects: [
-        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Solve the quadratic x² - 5x + 6 = 0...', topics: MATH_TOPICS_WAEC },
+        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Solve the quadratic x² - 5x + 6 = 0...', topics: MATH_TOPICS_GENERAL },
         { name: 'Physics', emoji: '⚛️', color: '#4FC3F7', placeholder: 'e.g. State Ohm\'s law...' },
         { name: 'Chemistry', emoji: '🧪', color: '#FFD166', placeholder: 'e.g. Explain the periodic trend in atomic radius...' },
         { name: 'Biology', emoji: '🧬', color: '#64DC64', placeholder: 'e.g. Explain the process of photosynthesis...' },
@@ -233,9 +267,9 @@ window.CURRICULUM = (function () {
 
     // Australia
     hsc: {
-      label: 'HSC', hint: 'Higher School Certificate', country: 'au', level: 'secondary',
+      label: 'HSC', hint: 'Higher School Certificate', country: 'au', level: 'secondary', topicsNote: 'General topic coverage',
       subjects: [
-        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Solve 2x + 5 = 13...', topics: MATH_TOPICS_GCSE },
+        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Solve 2x + 5 = 13...', topics: MATH_TOPICS_GENERAL },
         { name: 'Physics', emoji: '⚛️', color: '#4FC3F7', placeholder: 'e.g. Explain projectile motion...' },
         { name: 'Chemistry', emoji: '🧪', color: '#FFD166', placeholder: 'e.g. Explain acid-base equilibria...' },
         { name: 'Biology', emoji: '🧬', color: '#64DC64', placeholder: 'e.g. Explain the process of DNA replication...' },
@@ -245,9 +279,9 @@ window.CURRICULUM = (function () {
 
     // International
     igcse: {
-      label: 'IGCSE', hint: 'International General Certificate of Secondary Education', country: 'intl', level: 'secondary',
+      label: 'IGCSE', hint: 'International General Certificate of Secondary Education', country: 'intl', level: 'secondary', topicsNote: 'General topic coverage',
       subjects: [
-        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Solve 2x + 5 = 13...', topics: MATH_TOPICS_GCSE },
+        { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Solve 2x + 5 = 13...', topics: MATH_TOPICS_GENERAL },
         { name: 'Physics', emoji: '⚛️', color: '#4FC3F7', placeholder: 'e.g. Explain how a transformer works...' },
         { name: 'Chemistry', emoji: '🧪', color: '#FFD166', placeholder: 'e.g. Describe fractional distillation...' },
         { name: 'Biology', emoji: '🧬', color: '#64DC64', placeholder: 'e.g. Explain the process of osmosis...' },
@@ -265,11 +299,6 @@ window.CURRICULUM = (function () {
       ]
     }
   };
-
-  // NECO and JAMB share WAEC's subject catalogue in practice (same national
-  // curriculum) — resolved at lookup time rather than duplicated in data.
-  EXAM_BOARDS.neco.subjects = EXAM_BOARDS.waec.subjects;
-  EXAM_BOARDS.jamb.subjects = EXAM_BOARDS.waec.subjects;
 
   // ── TERTIARY / UNIVERSITY ────────────────────────────────────────────
   // One generic tertiary board per country (auto-added to every country's
@@ -327,7 +356,7 @@ window.CURRICULUM = (function () {
   function getExamBoardsForCountry(countryCode) {
     const country = COUNTRIES.find(c => c.code === countryCode);
     if (!country) return [];
-    return country.examBoards.map(code => ({ code, ...EXAM_BOARDS[code] }));
+    return country.examBoards.filter(code => EXAM_BOARDS[code]).map(code => ({ code, ...EXAM_BOARDS[code] }));
   }
 
   function getExamBoard(examCode) {
@@ -339,7 +368,10 @@ window.CURRICULUM = (function () {
     return Object.keys(EXAM_BOARDS).map(code => ({ code, ...EXAM_BOARDS[code] }));
   }
 
+  // Returns [] for an unknown board — callers must show a neutral
+  // "not available yet" state, never substitute another board's subjects.
   function getSubjects(examCode) {
+    if (examCode === NEUTRAL_EXAM) return GENERAL_SUBJECTS;
     const exam = EXAM_BOARDS[examCode];
     return exam ? exam.subjects : [];
   }
@@ -353,11 +385,24 @@ window.CURRICULUM = (function () {
     return (subject && subject.topics) ? subject.topics : [];
   }
 
-  // Fallback default so the app has something sane to render before a
-  // student picks a country (keeps existing Nigeria-first behavior as the
-  // *default*, not a hardcoded ceiling — every other country is one tap away).
-  const DEFAULT_COUNTRY = 'ng';
-  const DEFAULT_EXAM = 'waec';
+  // ── NEUTRAL STATE ────────────────────────────────────────────────────
+  // There is NO hidden country or exam default. A student who has not chosen
+  // yet is "International / not selected" — never silently Nigeria + WAEC.
+  // Nigeria and WAEC/JAMB/NECO remain fully supported when explicitly picked.
+  const DEFAULT_COUNTRY = 'intl';
+  const NEUTRAL_EXAM = 'none';       // "Just exploring" / not selected
+  const DEFAULT_EXAM = NEUTRAL_EXAM; // kept for older callers
+
+  // Subjects offered when no exam is selected. Generic, board-agnostic.
+  const GENERAL_SUBJECTS = [
+    { name: 'Mathematics', emoji: '📐', color: '#6C63FF', placeholder: 'e.g. Solve 2x + 5 = 13...', topics: MATH_TOPICS_GENERAL },
+    { name: 'Physics',     emoji: '⚛️', color: '#4FC3F7', placeholder: 'e.g. A car accelerates from rest at 5 m/s² for 6 seconds. Find its final velocity...' },
+    { name: 'Chemistry',   emoji: '🧪', color: '#FFD166', placeholder: 'e.g. Balance the equation: Fe + O2 → Fe2O3...' },
+    { name: 'Biology',     emoji: '🧬', color: '#64DC64', placeholder: 'e.g. Describe the process of osmosis in plant cells...' },
+    { name: 'English',     emoji: '📖', color: '#FF8A8A', placeholder: 'e.g. Identify the figure of speech in "The wind whispered through the trees"...' },
+    { name: 'Economics',   emoji: '📊', color: '#00D4AA', placeholder: 'e.g. Explain the law of diminishing marginal utility...' },
+    { name: 'History',     emoji: '📜', color: '#FFB74D', placeholder: 'e.g. Explain the causes of World War One...' }
+  ];
 
   return {
     getCountries,
@@ -369,6 +414,7 @@ window.CURRICULUM = (function () {
     getSubject,
     getTopics,
     DEFAULT_COUNTRY,
-    DEFAULT_EXAM
+    DEFAULT_EXAM,
+    NEUTRAL_EXAM
   };
 })();

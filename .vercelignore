@@ -1,0 +1,11 @@
+# Not part of the deployed web app (kept out so SQL, tests and generators are not publicly downloadable)
+tests
+gen
+scripts
+www
+android
+ios
+assets
+*.sql
+README.md
+capacitor.config.json
