@@ -114,16 +114,13 @@ end $$;
 do $$
 begin
   if to_regprocedure('public.reserve_usage(text,text,integer)') is not null then
-    revoke all on function public.reserve_usage(text,text,integer) from public, anon;
-    grant execute on function public.reserve_usage(text,text,integer) to authenticated;
+    revoke all on function public.reserve_usage(text,text,integer) from public, anon, authenticated; -- server-only since schema 14 (do not re-grant)
   end if;
   if to_regprocedure('public.commit_usage(uuid)') is not null then
-    revoke all on function public.commit_usage(uuid) from public, anon;
-    grant execute on function public.commit_usage(uuid) to authenticated;
+    revoke all on function public.commit_usage(uuid) from public, anon, authenticated; -- server-only since schema 14 (do not re-grant)
   end if;
   if to_regprocedure('public.release_usage(uuid)') is not null then
-    revoke all on function public.release_usage(uuid) from public, anon;
-    grant execute on function public.release_usage(uuid) to authenticated;
+    revoke all on function public.release_usage(uuid) from public, anon, authenticated; -- server-only since schema 14 (do not re-grant)
   end if;
   if to_regprocedure('public.get_usage(text,text)') is not null then
     revoke all on function public.get_usage(text,text) from public, anon;

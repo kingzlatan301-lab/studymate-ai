@@ -36,6 +36,8 @@ Set these in **Vercel → Project → Settings → Environment Variables**. Use 
 | `SUPABASE_SERVICE_ROLE_KEY` | Payment activation, webhook, YouTube cache writes | **Required** for payments | **Secret — bypasses RLS** | Server only. |
 | `PAYSTACK_SECRET_KEY` | Checkout, verification, webhook signature | **Required** for payments | **Secret** | `sk_test_…` in Preview/testing, `sk_live_…` only in Production at go-live. Must match the public key mode in `app-config.js` (see below). |
 | `YOUTUBE_API_KEY` | Real video thumbnails | Optional | **Secret** | Without it the app shows a plain "search on YouTube" link. |
+| `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (or Vercel KV's `KV_REST_API_URL` + `KV_REST_API_TOKEN`) | Shared rate limiting (`api/_lib/ratelimit.js`) | Recommended for production | **Secret** | Without it limits are per serverless instance (best-effort) and a warning is logged. |
+| `ACCOUNT_DELETION_RETENTION` | Enables in-app "Delete my account" (`api/account.js`). Only `delete_all` is implemented | Optional — **leave unset until you decide the payment-record retention policy** | Config | Unset = deletion refused with 503 and nothing is deleted; export always works. See `docs/GLOBAL-READINESS.md` §6. |
 | `APP_SHARED_SECRET` | Light check that calls come from your build | Optional | Secret-ish | Not a substitute for sign-in. If set, the client must send it. |
 
 **Not environment variables (in code, public by design):** the Supabase project URL and the Supabase **anon/publishable** key (`supabase-client.js`, `api/_lib/plan.js`) and the Paystack **public** key (`app-config.js`, `pk_test_…` today). Never put a `service_role`/`sk_` key in those files.
@@ -77,6 +79,8 @@ Evidence in this project: you ran schema 09 earlier and ran schema 11 (feedback)
 | `supabase-schema-10-pricing-integrity.sql` | Regional-pricing lock and abuse log | 09 | creates `profile_country_changes`, adds profile/payment columns + triggers |
 | `supabase-schema-11-answer-feedback.sql` | 👍/👎/report feedback | — | creates `answer_feedback` + RLS (own rows; append-only) — **no grants** (added by 12) |
 | **`supabase-schema-12-data-api-grants.sql`** | **NEW.** Explicit least-privilege Data API grants for every table, `youtube_cache` write lockdown, function EXECUTE hardening, default privileges for future tables | all above (tolerates missing tables) | grants/revokes only; drops 2 over-permissive policies; no data changes; atomic |
+| `supabase-schema-13-payment-providers.sql` | **OPTIONAL — run only when you implement a 2nd payment provider.** Adds `provider`/`provider_ref` columns + `apply_verified_payment_v3` (v2's guarantees + provider binding) | 09, 10, 12 | additive only; nothing in the app calls it yet; Paystack path (v2) untouched |
+| **`supabase-schema-14-server-only-usage.sql`** | **Closes the Free Mock Exam quota bypass.** Usage reserve/commit/release become `srv_*` functions executable by `service_role` only (the API passes the verified student id and owns the limits); the four old client-callable functions are revoked | 07, 09, 12 | function create/revoke only; no data changes; atomic; **ends with a self-check that aborts if any client role can still execute them** |
 
 **Why 12 matters:** from **30 Oct 2026** Supabase stops auto-exposing new `public` tables to the Data API; tables must be granted explicitly. Existing tables keep their legacy grants, which were broader than needed (RLS was the only guard) and which schemas 03–11 never made explicit. Schema 12 makes access explicit and minimal and behaves the same before and after the cut-over. It is **not** wired to the app by any code change — apply it in Supabase.
 
@@ -88,6 +92,17 @@ Evidence in this project: you ran schema 09 earlier and ran schema 11 (feedback)
 4. Smoke-test as a signed-in student: sign in, complete/open profile, ask a question, **Save** it, give 👍 feedback, open Presets, open Progress. A `42501 permission denied` means a grant is missing for that table — report which; do not re-grant broadly.
 5. Rollback for one table (temporary): `grant select, insert, update, delete on public.<table> to authenticated;` — RLS still keeps rows private.
 
+### Apply schema 14 (quota-bypass fix) — order matters
+
+The new API code calls the `srv_*` functions and **needs `SUPABASE_SERVICE_ROLE_KEY` set in Vercel** (already required for payments). The old code calls the functions that schema 14 revokes. So the two must go live together:
+
+1. Quiet moment, pre-launch is ideal. Run `supabase-schema-14-server-only-usage.sql` once (one transaction; it aborts and rolls back if its own privilege self-check fails).
+2. Immediately promote the matching API deployment. Between step 1 and 2 the app answers "Could not verify your usage right now" (fail-closed — nobody gets free AI).
+   *Zero-downtime alternative:* run only the part of the file above the line `PART B` first (adds the new functions, changes nothing for the old code), deploy, then run the rest.
+3. Run the read-only check at the bottom of the file: every row must show `can_execute = false` for `anon` and `authenticated`.
+4. Smoke test as a Free student: ask a question, run a Mock Exam (several questions), check the usage screen.
+5. **Rollback** (re-opens the bypass — only as an emergency): deploy the previous API build and `grant execute on function public.reserve_usage(text,text,integer), public.reserve_usage_run(text,text,integer,text,integer), public.commit_usage(uuid), public.release_usage(uuid) to authenticated;`
+
 ## Deploy, verify, roll back
 
 1. Push to a **Preview** deployment with **test** keys. Run the Paystack test-mode steps below.
@@ -98,12 +113,12 @@ Evidence in this project: you ran schema 09 earlier and ran schema 11 (feedback)
 
 ## Android / iOS (Capacitor)
 
-Config is `capacitor.config.json` (the old `capacitor_config.json` was **ignored by Capacitor** and has been renamed). `webDir` is `www`, produced by `npm run build` (`scripts/build-web.js`): it copies only the files `index.html` actually loads, and fails if one is missing — API code, SQL, tests and README are not packaged. App ID is `com.studymate.ai` — change it before your first store upload (it cannot change after publishing).
+Config is `capacitor.config.json` (the old `capacitor_config.json` was **ignored by Capacitor** and has been renamed). `webDir` is `www`, produced by `npm run build:web` (`scripts/build-web.js`): it copies only the files `index.html` actually loads, and fails if one is missing — API code, SQL, tests and README are not packaged. App ID is `com.studymate.ai` — change it before your first store upload (it cannot change after publishing).
 
 ```bash
 # 1. Set STUDYMATE_API_URL in app-config.js to your deployed https URL (no /api/ask suffix)
 npm install
-npm run build                  # writes www/
+npm run build:web              # writes www/
 npx cap add android            # once; creates android/
 npx @capacitor/assets generate --android   # launcher icons + splash from assets/ (needs network)
 npm run sync                   # build + cap sync
@@ -143,7 +158,7 @@ iOS: `npx cap add ios`, `npm run sync`, `npm run open:ios` on a Mac with Xcode. 
 - Run **schema 12** (new) and confirm **schema 10** is applied; run the VERIFY queries.
 - Confirm in Supabase that **Auth** email/redirect URLs and any CAPTCHA/rate limits match your production domain.
 - Vercel: set the variables above per environment; confirm the project plan's function timeout/body limits (request bodies over ~4.5 MB are rejected by Vercel; the app now shrinks photos and caps paper uploads to ~3 MB total to stay under it).
-- Rate limiting in `api/ask.js` is **in-memory per serverless instance (best-effort)**. The hard protections are the server-side quotas, sign-in, and body/text limits. Premium Ask AI is unlimited by design, so set **spend limits** at Anthropic and Google; consider a fair-use daily ceiling (a business-rule change — not applied).
+- Rate limiting now uses a shared Redis store when `UPSTASH_REDIS_REST_*`/`KV_REST_API_*` is set (see `docs/GLOBAL-READINESS.md`); otherwise it is per instance. The hard protections are the server-side quotas, sign-in, and body/text limits. Premium Ask AI is unlimited by design, so set **spend limits** at Anthropic and Google; consider a fair-use daily ceiling (a business-rule change — not applied).
 - No CSP header: the app relies on inline scripts/handlers; a nonce-based CSP is a larger refactor.
 - Android SDK/Gradle release build and a real-device test are not done.
 
@@ -196,3 +211,7 @@ schemas/triggers/RLS in Supabase and run one real Paystack test-mode purchase be
 `escapeHtml()` (text/attributes) or `escapeForInlineHandler()` (arguments inside `onclick="…"`).
 `tests/curriculum-security.test.js` scans `index.html` for regressions — if you add a new template that
 interpolates a topic, subject, file name, AI text or error message, wrap it, or that test will fail.
+
+## Global readiness
+
+See [`docs/GLOBAL-READINESS.md`](docs/GLOBAL-READINESS.md) for: the server-owned AI safety prompt, how to switch on shared rate limiting (Upstash/KV env vars), the log events to monitor, the UI-language approach (`i18n.js`, fr/es/pt first-pass strings need native review), the accurate curriculum scope (10 countries + International), the global payments plan (Paystack/NGN today; Stripe checklist, schema 13 and the Play Billing caveat), the export/delete-my-data flow (delete stays off until a retention policy is chosen), and the list of product decisions still open.

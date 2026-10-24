@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0F1B2D">
-<meta name="description" content="Your global AI exam prep tutor — WAEC, GCSE, SAT, IB and more.">
+<meta name="description" content="AI exam prep tutor for selected exams in 10 countries, plus IGCSE and IB worldwide — WAEC, GCSE, SAT, IB and more.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -1739,27 +1739,27 @@
   <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
     <button class="nav-item active" onclick="goScreen('home', this)">
       <div class="nav-icon">🏠</div>
-      Home
+      <span data-i18n="nav.home">Home</span>
     </button>
     <button class="nav-item" onclick="goScreen('ask', this)">
       <div class="nav-icon">🧠</div>
-      Ask AI
+      <span data-i18n="nav.ask">Ask AI</span>
     </button>
     <button class="nav-item" onclick="goScreen('practice', this)">
       <div class="nav-icon">🎯</div>
-      Practice
+      <span data-i18n="nav.practice">Practice</span>
     </button>
     <button class="nav-item" onclick="goScreen('history', this)">
       <div class="nav-icon">📋</div>
-      Saved
+      <span data-i18n="nav.saved">Saved</span>
     </button>
     <button class="nav-item" onclick="goScreen('progress', this)">
       <div class="nav-icon">📈</div>
-      Progress
+      <span data-i18n="nav.progress">Progress</span>
     </button>
     <button class="nav-item" onclick="goScreen('profile', this)">
       <div class="nav-icon">👤</div>
-      Profile
+      <span data-i18n="nav.profile">Profile</span>
     </button>
   </nav>
 </div>
@@ -1772,28 +1772,28 @@
 </div>
 
 <!-- PAYWALL MODAL -->
-<div class="modal-overlay" id="paywall-modal" onclick="closePaywall(event)" role="dialog" aria-modal="true" aria-label="Upgrade to Premium">
+<div class="modal-overlay" id="paywall-modal" onclick="closePaywall(event)" role="dialog" aria-modal="true" aria-label="Upgrade to Premium" data-i18n-attr="aria-label:pay.aria">
   <div class="modal" style="position:relative">
     <div class="modal-handle"></div>
-    <div class="modal-title">Unlock Premium ⚡</div>
-    <div class="modal-sub">Get unlimited access for less than a data subscription</div>
+    <div class="modal-title" data-i18n="pay.title">Unlock Premium ⚡</div>
+    <div class="modal-sub" data-i18n="pay.sub">Get unlimited access for less than a data subscription</div>
     <div class="pricing-card">
-      <div class="pricing-tag">Monthly Plan</div>
+      <div class="pricing-tag" data-i18n="pay.tag">Monthly Plan</div>
       <div class="pricing-price" id="pricing-price-display">… <span>/ month</span></div>
       <div class="pricing-features">
-        <div class="pricing-feature">Unlimited Ask AI questions</div>
-        <div class="pricing-feature">Unlimited Practice questions</div>
-        <div class="pricing-feature">Unlimited Mock Exams</div>
-        <div class="pricing-feature">Unlimited Flashcard decks</div>
-        <div class="pricing-feature">Unlimited Teach Me lessons</div>
-        <div class="pricing-feature">Unlimited AI-generated summaries</div>
-        <div class="pricing-feature">Custom app theme &amp; icon</div>
-        <div class="pricing-feature">CBT Mode — full JAMB UTME simulation (Nigeria)</div>
+        <div class="pricing-feature" data-i18n="pay.f.ask">Unlimited Ask AI questions</div>
+        <div class="pricing-feature" data-i18n="pay.f.practice">Unlimited Practice questions</div>
+        <div class="pricing-feature" data-i18n="pay.f.mock">Unlimited Mock Exams</div>
+        <div class="pricing-feature" data-i18n="pay.f.flash">Unlimited Flashcard decks</div>
+        <div class="pricing-feature" data-i18n="pay.f.teach">Unlimited Teach Me lessons</div>
+        <div class="pricing-feature" data-i18n="pay.f.summary">Unlimited AI-generated summaries</div>
+        <div class="pricing-feature" data-i18n="pay.f.theme">Custom app theme &amp; icon</div>
+        <div class="pricing-feature" data-i18n="pay.f.cbt">CBT Mode — full JAMB UTME simulation (Nigeria)</div>
       </div>
     </div>
-    <div id="pricing-country-box" style="margin:10px 0; font-size:12px; line-height:1.5; color:var(--muted);"></div>
-    <button class="subscribe-btn" id="subscribe-btn" onclick="startCheckout()">Subscribe Now</button>
-    <button class="modal-dismiss" onclick="closePaywall()">Maybe later</button>
+    <div id="pricing-country-box" style="margin:12px 0; font-size:14px; line-height:1.6; color:var(--muted);"></div>
+    <button class="subscribe-btn" id="subscribe-btn" onclick="startCheckout()" data-i18n="pay.subscribe">Subscribe Now</button>
+    <button class="modal-dismiss" onclick="closePaywall()" data-i18n="common.later">Maybe later</button>
   </div>
 </div>
 
@@ -1838,11 +1838,14 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://js.paystack.co/v2/inline.js"></script>
 <script src="app-config.js"></script>
+<script src="i18n.js"></script>
+<script>try{window.SMI18n&&SMI18n.setLocale(localStorage.getItem('sm_language')||'en')}catch(e){}</script>
 <script src="supabase-client.js"></script>
 <script src="curriculum-data.js"></script>
 <script src="weakness-profile.js"></script>
 <script src="weakness-sync.js"></script>
 <script src="bagley-context.js"></script>
+<script src="math-text.js"></script>
 <script src="personalization-art.js"></script>
 <script src="personalization-data.js"></script>
 <script src="personalization.js"></script>
@@ -2302,32 +2305,38 @@
     document.getElementById('onboarding-modal').classList.add('active');
   }
 
+  // Country count shown in copy is derived from the curriculum data so it can never drift ('intl' is not a country).
+  function scopeNoteText() {
+    return SMI18n.t('scope.note', { count: CURRICULUM.getCountries().filter(c => c.code !== 'intl').length });
+  }
+
   function renderOnboardingStep(step) {
     const content = document.getElementById('onboarding-content');
     if (!content) return;
 
     if (step === 'name') {
       content.innerHTML = `
-        <div class="modal-title">Hey, I'm Bagley 🤖</div>
-        <div class="modal-sub">Your unreasonably capable study assistant. I solve problems, keep receipts, and occasionally judge your handwriting. What should I call you?</div>
+        <div class="modal-title">${SMI18n.t('onb.name.title')}</div>
+        <div class="modal-sub">${SMI18n.t('onb.name.sub')}</div>
         <input
           type="text"
           id="onboarding-name-input"
-          placeholder="Enter your first name"
+          placeholder="${SMI18n.t('onb.name.placeholder')}"
           maxlength="30"
           onkeydown="if(event.key==='Enter') submitOnboardingName()"
           style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:14px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:16px; outline:none;"
         >
-        <button class="settings-save-btn" onclick="submitOnboardingName()">Nice to meet you 🚀</button>
-        <button class="modal-dismiss" onclick="skipOnboarding()">Skip for now</button>
+        <button class="settings-save-btn" onclick="submitOnboardingName()">${SMI18n.t('onb.name.cta')}</button>
+        <button class="modal-dismiss" onclick="skipOnboarding()">${SMI18n.t('common.skip')}</button>
       `;
       setTimeout(() => { const el = document.getElementById('onboarding-name-input'); if (el) el.focus(); }, 100);
 
     } else if (step === 'country') {
       const countries = CURRICULUM.getCountries();
       content.innerHTML = `
-        <div class="modal-title">Where are you studying, ${escapeHtml(state.userName) || 'friend'}? 🌍</div>
-        <div class="modal-sub">This decides which exam boards and subjects I'll show you.</div>
+        <div class="modal-title">${SMI18n.t('onb.country.title', { name: escapeHtml(state.userName) || SMI18n.t('onb.friend') })}</div>
+        <div class="modal-sub">${SMI18n.t('onb.country.sub')}</div>
+        <div class="modal-sub" style="font-size:12px; opacity:.85;">${scopeNoteText()}</div>
         <div class="option-list">
           ${countries.map(c => `
             <div class="option-item" onclick="selectOnboardingCountry('${c.code}')">
@@ -2336,13 +2345,13 @@
               </div>
             </div>`).join('')}
         </div>
-        <button class="modal-dismiss" onclick="skipOnboarding()">Skip for now</button>
+        <button class="modal-dismiss" onclick="skipOnboarding()">${SMI18n.t('common.skip')}</button>
       `;
 
     } else if (step === 'exam') {
       content.innerHTML = `
-        <div class="modal-title">Right, ${escapeHtml(state.userName) || 'mate'} 📋</div>
-        <div class="modal-sub">Which exam are we conquering?</div>
+        <div class="modal-title">${SMI18n.t('onb.exam.title', { name: escapeHtml(state.userName) || SMI18n.t('onb.mate') })}</div>
+        <div class="modal-sub">${SMI18n.t('onb.exam.sub')}</div>
         <div class="option-list">
           ${EXAM_BOARDS.map(b => `
             <div class="option-item" onclick="selectOnboardingExam('${b.code}')">
@@ -2352,7 +2361,7 @@
               </div>
             </div>`).join('')}
         </div>
-        <button class="modal-dismiss" onclick="skipOnboarding()">Skip for now</button>
+        <button class="modal-dismiss" onclick="skipOnboarding()">${SMI18n.t('common.skip')}</button>
       `;
 
     } else if (step === 'class') {
@@ -2360,21 +2369,21 @@
       const levelKind = (board && board.level === 'tertiary') ? 'tertiary' : 'secondary';
       const classOptions = CURRICULUM.getClassLevels(state.country, levelKind);
       content.innerHTML = `
-        <div class="modal-title">Noted 🎒</div>
-        <div class="modal-sub">What class/year are you in right now?</div>
+        <div class="modal-title">${SMI18n.t('onb.class.title')}</div>
+        <div class="modal-sub">${SMI18n.t('onb.class.sub')}</div>
         <div class="option-list">
           ${classOptions.map(c => `
             <div class="option-item" onclick="selectOnboardingClass('${escapeForInlineHandler(c)}')">
               <div class="toggle-label">${c}</div>
             </div>`).join('')}
         </div>
-        <button class="modal-dismiss" onclick="skipOnboarding()">Skip for now</button>
+        <button class="modal-dismiss" onclick="skipOnboarding()">${SMI18n.t('common.skip')}</button>
       `;
 
     } else if (step === 'routine') {
       content.innerHTML = `
-        <div class="modal-title">Last thing 📖</div>
-        <div class="modal-sub">Be honest — how do you usually read?</div>
+        <div class="modal-title">${SMI18n.t('onb.routine.title')}</div>
+        <div class="modal-sub">${SMI18n.t('onb.routine.sub')}</div>
         <div class="option-list">
           ${ROUTINE_OPTIONS.map(r => `
             <div class="option-item" onclick="selectOnboardingRoutine('${r.key}')">
@@ -2388,9 +2397,9 @@
 
     } else if (step === 'plan') {
       content.innerHTML = `
-        <div class="modal-title">Sorted. 🧠</div>
+        <div class="modal-title">${SMI18n.t('onb.plan.title')}</div>
         <div class="modal-sub" style="line-height:1.7;">${generateBagleyPlanMessage()}</div>
-        <button class="settings-save-btn" onclick="finishOnboarding()">Let's get to work 🚀</button>
+        <button class="settings-save-btn" onclick="finishOnboarding()">${SMI18n.t('onb.plan.cta')}</button>
       `;
     }
   }
@@ -2400,7 +2409,7 @@
     const name = input.value.trim().slice(0, 60);
     if (!name) {
       input.focus();
-      showToast('Go on, tell me your name.');
+      showToast(SMI18n.t('onb.name.required'));
       return;
     }
     state.userName = name;
@@ -2787,7 +2796,7 @@
   }
 
   async function askQuestion() {
-    if (state.subjectsUnavailable) { showToast('Subjects for this exam board are not available yet.'); return; }
+    if (state.subjectsUnavailable) { showToast(SMI18n.t('err.subjectsUnavailable')); return; }
     if (checkAndBlockIfLimited('askAI', 'questions')) return;
 
     const q = document.getElementById('question-input').value.trim();
@@ -3047,6 +3056,8 @@ ${languageInstruction}${examInstruction}
 Subject: ${subject}
 ${questionSection}
 
+${MATH_FORMAT_RULE}
+
 Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text):
 {
   "answer": "The concise final answer",
@@ -3103,15 +3114,22 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   // Returns the parsed answer object, or null if the AI's output isn't valid
   // JSON in the expected shape. Callers MUST handle null by telling the
   // student the AI did not answer — there is deliberately no fallback content.
-  function parseAnswer(text) {
-    try {
-      const clean = String(text || '').replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(clean);
-      if (!parsed || typeof parsed !== 'object' || typeof parsed.answer !== 'string' || !parsed.answer.trim()) return null;
-      return parsed;
-    } catch {
-      return null;
+  // Reads an AI reply that is one JSON value (Ask AI, lessons, flashcards). math-text.js repairs LaTeX backslashes
+  // that would break JSON.parse and converts LaTeX in every string to readable Unicode (newlines and code are
+  // left alone). If the module is somehow unavailable (e.g. a stale offline cache), fall back to the plain parse.
+  function parseAiJson(text) {
+    const t = String(text || '');
+    if (window.MathText) {
+      const v = MathText.parseJson(t);
+      return v === null || v === undefined ? null : MathText.cleanDeep(v);
     }
+    try { return JSON.parse(t.replace(/```json|```/g, '').trim()); } catch { return null; }
+  }
+
+  function parseAnswer(text) {
+    const parsed = parseAiJson(text);
+    if (!parsed || typeof parsed !== 'object' || typeof parsed.answer !== 'string' || !parsed.answer.trim()) return null;
+    return parsed;
   }
 
   // ── RICH TEXT FOR AI ANSWERS ──
@@ -3385,7 +3403,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   async function submitAnswerFeedback(kind, value) {
     const cur = state.currentAnswer, box = document.getElementById('feedback-container');
     if (!cur || !box) return;
-    if (!window.sbClient || !state.activeUserId) { showToast('Sign in to send feedback'); return; }
+    if (!window.sbClient || !state.activeUserId) { showToast(SMI18n.t('err.signinToFeedback')); return; }
     const kinds = { rating: ['helpful', 'not_helpful'], report: REPORT_REASONS };
     if (!kinds[kind] || kinds[kind].indexOf(value) === -1) return;
     const buttons = box.querySelectorAll('button');
@@ -3578,6 +3596,11 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     fetchNextPracticeQuestion();
   }
 
+  // Shared by the Practice and Mock Exam prompts. The UI shows plain text (no maths renderer), and LaTeX
+  // backslashes corrupt JSON strings (\f, \t, \b, \r become control characters), so the model is told to
+  // write readable Unicode maths. math-text.js repairs/rejects whatever still slips through.
+  const MATH_FORMAT_RULE = 'Write all mathematics in plain text using Unicode symbols, for example √ × ÷ ² ³ ½ π ≤ ≥ ≠ °. Write fractions like 3/4 or (x + 1)/2 and powers like x² or x^n. Do not use LaTeX, backslashes, or dollar signs around formulas anywhere in the JSON.';
+
   function buildPracticePrompt() {
     const lang = LANGUAGES.find(l => l.code === state.language) || LANGUAGES[0];
     const languageInstruction = lang.code === 'en' ? '' :
@@ -3597,6 +3620,8 @@ Difficulty: ${practiceSession.difficulty}${languageInstruction}${examInstruction
 
 Make exactly one option correct. Wrong options should reflect realistic student mistakes for this topic (not random nonsense) — if the student context above names a recent mistake pattern relevant to this question, prefer a distractor that matches it, so a wrong answer is diagnostic rather than random.
 
+${MATH_FORMAT_RULE}
+
 For each WRONG option, classify what picking it would most likely reveal about the student's error, using ONLY one of these exact labels: ${MISTAKE_TYPES.join(', ')}.
 
 Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text):
@@ -3611,16 +3636,14 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
 The distractorRationale array must be the same length as options, with null in the position matching correctIndex and a label in every other position.`;
   }
 
+  // Returns a validated, display-ready question or null (callers must handle null). The work is done by
+  // math-text.js (shared with the server): it repairs JSON-escape damage to LaTeX, converts LaTeX to readable
+  // Unicode, and REJECTS a question that is malformed or still corrupt instead of showing it.
   function parsePracticeQuestion(text) {
-    try {
-      const clean = text.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(clean);
-      if (!parsed.question || !Array.isArray(parsed.options) || parsed.options.length < 2 || typeof parsed.correctIndex !== 'number') return null;
-      if (!Array.isArray(parsed.distractorRationale)) parsed.distractorRationale = []; // tolerate older/partial responses — see mistakeLabelFor()
-      return parsed;
-    } catch {
-      return null;
-    }
+    if (!window.MathText) return null;
+    const res = MathText.parseQuestion(text);
+    if (!res.ok) console.warn('[question] rejected:', res.reason);
+    return res.ok ? res.question : null;
   }
 
   // Looks up the AI's pre-generated classification for a wrong answer —
@@ -3644,9 +3667,9 @@ The distractorRationale array must be the same length as options, with null in t
       </div>`;
 
     try {
-      const text = await callAskApi(buildPracticePrompt(), 'practice');
-      const parsed = text && parsePracticeQuestion(text);
-      if (!parsed) throw new Error('Could not generate a valid question');
+      const got = await requestValidQuestion(buildPracticePrompt, 'practice');
+      if (!got.question) throw got.error || new Error('Could not generate a valid question');
+      const parsed = got.question;
 
       practiceSession.currentQuestion = parsed;
       practiceSession.selectedIndex = null;
@@ -3861,6 +3884,8 @@ Difficulty: ${difficulty}${languageInstruction}${examInstruction}${avoidInstruct
 
 Cover a different topic within the subject than already used, so the exam samples broadly. Make exactly one option correct.
 
+${MATH_FORMAT_RULE}
+
 For each WRONG option, classify what picking it would most likely reveal about the student's error, using ONLY one of these exact labels: ${MISTAKE_TYPES.join(', ')}.
 
 Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text):
@@ -3875,12 +3900,46 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
 The distractorRationale array must be the same length as options, with null in the position matching correctIndex and a label in every other position.`;
   }
 
+  // ── Shared by Practice and Mock Exam: ask for ONE question, retrying a bounded number of times ──
+  // A reply that fails validation (malformed JSON, corrupt maths — see math-text.js) or a transient service
+  // error is retried; each failed Free attempt is released server-side, so retries don't spend allowance.
+  // Limit / sign-in / paywall errors are never retried (callAskApi has already handled them for the student).
+  const QUESTION_ATTEMPTS = 3;
+  const QUESTION_TERMINAL_CODES = ['FREE_LIMIT_REACHED', 'PREMIUM_REQUIRED', 'AUTH_REQUIRED'];
+  const QUESTION_RETRYABLE_CODES = ['PROVIDER_BUSY', 'EMPTY', 'NETWORK_ERROR', 'USAGE_CHECK_FAILED', 'MALFORMED_QUESTION'];
+  // → { question } on success, { terminal:true, error } for limit/auth errors, { error } when attempts ran out.
+  async function requestValidQuestion(buildPrompt, feature, extra) {
+    let lastErr = null;
+    for (let attempt = 1; attempt <= QUESTION_ATTEMPTS; attempt++) {
+      try {
+        const text = await callAskApi(buildPrompt(), feature, extra);
+        const parsed = parsePracticeQuestion(text);
+        if (parsed) return { question: parsed };
+        lastErr = new AiApiError('A question came back malformed.', 'MALFORMED_QUESTION');
+      } catch (err) {
+        console.error(err);
+        if (err && QUESTION_TERMINAL_CODES.includes(err.code)) return { terminal: true, error: err };
+        lastErr = err;
+        if (!(err && QUESTION_RETRYABLE_CODES.includes(err.code))) break; // not worth retrying
+      }
+      if (attempt < QUESTION_ATTEMPTS) await new Promise(r => setTimeout(r, 500 * attempt));
+    }
+    return { error: lastErr };
+  }
+
+  // Mock exam: one question that stays unusable is skipped (bounded); a service outage ends generation. Neither
+  // aborts an exam that already has usable questions. All calls of one exam share one run id, which the server
+  // caps at 40 calls (api/_lib/limits.js) — above the worst case here (10 questions × 3 attempts = 30).
+  const MOCK_MAX_SKIPPED_QUESTIONS = 2;
+  let pendingMockQuestions = null; // questions generated so far, for the "Start with N questions" button
+
   async function startMockExam() {
     if (checkAndBlockIfLimited('mockExam', 'mock exams')) return;
     const el = document.getElementById('mockexam-content');
     const total = mockExamSetup.numQuestions;
     const questions = [];
     const usedTopics = [];
+    let skipped = 0;
     // One run id for every question of this exam attempt = one Free use.
     // A retry of an attempt that failed before any question was produced
     // gets a fresh id (its slot was released server-side).
@@ -3892,24 +3951,39 @@ The distractorRationale array must be the same length as options, with null in t
           <div style="font-size:32px; margin-bottom:12px;">⏱️</div>
           <div style="font-size:13px;">Preparing your mock exam — question ${i + 1} of ${total}...</div>
         </div>`;
-      try {
-        const text = await callAskApi(buildMockQuestionPrompt(mockExamSetup.subject, mockExamSetup.difficulty, usedTopics), 'mockExam', { runId: mockExamRunId });
-        const parsed = text && parsePracticeQuestion(text);
-        if (!parsed) throw new Error('Invalid question');
+
+      const got = await requestValidQuestion(() => buildMockQuestionPrompt(mockExamSetup.subject, mockExamSetup.difficulty, usedTopics), 'mockExam', { runId: mockExamRunId });
+      if (got.terminal) return;
+      const parsed = got.question;
+      const lastErr = got.error;
+
+      if (parsed) {
         questions.push(parsed);
         if (parsed.topic) usedTopics.push(parsed.topic);
-      } catch (err) {
-        console.error(err);
-        if (err && (err.code === 'FREE_LIMIT_REACHED' || err.code === 'PREMIUM_REQUIRED' || err.code === 'AUTH_REQUIRED')) return;
-        el.innerHTML = `
-          <div style="text-align:center; padding:40px 20px;">
-            <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">${escapeHtml(err.message || "Couldn't finish generating the exam — the AI service may be unavailable.")} ${questions.length ? `Got ${questions.length} of ${total} questions.` : ''}</div>
-            ${questions.length >= 2 ? `<button class="action-btn" onclick="beginMockExam(${JSON.stringify(questions).replace(/"/g, '&quot;')})">Start with ${questions.length} Questions</button>` : ''}
-            <button class="modal-dismiss" onclick="renderMockExamSetup()">Back to Setup</button>
-          </div>`;
-        return;
+        continue;
       }
+      // Still no usable question: skip a malformed one (bounded), otherwise stop and offer what we have.
+      if (lastErr && lastErr.code === 'MALFORMED_QUESTION' && skipped < MOCK_MAX_SKIPPED_QUESTIONS) { skipped++; continue; }
+      pendingMockQuestions = questions.slice();
+      el.innerHTML = `
+        <div style="text-align:center; padding:40px 20px;">
+          <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">${escapeHtml((lastErr && lastErr.message) || "Couldn't finish generating the exam — the AI service may be unavailable.")} ${questions.length ? `Got ${questions.length} of ${total} questions.` : ''}</div>
+          ${questions.length >= 2 ? `<button class="action-btn" onclick="beginMockExam(pendingMockQuestions)">Start with ${questions.length} Questions</button>` : ''}
+          <button class="modal-dismiss" onclick="renderMockExamSetup()">Back to Setup</button>
+        </div>`;
+      return;
     }
+
+    if (questions.length < 2) { // skipped too many malformed questions to make a meaningful exam
+      pendingMockQuestions = null;
+      el.innerHTML = `
+        <div style="text-align:center; padding:40px 20px;">
+          <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">We couldn't generate enough valid questions this time. Please try again.</div>
+          <button class="modal-dismiss" onclick="renderMockExamSetup()">Back to Setup</button>
+        </div>`;
+      return;
+    }
+    if (questions.length < total) showToast(`Started with ${questions.length} questions — ${total - questions.length} couldn't be generated.`);
     beginMockExam(questions);
   }
 
@@ -4455,6 +4529,8 @@ ${topicLine}${languageInstruction}${examInstruction}${buildPersonalizationContex
 
 Each flashcard: front = a concise question or term, back = a clear, concise answer/definition (1-3 sentences). Vary difficulty slightly across the 8 cards. If the student context above names struggling topics, weight extra cards toward those rather than spreading evenly.
 
+${MATH_FORMAT_RULE}
+
 Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text):
 [
   {"front": "...", "back": "..."},
@@ -4463,13 +4539,10 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   }
 
   function parseFlashcards(text) {
-    try {
-      const clean = text.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(clean);
-      if (!Array.isArray(parsed)) return null;
-      const valid = parsed.filter(c => c && typeof c.front === 'string' && typeof c.back === 'string');
-      return valid.length ? valid : null;
-    } catch { return null; }
+    const parsed = parseAiJson(text);
+    if (!Array.isArray(parsed)) return null;
+    const valid = parsed.filter(c => c && typeof c.front === 'string' && typeof c.back === 'string');
+    return valid.length ? valid : null;
   }
 
   async function generateFlashcardDeck(subject, topic) {
@@ -4662,6 +4735,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     return `Create a complete guided lesson teaching "${topic}" in ${subject} to a student, progressing from basics to a short test.${languageInstruction}${examInstruction}${buildPersonalizationContext(subject)}
 If the student context above mentions a mistake pattern or a related struggling topic, address it directly in the explanation or examples — that's exactly the confusion this lesson should clear up.
 
+${MATH_FORMAT_RULE}
+
 Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text):
 {
   "concept": "1-2 sentence plain-language intro to what this topic actually is",
@@ -4678,13 +4753,11 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   }
 
   function parseLesson(text) {
-    try {
-      const clean = text.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(clean);
-      if (!parsed.concept || !parsed.explanation || !Array.isArray(parsed.examples)) return null;
-      if (!parsed.guidedQuestion || !parsed.independentQuestion || !Array.isArray(parsed.miniTest) || !parsed.miniTest.length) return null;
-      return parsed;
-    } catch { return null; }
+    const parsed = parseAiJson(text);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    if (!parsed.concept || !parsed.explanation || !Array.isArray(parsed.examples)) return null;
+    if (!parsed.guidedQuestion || !parsed.independentQuestion || !Array.isArray(parsed.miniTest) || !parsed.miniTest.length) return null;
+    return parsed;
   }
 
   async function startTeachMeLesson(subject, topic) {
@@ -5161,7 +5234,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
       return;
     }
     if (file.size > 2_000_000) {
-      showToast('File is too large (2MB limit)');
+      showToast(SMI18n.t('err.fileTooLarge'));
       e.target.value = '';
       return;
     }
@@ -5362,6 +5435,8 @@ Each question must have exactly one correct option among 4 choices. Cover a rang
 
 For each WRONG option in every question, classify what picking it would most likely reveal about the student's error, using ONLY one of these exact labels: ${MISTAKE_TYPES.join(', ')}.
 
+${MATH_FORMAT_RULE}
+
 Respond ONLY in this exact JSON format (a JSON array, no markdown, no backticks, no extra text):
 [
   {"question": "...", "options": ["A", "B", "C", "D"], "correctIndex": 0, "explanation": "...", "topic": "specific topic name", "distractorRationale": [null, "label", "label", "label"]}
@@ -5369,15 +5444,12 @@ Respond ONLY in this exact JSON format (a JSON array, no markdown, no backticks,
 Each distractorRationale array must be the same length as options, with null in the position matching correctIndex and a label (from the exact list above) in every other position. Return exactly ${count} items in the array.`;
   }
 
+  // CBT batch: each question goes through the same validation as Practice/Mock (repaired LaTeX, in-range
+  // correctIndex, distinct options); invalid ones are dropped individually rather than failing the whole batch.
   function parseQuestionBatch(text) {
-    try {
-      const clean = text.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(clean);
-      if (!Array.isArray(parsed)) return null;
-      const valid = parsed.filter(q => q && typeof q.question === 'string' && Array.isArray(q.options) && q.options.length >= 2 && typeof q.correctIndex === 'number');
-      valid.forEach(q => { if (!Array.isArray(q.distractorRationale)) q.distractorRationale = []; });
-      return valid.length ? valid : null;
-    } catch { return null; }
+    if (!window.MathText) return null;
+    const valid = MathText.parseQuestionList(text);
+    return valid.length ? valid : null;
   }
 
   async function startCbtGeneration() {
@@ -6313,7 +6385,7 @@ Each distractorRationale array must be the same length as options, with null in 
   // RLS: auth.uid() = user_id). The in-memory list is only a mirror of it.
   async function saveQuestion() {
     if (!state.currentAnswer) return;
-    if (!window.sbClient || !state.activeUserId) { showToast('Sign in to save questions'); return; }
+    if (!window.sbClient || !state.activeUserId) { showToast(SMI18n.t('err.signinToSave')); return; }
 
     const btn = document.getElementById('save-btn');
     const cur = state.currentAnswer;
@@ -6924,6 +6996,50 @@ Each distractorRationale array must be the same length as options, with null in 
       return new Intl.NumberFormat(getUserLocale(), { style: 'currency', currency: q.currency, maximumFractionDigits: 0 }).format(q.amountMinor / 100);
     } catch (_) { return (q.amountMinor / 100).toLocaleString(getUserLocale()) + ' ' + q.currency; }
   }
+  // ── PAYWALL DISPLAY CURRENCY — PRESENTATION ONLY ──
+  // The big price at the top is shown in the student's own kind of currency (₹ India, £ UK, € Europe, each African
+  // country's own, $ everywhere else). It is an ESTIMATE converted from the server's NGN quote. It is never sent
+  // anywhere: the charge, the expected-amount check and the Subscribe button all keep using the exact NGN quote
+  // (state.priceQuote), and the screen says so right under the price.
+  // Rates: ECB/Banque de France reference rates 16 Oct 2026 (EUR, GBP, INR, ZAR), Central Bank of Kenya via KRA
+  // 12–18 Oct 2026 (KES, GHS), USD/NGN market ≈ 1,330. They drift — if they are older than maxAgeDays the screen
+  // falls back to the exact naira price instead of showing a stale estimate. Review asOf + the numbers monthly.
+  const DISPLAY_RATES = {
+    asOf: '2026-10-16', maxAgeDays: 60, ngnPerUsd: 1330,
+    perUsd: { USD: 1, EUR: 0.8886, GBP: 0.7507, INR: 94.97, GHS: 11.75, KES: 129.9, ZAR: 16.43 } // units of currency per 1 USD
+  };
+  const DISPLAY_CURRENCY_BY_COUNTRY = { gb: 'GBP', in: 'INR', ng: 'NGN', gh: 'GHS', ke: 'KES', za: 'ZAR' };
+  // Euro display for European countries. (The country picker currently offers none besides the UK, so this only
+  // takes effect once European countries are added to it.)
+  const EUROPE_EURO_DISPLAY = ['ad', 'al', 'at', 'ba', 'be', 'bg', 'by', 'ch', 'cy', 'cz', 'de', 'dk', 'ee', 'es', 'fi', 'fr', 'gr', 'hr', 'hu', 'ie', 'is', 'it', 'li', 'lt', 'lu', 'lv', 'mc', 'md', 'me', 'mk', 'mt', 'nl', 'no', 'pl', 'pt', 'ro', 'rs', 'ru', 'se', 'si', 'sk', 'sm', 'ua', 'va', 'xk'];
+  const DISPLAY_WHOLE_UNIT_CURRENCIES = ['INR', 'GHS', 'KES', 'ZAR', 'NGN'];
+
+  function displayCurrencyFor(q) {
+    // same country the screen already names (locked region, else the SELECTED country, else the quote region)
+    const code = q.locked ? q.region : (q.selectedCountry && q.selectedCountry !== 'intl' ? q.selectedCountry : q.region);
+    if (EUROPE_EURO_DISPLAY.includes(code)) return 'EUR';
+    return DISPLAY_CURRENCY_BY_COUNTRY[code] || 'USD'; // North America, Australia, UAE, international, anything unlisted → dollars
+  }
+
+  // → { text, estimated } ; text is what goes in the big price. Falls back to the exact quote when no safe estimate exists.
+  function formatDisplayPrice(q, now) {
+    const exact = { text: formatQuote(q), estimated: false };
+    try {
+      const cur = displayCurrencyFor(q);
+      if (q.currency !== 'NGN' || cur === 'NGN') return exact;                       // already naira, or not an NGN quote: nothing to convert
+      const rate = DISPLAY_RATES.perUsd[cur];
+      const ageDays = ((now === undefined ? Date.now() : now) - Date.parse(DISPLAY_RATES.asOf)) / 864e5;
+      if (!rate || !(ageDays <= DISPLAY_RATES.maxAgeDays) || !(ageDays >= -1)) return exact; // unknown or stale rate → honest naira price
+      const value = (q.amountMinor / 100) / DISPLAY_RATES.ngnPerUsd * rate;
+      const whole = DISPLAY_WHOLE_UNIT_CURRENCIES.includes(cur);
+      const opts = { style: 'currency', currency: cur, currencyDisplay: 'narrowSymbol', minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 };
+      let text;
+      try { text = new Intl.NumberFormat(getUserLocale(), opts).format(value); }
+      catch (_) { text = new Intl.NumberFormat('en', { style: 'currency', currency: cur, minimumFractionDigits: opts.minimumFractionDigits, maximumFractionDigits: opts.maximumFractionDigits }).format(value); }
+      return { text, estimated: true };
+    } catch (_) { return exact; }
+  }
+
   function checkoutBase() { return getAiEndpoint().replace(/\/api\/ask$/, ''); }
 
   // Fetches the server's quote for the signed-in account (null on failure).
@@ -6975,19 +7091,34 @@ Each distractorRationale array must be the same length as options, with null in 
     const needsConfirm = !!q && q.confirmationRequired;
     const modeBad = paystackModeMismatch(q);
     const ready = !!q && (PAYSTACK_IS_TEST || PAYSTACK_IS_LIVE) && !blocked && !modeBad && (!needsConfirm || state.countryConfirmed);
-    if (priceEl) priceEl.innerHTML = q ? `${formatQuote(q)} <span>/ month</span>` : `… <span>/ month</span>`;
+    if (priceEl) {
+      if (!q) priceEl.innerHTML = `… <span>/ month</span>`;
+      else {
+        const shown = formatDisplayPrice(q);
+        // textContent-built (no HTML from data); the exact NGN charge is always stated when the big price is an estimate
+        priceEl.textContent = '';
+        priceEl.appendChild(document.createTextNode((shown.estimated ? '≈ ' : '') + shown.text + ' '));
+        const per = document.createElement('span'); per.textContent = '/ month'; priceEl.appendChild(per);
+        if (shown.estimated) {
+          const exact = document.createElement('div');
+          exact.style.cssText = 'font-family:inherit; font-size:12px; font-weight:500; color:var(--muted); margin-top:6px; line-height:1.5;';
+          exact.textContent = `Estimate. You will be charged ${formatQuote(q)} / month (Nigerian Naira) — the amount shown on the payment page.`;
+          priceEl.appendChild(exact);
+        }
+      }
+    }
 
     if (boxEl) {
       boxEl.textContent = '';
       if (q) {
         const line = document.createElement('div');
-        line.style.cssText = 'color:var(--text); font-weight:600;';
+        line.style.cssText = 'color:var(--text); font-weight:600; font-size:16px;';
         line.textContent = (q.locked ? 'Your pricing region: ' : 'Pricing country: ') + pricingCountryLabel(q);
         if (!q.locked && !blocked) {
           const link = document.createElement('button');
           link.type = 'button';
           link.textContent = 'Change';
-          link.style.cssText = 'margin-left:8px; background:none; border:none; color:var(--indigo,#8b85ff); text-decoration:underline; cursor:pointer; font-size:12px;';
+          link.style.cssText = 'margin-left:8px; background:none; border:none; color:var(--indigo,#8b85ff); text-decoration:underline; cursor:pointer; font-size:14px; padding:6px 4px;';
           link.onclick = changePricingCountry;
           line.appendChild(link);
         }
@@ -7001,9 +7132,10 @@ Each distractorRationale array must be the same length as options, with null in 
         } else if (needsConfirm) {
           add("We noticed your selected country differs from your detected region. Please confirm your country before continuing.");
           const lab = document.createElement('label');
-          lab.style.cssText = 'display:flex; gap:8px; align-items:flex-start; margin-top:6px; color:var(--text);';
+          lab.style.cssText = 'display:flex; gap:12px; align-items:flex-start; margin-top:10px; padding:14px; color:var(--text); font-size:15px; font-weight:500; line-height:1.5; border:1px solid var(--indigo,#8b85ff); border-radius:12px; background:rgba(108,99,255,0.10); cursor:pointer;';
           const cb = document.createElement('input');
           cb.type = 'checkbox'; cb.checked = !!state.countryConfirmed;
+          cb.style.cssText = 'width:24px; height:24px; flex:0 0 24px; margin:0; accent-color:var(--indigo,#8b85ff); cursor:pointer;';
           cb.onchange = () => onCountryConfirmToggle(cb.checked);
           const sp = document.createElement('span');
           sp.textContent = `I confirm that ${pricingCountryLabel(q).replace(/^\S+ /, '').replace(/ — international pricing$/, '')} is my country of residence.`;
@@ -7128,7 +7260,7 @@ Each distractorRationale array must be the same length as options, with null in 
     if (checkoutInFlight) return;
     if (!window.sbClient || !window.sbAuthSession) {
       closePaywall();
-      showToast('Sign in first — Premium needs an account so it can renew correctly');
+      showToast(SMI18n.t('err.signinFirst'));
       openAccountSettings();
       return;
     }
@@ -7137,12 +7269,12 @@ Each distractorRationale array must be the same length as options, with null in 
       return;
     }
     if (typeof PaystackPop === 'undefined') {
-      showToast('Payment service failed to load — check your connection and try again');
+      showToast(SMI18n.t('err.paymentLoad'));
       return;
     }
-    if (!state.priceQuote) { showToast('Loading your price — try again in a moment'); loadPriceQuote().then(renderPaywallPrice); return; }
+    if (!state.priceQuote) { showToast(SMI18n.t('err.priceLoading')); loadPriceQuote().then(renderPaywallPrice); return; }
     if (paystackModeMismatch(state.priceQuote)) {
-      showToast('Payments are temporarily unavailable (configuration problem). You have not been charged — please contact support.');
+      showToast(SMI18n.t('err.paymentConfig'));
       return;
     }
 
@@ -7201,7 +7333,7 @@ Each distractorRationale array must be the same length as options, with null in 
       });
     } catch (err) {
       console.error('startCheckout error', err);
-      showToast('Could not reach the server to start checkout — check your connection and try again.');
+      showToast(SMI18n.t('err.checkoutNetwork'));
     } finally {
       checkoutInFlight = false;
       renderPaywallPrice();
@@ -7391,19 +7523,19 @@ Each distractorRationale array must be the same length as options, with null in 
 
   function renderGateSignInForm() {
     renderAuthGateContent(`
-      <div class="modal-title">Welcome to StudyMate AI 🎓</div>
-      <div class="modal-sub">Sign in or create a free account to get started — this keeps your progress safe and is how Premium gets activated correctly.</div>
+      <div class="modal-title">${SMI18n.t('auth.title')}</div>
+      <div class="modal-sub">${SMI18n.t('auth.sub')}</div>
       <div id="auth-gate-error" style="display:none; font-size:12px; color:var(--danger); margin-bottom:10px;"></div>
-      <input type="email" id="auth-gate-email" aria-label="Email" placeholder="Email" autocomplete="email" style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:10px;">
-      <input type="password" id="auth-gate-password" aria-label="Password" placeholder="Password (min 6 characters)" autocomplete="current-password" style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:16px;">
-      <button class="ask-btn" id="auth-gate-signin-btn" onclick="gateSignIn()">Sign In</button>
-      <button class="action-btn" style="width:100%; margin-top:8px;" id="auth-gate-signup-btn" onclick="gateSignUp()">Create Account</button>
+      <input type="email" id="auth-gate-email" aria-label="${SMI18n.t('auth.email')}" placeholder="${SMI18n.t('auth.email')}" autocomplete="email" style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:10px;">
+      <input type="password" id="auth-gate-password" aria-label="${SMI18n.t('auth.password')}" placeholder="${SMI18n.t('auth.password')}" autocomplete="current-password" style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:16px;">
+      <button class="ask-btn" id="auth-gate-signin-btn" onclick="gateSignIn()">${SMI18n.t('auth.signin')}</button>
+      <button class="action-btn" style="width:100%; margin-top:8px;" id="auth-gate-signup-btn" onclick="gateSignUp()">${SMI18n.t('auth.signup')}</button>
       <div style="display:flex; align-items:center; gap:10px; margin:16px 0; color:var(--muted); font-size:11px;">
-        <div style="flex:1; height:1px; background:var(--border-1);"></div>OR<div style="flex:1; height:1px; background:var(--border-1);"></div>
+        <div style="flex:1; height:1px; background:var(--border-1);"></div>${SMI18n.t('auth.or')}<div style="flex:1; height:1px; background:var(--border-1);"></div>
       </div>
       <button class="action-btn" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="continueWithGoogle()">
         <span style="display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:var(--white); color:#111; font-size:12px; font-weight:700;">G</span>
-        Continue with Google
+        ${SMI18n.t('auth.google')}
       </button>
     `);
   }
@@ -7512,14 +7644,16 @@ Each distractorRationale array must be the same length as options, with null in 
         : `<button class="ask-btn" style="width:100%; margin-bottom:12px;" onclick="closeSettingsModal(); showPaywall();">⚡ Upgrade to Premium</button>`;
       openSettingsModal(`
         <div class="modal-title">Account 👤</div>
-        <div class="modal-sub">Signed in as ${email}</div>
+        <div class="modal-sub">Signed in as ${escapeHtml(email)}</div>
         ${premiumStatusHtml}
         <div style="background:var(--navy-card2); border-radius:10px; padding:12px 14px; margin-bottom:12px; font-size:12px; color:var(--muted); line-height:1.5;">
           New progress (Practice, Mock Exams, Flashcards, Teach Me, Ask AI check-ins) now syncs to the cloud automatically as it happens. This uploads whatever was already on this device <em>before</em> you signed in — safe to run more than once, it won't create duplicates.
         </div>
         <button class="action-btn" style="width:100%; margin-bottom:8px;" id="sync-progress-btn" onclick="runWeaknessMigration()">☁️ Upload My Existing Progress</button>
         <div id="sync-progress-status" style="font-size:11px; color:var(--muted); text-align:center; margin-bottom:12px;"></div>
+        <button class="action-btn" style="width:100%; margin-bottom:8px;" id="export-data-btn" onclick="exportMyData()">📦 ${SMI18n.t('acct.export')}</button>
         <button class="action-btn" style="width:100%;" onclick="signOutAccount()">Sign Out</button>
+        <button class="action-btn" style="width:100%; margin-top:16px; color:var(--danger); border-color:var(--danger);" onclick="openDeleteAccountModal()">🗑️ ${SMI18n.t('acct.delete')}</button>
       `);
       return;
     }
@@ -7567,7 +7701,7 @@ Each distractorRationale array must be the same length as options, with null in 
       if (btn) { btn.textContent = 'Sign In'; btn.style.pointerEvents = 'auto'; }
       return;
     }
-    showToast('Signed in');
+    showToast(SMI18n.t('toast.signedIn'));
     openAccountSettings(); // re-render to the signed-in view
   }
 
@@ -7599,9 +7733,71 @@ Each distractorRationale array must be the same length as options, with null in 
     }
   }
 
+  // ── DATA RIGHTS: export / delete (server: api/account.js — identity from the access token only) ──
+  function accountApiBase() { return getAiEndpoint().replace(/\/api\/ask$/, ''); }
+
+  async function exportMyData() {
+    if (!window.sbAuthSession) return;
+    const btn = document.getElementById('export-data-btn');
+    if (btn) { btn.disabled = true; btn.textContent = SMI18n.t('acct.exporting'); }
+    try {
+      const res = await fetch(`${accountApiBase()}/api/account?action=export`, {
+        headers: { Authorization: `Bearer ${window.sbAuthSession.access_token}` }, cache: 'no-store'
+      });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || SMI18n.t('acct.err.generic')); return; }
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement('a');
+      a.href = url; a.download = 'studymate-data-export.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      showToast(SMI18n.t('acct.exportReady'));
+    } catch (e) {
+      showToast(SMI18n.t('acct.err.generic'));
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '📦 ' + SMI18n.t('acct.export'); }
+    }
+  }
+
+  function openDeleteAccountModal() {
+    if (!window.sbAuthSession) return;
+    openSettingsModal(`
+      <div class="modal-title">${SMI18n.t('acct.deleteTitle')}</div>
+      <div class="modal-sub">${SMI18n.t('acct.deleteWarn')}</div>
+      <div id="delete-account-error" role="alert" style="display:none; font-size:12px; color:var(--danger); margin-bottom:10px;"></div>
+      <input type="text" id="delete-confirm-input" autocomplete="off" autocapitalize="characters" aria-label="${SMI18n.t('acct.deletePrompt')}" placeholder="${SMI18n.t('acct.deletePrompt')}" style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:12px;">
+      <button class="action-btn" style="width:100%; color:var(--danger); border-color:var(--danger);" id="delete-account-btn" onclick="confirmDeleteAccount()">${SMI18n.t('acct.deleteCta')}</button>
+      <button class="modal-dismiss" onclick="openAccountSettings()">${SMI18n.t('common.cancel')}</button>
+    `);
+  }
+
+  async function confirmDeleteAccount() {
+    if (!window.sbAuthSession) return;
+    const input = document.getElementById('delete-confirm-input');
+    const err = document.getElementById('delete-account-error');
+    const btn = document.getElementById('delete-account-btn');
+    const showErr = (m) => { if (err) { err.textContent = m; err.style.display = 'block'; } };
+    if (btn) btn.disabled = true;
+    try {
+      const res = await fetch(`${accountApiBase()}/api/account`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${window.sbAuthSession.access_token}` },
+        body: JSON.stringify({ action: 'delete', confirm: input ? input.value.trim() : '' })
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok || !d.ok) { showErr(d.error || SMI18n.t('acct.err.generic')); return; }
+      try { await window.sbClient.auth.signOut(); } catch (_) { /* the account is already gone server-side */ }
+      closeSettingsModal();
+      showToast(SMI18n.t('acct.deleted'));
+    } catch (e) {
+      showErr(SMI18n.t('acct.err.generic'));
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
   async function signOutAccount() {
     await window.sbClient.auth.signOut();
-    showToast('Signed out');
+    showToast(SMI18n.t('toast.signedOut'));
     openAccountSettings();
   }
 
@@ -7876,10 +8072,10 @@ Each distractorRationale array must be the same length as options, with null in 
         }
         if (window.SMPresets) { presetsPhotoOn(true); SMPresets.photoChanged(); showToast('Your photo is now your background'); }
       };
-      img.onerror = () => showToast('Could not read that photo — try again');
+      img.onerror = () => showToast(SMI18n.t('err.photoRead'));
       img.src = ev.target.result;
     };
-    reader.onerror = () => showToast('Could not read that photo — try again');
+    reader.onerror = () => showToast(SMI18n.t('err.photoRead'));
     reader.readAsDataURL(file);
   }
 
@@ -8087,7 +8283,7 @@ Each distractorRationale array must be the same length as options, with null in 
             <span class="option-check">✓</span>
           </div>`).join('')}
       </div>
-      <button class="settings-save-btn" onclick="closeSettingsModal()">Done</button>
+      <button class="settings-save-btn" onclick="closeSettingsModal()">${SMI18n.t('common.done')}</button>
     `);
   }
 
@@ -8098,7 +8294,9 @@ Each distractorRationale array must be the same length as options, with null in 
       el.classList.toggle('selected', el.dataset.code === code);
     });
     const lang = LANGUAGES.find(l => l.code === code);
-    showToast(`Answers will now explain in ${lang.label}`);
+    // Interface text follows the language only when a dictionary exists (i18n.js); else it stays English.
+    if (window.SMI18n) SMI18n.setLocale(code);
+    showToast(window.SMI18n ? SMI18n.t('toast.language', { language: lang.label }) : `Answers will now explain in ${lang.label}`);
   }
 
   // ── EXAM MODE ──
@@ -8107,8 +8305,9 @@ Each distractorRationale array must be the same length as options, with null in 
     const countries = CURRICULUM.getCountries();
     const currentCountry = countries.find(c => c.code === state.country);
     openSettingsModal(`
-      <div class="modal-title">Country & Exam Mode 📋</div>
-      <div class="modal-sub">Align answers with your country's exam board and marking style</div>
+      <div class="modal-title">${SMI18n.t('settings.country.title')}</div>
+      <div class="modal-sub">${SMI18n.t('settings.country.sub')}</div>
+      <div class="modal-sub" style="font-size:12px; opacity:.85;">${scopeNoteText()}</div>
       <div class="select-label" style="margin-bottom:8px;">Country</div>
       <select onchange="selectSettingsCountry(this.value)" aria-label="Country" style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:16px;">
         ${countries.map(c => `<option value="${c.code}" ${c.code === state.country ? 'selected' : ''}>${c.flag} ${c.name}</option>`).join('')}

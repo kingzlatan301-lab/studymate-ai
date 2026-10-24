@@ -1,7 +1,7 @@
 {
   "name": "StudyMate AI",
   "short_name": "StudyMate",
-  "description": "Your global AI exam prep tutor — WAEC, GCSE, SAT, IB and more.",
+  "description": "AI exam prep tutor for selected exams in 10 countries, plus IGCSE and IB worldwide — WAEC, GCSE, SAT, IB and more.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0F1B2D",

@@ -16,11 +16,11 @@
  *
  * The app still installs and opens offline from the last cached copy.
  */
-const CACHE_VERSION = 'v40-2026-10-09';
+const CACHE_VERSION = 'v44-2026-10-23';
 const CACHE = `studymate-${CACHE_VERSION}`;
 const APP_FILES = [
-  '/', '/index.html', '/app-config.js', '/supabase-client.js', '/weakness-sync.js',
-  '/curriculum-data.js', '/weakness-profile.js', '/bagley-context.js',
+  '/', '/index.html', '/app-config.js', '/i18n.js', '/supabase-client.js', '/weakness-sync.js',
+  '/curriculum-data.js', '/weakness-profile.js', '/bagley-context.js', '/math-text.js',
   '/personalization.css', '/personalization-art.js', '/personalization-data.js', '/personalization.js', '/manifest.webmanifest', '/icons/icon.svg',
   '/icons/icon-192.png', '/icons/icon-512.png', '/personalization-scenes.js'
 ];
