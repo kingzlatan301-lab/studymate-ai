@@ -60,11 +60,11 @@
  * - Never log req.body in production — it may contain a student's photo.
  * - APP_SHARED_SECRET is optional, lightweight abuse-deterrence (a header
  *   the client sends), not a substitute for the auth check below.
- * - Rate limiting below is in-memory, so it only holds within a single
- *   warm serverless instance and resets on cold start / across regions.
- *   Fine as a first line of defense, not sufficient alone at real scale —
- *   swap in a shared store (Upstash Redis, Vercel KV, etc.) before you
- *   have meaningful traffic.
+ * - Rate limiting uses the shared store in api/_lib/ratelimit.js (Upstash
+ *   Redis / Vercel KV). Without UPSTASH_/KV_ env vars it falls back to
+ *   per-instance memory (best-effort) and logs a warning in production.
+ * - Every provider call carries a server-owned safety/scope system prompt
+ *   (api/_lib/safety.js). Client prompts cannot remove it.
  */
 
 const { getAuthedUser, isPremium, periodKeyFor, reserveUsage, reserveUsageRun, commitUsage, releaseUsage } = require('./_lib/plan');
@@ -72,6 +72,9 @@ const { FREE_FEATURE_LIMITS, RUN_ID_RE, freeLimitMessage } = require('./_lib/lim
 const { isUsableOutput } = require('./_lib/validate-output');
 const { askGemini } = require('./_lib/gemini');
 const { buildContextBlock, applyToContent } = require('./_lib/bagley-context');
+const { systemPromptFor } = require('./_lib/safety');
+const { rateLimit, clientIp } = require('./_lib/ratelimit');
+const logger = require('./_lib/log');
 
 const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
 const MAX_TOKENS = 4096; // raised to support batch question generation (CBT Mode requests ~15 MCQs per call); safe to raise since Anthropic bills by tokens actually generated, not this ceiling
@@ -81,7 +84,14 @@ const MAX_TEXT_CHARS = 6000;          // combined text across all blocks
 const MAX_IMAGE_BASE64_CHARS = 4_200_000;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX_REQUESTS = 12; // per IP per window — a real student won't hit this
+// The whole request (auth, usage reservation, provider call, retry) must finish inside vercel.json's
+// 30s maxDuration for this route. Gemini gets a deadline 27s after the handler starts (3s margin).
+const GEMINI_DEADLINE_FROM_START_MS = 27_000;
+// Shared-store limits (api/_lib/ratelimit.js). The per-IP ceiling is generous on purpose: a whole
+// classroom can sit behind one school/mobile-carrier NAT address. The per-account limit is the
+// tighter, fairer one; the real spend limits are the Free quotas and provider spend caps.
+const RATE_LIMIT_IP_PER_MIN = 60;
+const RATE_LIMIT_USER_PER_MIN = 60;
 
 // Every Free-plan feature (all of them have a hard server-side counter in
 // limits.js). Anything NOT in this set is treated as Premium-only — e.g. 'cbtMode' (CBT Mode) and
@@ -91,37 +101,20 @@ const RATE_LIMIT_MAX_REQUESTS = 12; // per IP per window — a real student won'
 // Derived from limits.js so a feature can never be Free-routable without a limit.
 const FREE_ROUTABLE_FEATURES = new Set(Object.keys(FREE_FEATURE_LIMITS));
 
-// In-memory rate limiter (see note above on its limits).
-const hits = new Map();
-function isRateLimited(key) {
-  const now = Date.now();
-  const windowStart = now - RATE_LIMIT_WINDOW_MS;
-  const timestamps = (hits.get(key) || []).filter(t => t > windowStart);
-  timestamps.push(now);
-  hits.set(key, timestamps);
-  // Opportunistic cleanup so the map doesn't grow unbounded across a warm instance.
-  if (hits.size > 5000) {
-    for (const [k, v] of hits) {
-      if (!v.some(t => t > windowStart)) hits.delete(k);
-    }
-  }
-  return timestamps.length > RATE_LIMIT_MAX_REQUESTS;
-}
-
 // For the Ask AI feature the client requires a specific JSON answer shape
 // (see buildPrompt() in index.html). If the provider returns something that
 // can't be parsed into it, the student must NOT lose a question and must NOT
 // be shown a made-up answer — so it's treated exactly like a provider
 // failure: the reserved slot is released and the unavailable message is sent.
 function isValidAskAnswer(blocks) {
-  try {
-    const text = (blocks || []).map(b => (b && b.text) || '').join('');
-    const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
-    return !!parsed && typeof parsed === 'object' && typeof parsed.answer === 'string' && parsed.answer.trim().length > 0;
-  } catch (_) {
-    return false;
-  }
+  return isUsableOutput('askAI', blocks); // one definition (validate-output.js), shared with the Free path
 }
+
+// Features whose reply is ONE JSON value (the app JSON.parses it). Free/Gemini is asked for JSON mode on these;
+// studyMaterial is free text and is not. Premium replies for the structured ones get the same usability check
+// the Free path has, so a malformed Claude reply is a clean retryable error rather than a broken screen.
+const JSON_REPLY_FEATURES = new Set(['askAI', 'practice', 'mockExam', 'teachMe', 'flashcards']);
+const PREMIUM_CHECKED_FEATURES = new Set(['practice', 'mockExam', 'teachMe', 'flashcards']);
 
 function validateContent(content) {
   if (typeof content === 'string') {
@@ -171,6 +164,8 @@ async function callClaude(content) {
       body: JSON.stringify({
         model: ANTHROPIC_MODEL,
         max_tokens: MAX_TOKENS,
+        // Server-owned safety/scope prompt (api/_lib/safety.js); a client-sent `system` is ignored.
+        system: systemPromptFor(),
         messages: [{ role: 'user', content }]
       }),
       signal: controller.signal
@@ -199,6 +194,7 @@ async function callClaude(content) {
 }
 
 module.exports = async function handler(req, res) {
+  const handlerStartedAt = Date.now();
   // CORS: allows a Capacitor-packaged native app (different origin than the
   // deployed web app) to call this endpoint too.
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -223,8 +219,9 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
-  if (isRateLimited(ip)) {
+  const ipLimit = await rateLimit({ scope: 'ask-ip', id: clientIp(req), limit: RATE_LIMIT_IP_PER_MIN });
+  if (ipLimit.limited) {
+    logger.warn('rate_limited', { endpoint: 'ask', by: 'ip', backend: ipLimit.backend });
     res.status(429).json({ error: 'Too many requests — please wait a moment and try again.' });
     return;
   }
@@ -267,6 +264,13 @@ module.exports = async function handler(req, res) {
     return;
   }
 
+  const userLimit = await rateLimit({ scope: 'ask-user', id: user.id, limit: RATE_LIMIT_USER_PER_MIN });
+  if (userLimit.limited) {
+    logger.warn('rate_limited', { endpoint: 'ask', by: 'user', backend: userLimit.backend });
+    res.status(429).json({ error: 'Too many requests — please wait a moment and try again.' });
+    return;
+  }
+
   // ── AUTHORIZATION (Free vs Premium) ──
   const premium = await isPremium(accessToken, user.id);
 
@@ -288,7 +292,7 @@ module.exports = async function handler(req, res) {
     let reservation = null;
     if (feature === 'askAI') {
       try {
-        const r = await reserveUsage(accessToken, feature, periodKeyFor('daily'), 2147483647);
+        const r = await reserveUsage(user.id, feature, periodKeyFor('daily'), 2147483647);
         reservation = r.reservationId;
       } catch (err) {
         console.error('premium usage reserve failed (continuing)', err && err.message);
@@ -299,20 +303,25 @@ module.exports = async function handler(req, res) {
     if (result.ok && feature === 'askAI' && !isValidAskAnswer(result.content)) {
       console.error('Claude returned an unparseable askAI answer');
       result = { ok: false, status: 502 };
+    } else if (result.ok && PREMIUM_CHECKED_FEATURES.has(feature) && !isUsableOutput(feature, result.content)) {
+      console.error('Claude returned an unusable ' + feature + ' reply'); // no usage is recorded for these on Premium
+      result = { ok: false, status: 502 };
     }
     if (!result.ok) {
-      if (reservation) await releaseUsage(accessToken, reservation);
+      logger.error('provider_failed', { provider: 'claude', feature, status: result.status });
+      if (reservation) await releaseUsage(user.id, reservation);
       res.status(result.status || 502).json({ error: UNAVAILABLE_MSG, code: 'PROVIDER_BUSY' });
       return;
     }
 
+    logger.info('ai_call', { provider: 'claude', feature, tier: 'premium' });
     let usage;
     if (reservation) {
       try {
-        const c = await commitUsage(accessToken, reservation);
+        const c = await commitUsage(user.id, reservation);
         usage = { feature, count: c.committed, max: null, period: 'daily', total: c.total };
       } catch (err) {
-        console.error('premium usage commit failed', err && err.message);
+        logger.error('usage_commit_failed', { tier: 'premium', feature, msg: err && err.message });
       }
     }
     res.status(200).json({ content: result.content, ...(usage ? { usage } : {}) });
@@ -339,7 +348,7 @@ module.exports = async function handler(req, res) {
   //    committed run (Mock Exam question 2..N) reuses that run's slot.
   let reservation;
   try {
-    reservation = await reserveUsageRun(accessToken, feature, periodKeyFor(limitConfig.period), limitConfig.max, runId, limitConfig.maxCalls);
+    reservation = await reserveUsageRun(user.id, feature, periodKeyFor(limitConfig.period), limitConfig.max, runId, limitConfig.maxCalls);
   } catch (err) {
     console.error('usage reserve failed', err && err.message);
     res.status(502).json({ error: 'Could not verify your usage right now — please try again.', code: 'USAGE_CHECK_FAILED' });
@@ -363,17 +372,24 @@ module.exports = async function handler(req, res) {
 
   // 2. FREE → GEMINI (never Claude, never a fake answer).
   const freeContent = feature === 'askAI' ? personalizedContent : content;
-  let result = await askGemini(freeContent);
+  let result = await askGemini(freeContent, {
+    deadlineAt: handlerStartedAt + GEMINI_DEADLINE_FROM_START_MS,
+    json: JSON_REPLY_FEATURES.has(feature) // the reply is one JSON value → ask Gemini for valid JSON
+  });
   if (result.ok && !isUsableOutput(feature, result.content)) {
     console.error('[gemini] returned an unusable answer for', feature);
     result = { ok: false, reason: 'invalid_output' };
   }
   if (!result.ok) {
+    logger.error('provider_failed', {
+      provider: 'gemini', feature, reason: result.reason,
+      status: result.status, upstream_code: result.upstreamCode, attempts: result.attempts, elapsed_ms: result.elapsedMs
+    });
     // 3a. Provider failed → RELEASE the slot so the student keeps the
     //     allowance. A request that merely continued a committed run
     //     (reservation.reused) must NOT release: that slot belongs to the
     //     earlier, successful part of the run.
-    if (!reservation.reused) await releaseUsage(accessToken, reservation.reservationId);
+    if (!reservation.reused) await releaseUsage(user.id, reservation.reservationId);
     sendUnavailable();
     return;
   }
@@ -381,13 +397,14 @@ module.exports = async function handler(req, res) {
   // 3b. Provider answered → COMMIT (idempotent). One retry on a transient DB
   //     error; if it still fails the reservation expires (2 min) rather than
   //     the student losing an answer they already received.
+  logger.info('ai_call', { provider: 'gemini', feature, tier: 'free' });
   let committed = null;
   if (!reservation.reused) {
     for (let attempt = 0; attempt < 2 && !committed; attempt++) {
       try {
-        committed = await commitUsage(accessToken, reservation.reservationId);
+        committed = await commitUsage(user.id, reservation.reservationId);
       } catch (err) {
-        console.error('usage commit failed', attempt + 1, err && err.message);
+        logger.error('usage_commit_failed', { tier: 'free', feature, attempt: attempt + 1, msg: err && err.message });
       }
     }
   }

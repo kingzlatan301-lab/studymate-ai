@@ -36,22 +36,15 @@
  */
 const crypto = require('crypto');
 const { getAuthedUser } = require('./_lib/plan');
-const { resolvePricing } = require('./_lib/pricing');
+const { resolvePricing, SUPPORTED_PROVIDERS } = require('./_lib/pricing');
+const { rateLimit, clientIp } = require('./_lib/ratelimit');
+const logger = require('./_lib/log');
 const { assessPricingRisk } = require('./_lib/risk');
 const { getPricingSignals, createPaymentIntent, setAccessCode, markIntent, paystackMode } = require('./_lib/payments');
 
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX_REQUESTS = 10;
-const hits = new Map();
-function isRateLimited(key) {
-  const now = Date.now();
-  const windowStart = now - RATE_LIMIT_WINDOW_MS;
-  const ts = (hits.get(key) || []).filter(t => t > windowStart);
-  ts.push(now);
-  hits.set(key, ts);
-  if (hits.size > 5000) for (const [k, v] of hits) if (!v.some(t => t > windowStart)) hits.delete(k);
-  return ts.length > RATE_LIMIT_MAX_REQUESTS;
-}
+// Shared-store limits (api/_lib/ratelimit.js): tight per account, looser per IP (shared NATs).
+const RATE_LIMIT_USER_PER_MIN = 10;
+const RATE_LIMIT_IP_PER_MIN = 30;
 
 // What the browser may learn. Deliberately omits the IP country and the score.
 function quoteBody(pricing, risk, locked, selectedCountry) {
@@ -80,14 +73,16 @@ module.exports = async function handler(req, res) {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!paystackSecret || !serviceRoleKey) { res.status(503).json({ error: 'Payments are not configured on the server yet.' }); return; }
 
-  const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
-  if (isRateLimited(ip)) { res.status(429).json({ error: 'Too many requests — please wait a moment and try again.' }); return; }
+  const ipLimit = await rateLimit({ scope: 'checkout-ip', id: clientIp(req), limit: RATE_LIMIT_IP_PER_MIN });
+  if (ipLimit.limited) { logger.warn('rate_limited', { endpoint: 'checkout', by: 'ip', backend: ipLimit.backend }); res.status(429).json({ error: 'Too many requests — please wait a moment and try again.' }); return; }
 
   const authHeader = req.headers.authorization || '';
   const accessToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
   if (!accessToken) { res.status(401).json({ error: 'You must be signed in to subscribe.', code: 'AUTH_REQUIRED' }); return; }
   const user = await getAuthedUser(accessToken);
   if (!user || !user.email) { res.status(401).json({ error: 'Your session has expired — please sign in again.', code: 'AUTH_REQUIRED' }); return; }
+  const userLimit = await rateLimit({ scope: 'checkout-user', id: user.id, limit: RATE_LIMIT_USER_PER_MIN });
+  if (userLimit.limited) { logger.warn('rate_limited', { endpoint: 'checkout', by: 'user', backend: userLimit.backend }); res.status(429).json({ error: 'Too many requests — please wait a moment and try again.' }); return; }
 
   let signals;
   try {
@@ -112,6 +107,13 @@ module.exports = async function handler(req, res) {
 
   // ── POST ──
   const body = req.body || {};
+
+  // Fail closed: this endpoint only knows how to settle providers listed in SUPPORTED_PROVIDERS.
+  if (!SUPPORTED_PROVIDERS.includes(pricing.provider)) {
+    logger.error('provider_unsupported', { endpoint: 'checkout', provider: pricing.provider, region: pricing.region });
+    res.status(503).json({ error: 'Payments are not available for your region yet. You have not been charged.', code: 'PROVIDER_UNAVAILABLE' });
+    return;
+  }
 
   if (risk && risk.restricted) {
     res.status(429).json({

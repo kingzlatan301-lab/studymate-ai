@@ -40,6 +40,9 @@
 
 const { getAuthedUser, isPremium, periodKeyFor, reserveUsage, commitUsage, releaseUsage } = require('./_lib/plan');
 const { PREMIUM_CAPS } = require('./_lib/limits');
+const { systemPromptFor } = require('./_lib/safety');
+const { rateLimit, clientIp } = require('./_lib/ratelimit');
+const logger = require('./_lib/log');
 
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
 const MAX_TOKENS = 2048;
@@ -50,22 +53,8 @@ const MAX_DOC_BASE64_CHARS = 4_200_000;   // per document
 const MAX_TOTAL_BASE64_CHARS = 4_200_000; // across all documents
 const ALLOWED_DOC_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp']);
 const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX_REQUESTS = 5; // this is an expensive call — a tight per-IP window on top of the app-level weekly cap
-
-const hits = new Map();
-function isRateLimited(key) {
-  const now = Date.now();
-  const windowStart = now - RATE_LIMIT_WINDOW_MS;
-  const timestamps = (hits.get(key) || []).filter(t => t > windowStart);
-  timestamps.push(now);
-  hits.set(key, timestamps);
-  if (hits.size > 5000) {
-    for (const [k, v] of hits) {
-      if (!v.some(t => t > windowStart)) hits.delete(k);
-    }
-  }
-  return timestamps.length > RATE_LIMIT_MAX_REQUESTS;
-}
+const RATE_LIMIT_USER_PER_MIN = 5; // expensive call — tight per-account window (shared store) on top of the weekly cap
+const RATE_LIMIT_IP_PER_MIN = 20;   // looser per-IP backstop (shared NAT / school networks)
 
 function validateRequest(body) {
   if (!body || typeof body.subject !== 'string' || !body.subject.trim()) return 'Missing subject.';
@@ -132,8 +121,12 @@ module.exports = async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) { res.status(503).json({ error: 'AI service is not configured on the server yet.' }); return; }
 
-  const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
-  if (isRateLimited(ip)) {
+  const [ipLimit, userLimit] = await Promise.all([
+    rateLimit({ scope: 'paper-ip', id: clientIp(req), limit: RATE_LIMIT_IP_PER_MIN }),
+    rateLimit({ scope: 'paper-user', id: user.id, limit: RATE_LIMIT_USER_PER_MIN })
+  ]);
+  if (ipLimit.limited || userLimit.limited) {
+    logger.warn('rate_limited', { endpoint: 'analyze-paper', by: ipLimit.limited ? 'ip' : 'user', backend: userLimit.backend });
     res.status(429).json({ error: 'Too many requests — please wait a moment and try again.' });
     return;
   }
@@ -156,7 +149,7 @@ module.exports = async function handler(req, res) {
   const cap = PREMIUM_CAPS.pastPaper;
   let reservation;
   try {
-    reservation = await reserveUsage(accessToken, 'pastPaper', periodKeyFor(cap.period), cap.max);
+    reservation = await reserveUsage(user.id, 'pastPaper', periodKeyFor(cap.period), cap.max);
   } catch (err) {
     console.error('past-paper usage reserve failed', err && err.message);
     res.status(502).json({ error: 'Could not verify your usage right now — please try again.', code: 'USAGE_CHECK_FAILED' });
@@ -181,13 +174,14 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify({
         model: MODEL,
         max_tokens: MAX_TOKENS,
+        system: systemPromptFor('paperAnalysis'),
         messages: [{ role: 'user', content }]
       })
     });
 
     if (!upstream.ok) {
       console.error('Anthropic API error (analyze-paper)', upstream.status);
-      await releaseUsage(accessToken, reservation.reservationId);
+      await releaseUsage(user.id, reservation.reservationId);
       res.status(502).json({ error: 'Paper analysis is temporarily unavailable.' });
       return;
     }
@@ -195,16 +189,16 @@ module.exports = async function handler(req, res) {
     const data = await upstream.json();
     const hasText = Array.isArray(data.content) && data.content.some(c => c && c.type === 'text' && c.text && c.text.trim());
     if (!hasText) {
-      await releaseUsage(accessToken, reservation.reservationId);
+      await releaseUsage(user.id, reservation.reservationId);
       res.status(502).json({ error: 'Paper analysis is temporarily unavailable.' });
       return;
     }
-    try { await commitUsage(accessToken, reservation.reservationId); } catch (err) { console.error('past-paper commit failed', err && err.message); }
+    try { await commitUsage(user.id, reservation.reservationId); } catch (err) { console.error('past-paper commit failed', err && err.message); }
     res.status(200).json({ content: data.content });
 
   } catch (err) {
     console.error('analyze-paper proxy error', err && err.message);
-    await releaseUsage(accessToken, reservation.reservationId);
+    await releaseUsage(user.id, reservation.reservationId);
     res.status(502).json({ error: 'Paper analysis is temporarily unavailable.' });
   }
 };

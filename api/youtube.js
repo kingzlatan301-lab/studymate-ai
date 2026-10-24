@@ -40,6 +40,7 @@
  */
 
 const { getAuthedUser } = require('./_lib/plan');
+const { rateLimit, clientIp } = require('./_lib/ratelimit');
 
 const SUPABASE_URL = 'https://xlbnvmkcooueucuayrvy.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_QHKfnwzCQUW23sNWL2YUPg_H2-oxJ3g';
@@ -50,23 +51,8 @@ const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days — video results don'
 // buildVideoQuery) is responsible for only including a board the student
 // actually selected.
 const MAX_QUERY_CHARS = 200;
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX_REQUESTS = 20; // per IP per window — generous for normal browsing
+const RATE_LIMIT_IP_PER_MIN = 60; // shared store (api/_lib/ratelimit.js); generous because of shared school/carrier NATs
 
-const hits = new Map();
-function isRateLimited(key) {
-  const now = Date.now();
-  const windowStart = now - RATE_LIMIT_WINDOW_MS;
-  const timestamps = (hits.get(key) || []).filter(t => t > windowStart);
-  timestamps.push(now);
-  hits.set(key, timestamps);
-  if (hits.size > 5000) {
-    for (const [k, v] of hits) {
-      if (!v.some(t => t > windowStart)) hits.delete(k);
-    }
-  }
-  return timestamps.length > RATE_LIMIT_MAX_REQUESTS;
-}
 
 function normalizeQuery(q) {
   return q.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -131,8 +117,8 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
-  if (isRateLimited(ip)) {
+  const ipLimit = await rateLimit({ scope: 'youtube-ip', id: clientIp(req), limit: RATE_LIMIT_IP_PER_MIN });
+  if (ipLimit.limited) {
     res.status(429).json({ error: 'Too many requests — please wait a moment and try again.' });
     return;
   }

@@ -24,23 +24,16 @@
  * here, in checkout, and in the webhook; never reaches the browser).
  */
 const { getAuthedUser } = require('./_lib/plan');
+const { rateLimit, clientIp } = require('./_lib/ratelimit');
+const logger = require('./_lib/log');
 const { validateTransaction, checkAgainstIntent, getIntent, markIntent, applyVerifiedPayment, modeMismatch } = require('./_lib/payments');
 
 const MSG_PENDING = 'Payment is still being confirmed. Your Premium access will activate automatically once Paystack confirms it.';
 const MSG_FAILED = "Payment wasn't completed. No Premium access was activated.";
 
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX_REQUESTS = 10;
-const hits = new Map();
-function isRateLimited(key) {
-  const now = Date.now();
-  const windowStart = now - RATE_LIMIT_WINDOW_MS;
-  const timestamps = (hits.get(key) || []).filter(t => t > windowStart);
-  timestamps.push(now);
-  hits.set(key, timestamps);
-  if (hits.size > 5000) for (const [k, v] of hits) if (!v.some(t => t > windowStart)) hits.delete(k);
-  return timestamps.length > RATE_LIMIT_MAX_REQUESTS;
-}
+// Shared-store limits (api/_lib/ratelimit.js): tight per account, looser per IP (shared NATs).
+const RATE_LIMIT_USER_PER_MIN = 10;
+const RATE_LIMIT_IP_PER_MIN = 30;
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -51,8 +44,8 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed.' }); return; }
 
-  const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
-  if (isRateLimited(ip)) { res.status(429).json({ error: 'Too many requests — please wait a moment and try again.' }); return; }
+  const ipLimit = await rateLimit({ scope: 'verify-ip', id: clientIp(req), limit: RATE_LIMIT_IP_PER_MIN });
+  if (ipLimit.limited) { logger.warn('rate_limited', { endpoint: 'verify-payment', by: 'ip', backend: ipLimit.backend }); res.status(429).json({ error: 'Too many requests — please wait a moment and try again.' }); return; }
 
   const paystackSecret = process.env.PAYSTACK_SECRET_KEY;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -69,6 +62,8 @@ module.exports = async function handler(req, res) {
     const user = await getAuthedUser(accessToken);
     if (!user) { res.status(401).json({ error: 'Your session has expired — please sign in again.' }); return; }
     const userId = user.id;
+    const userLimit = await rateLimit({ scope: 'verify-user', id: userId, limit: RATE_LIMIT_USER_PER_MIN });
+    if (userLimit.limited) { logger.warn('rate_limited', { endpoint: 'verify-payment', by: 'user', backend: userLimit.backend }); res.status(429).json({ error: 'Too many requests — please wait a moment and try again.' }); return; }
 
     // 2. WHAT — the server-created intent. Unknown reference, or someone
     // else's, never reaches Paystack and never grants anything.
