@@ -8,8 +8,9 @@
     "android": "npm run build:web && cap sync android && cap run android",
     "open:android": "cap open android",
     "open:ios": "cap open ios",
-    "test": "node tests/bagley-context.test.js && node --test tests/pricing-integrity.test.js tests/quota.test.js tests/curriculum-security.test.js tests/audit-regressions.test.js tests/safety-ratelimit.test.js tests/i18n.test.js tests/payment-providers.test.js tests/account.test.js tests/gemini-reliability.test.js tests/math-format.test.js tests/usage-server-only.test.js tests/paywall-display.test.js",
-    "build:web": "node scripts/build-web.js"
+    "test": "node tests/bagley-context.test.js && node --test tests/api-load.test.js tests/pricing-integrity.test.js tests/quota.test.js tests/curriculum-security.test.js tests/audit-regressions.test.js tests/safety-ratelimit.test.js tests/i18n.test.js tests/payment-providers.test.js tests/account.test.js tests/gemini-reliability.test.js tests/math-format.test.js tests/usage-server-only.test.js tests/paywall-display.test.js tests/formula-book.test.js tests/features-logic.test.js",
+    "build:web": "node scripts/build-web.js",
+    "test:e2e": "node --test tests/e2e/ui.e2e.test.js"
   },
   "dependencies": {
     "@capacitor/core": "^6.0.0",

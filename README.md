@@ -81,6 +81,9 @@ Evidence in this project: you ran schema 09 earlier and ran schema 11 (feedback)
 | **`supabase-schema-12-data-api-grants.sql`** | **NEW.** Explicit least-privilege Data API grants for every table, `youtube_cache` write lockdown, function EXECUTE hardening, default privileges for future tables | all above (tolerates missing tables) | grants/revokes only; drops 2 over-permissive policies; no data changes; atomic |
 | `supabase-schema-13-payment-providers.sql` | **OPTIONAL — run only when you implement a 2nd payment provider.** Adds `provider`/`provider_ref` columns + `apply_verified_payment_v3` (v2's guarantees + provider binding) | 09, 10, 12 | additive only; nothing in the app calls it yet; Paystack path (v2) untouched |
 | **`supabase-schema-14-server-only-usage.sql`** | **Closes the Free Mock Exam quota bypass.** Usage reserve/commit/release become `srv_*` functions executable by `service_role` only (the API passes the verified student id and owns the limits); the four old client-callable functions are revoked | 07, 09, 12 | function create/revoke only; no data changes; atomic; **ends with a self-check that aborts if any client role can still execute them** |
+| `supabase-schema-15-study-sessions.sql` | **Six-feature release.** Exam & Practice History + saved-question notes. Optional: until applied the app keeps history/notes on-device | 07, 12 | creates `study_sessions` (**append-only**: RLS own-row SELECT + INSERT only; students get column-limited INSERT, no UPDATE/DELETE, so scores can't be rewritten; `service_role` granted explicitly for export/delete); adds `saved_questions.note` with an own-row UPDATE policy and a column grant limited to `note`; idempotent, one transaction, **self-check aborts on any wrong permission** |
+| `supabase-schema-16-index-hygiene.sql` | Adds the only two missing `user_id` indexes (`past_paper_analyses`, `payments`) for per-student reads and fast account-delete cascades. No data/grant/policy changes | 05, 07 | two `create index if not exists`; idempotent; self-check |
+| `supabase-schema-17-final-verification.sql` | **Read-only final audit.** Fails with a full list if RLS is off, anon has access, students can write server-controlled tables, a policy lets everyone write, client roles can call usage/payment functions, `srv_*` functions are missing, a `SECURITY DEFINER` function lacks `search_path`, or `service_role` can't reach a table | all | creates nothing; run last, re-run after any migration |
 
 **Why 12 matters:** from **30 Oct 2026** Supabase stops auto-exposing new `public` tables to the Data API; tables must be granted explicitly. Existing tables keep their legacy grants, which were broader than needed (RLS was the only guard) and which schemas 03–11 never made explicit. Schema 12 makes access explicit and minimal and behaves the same before and after the cut-over. It is **not** wired to the app by any code change — apply it in Supabase.
 
@@ -149,7 +152,7 @@ iOS: `npx cap add ios`, `npm run sync`, `npm run open:ios` on a Mac with Xcode. 
 - [ ] Vercel **Production** only: `PAYSTACK_SECRET_KEY=sk_live_…`. Preview stays on `sk_test_`.
 - [ ] `app-config.js`: replace `pk_test_…` with `pk_live_…` (public key) and redeploy.
 - [ ] Paystack **live** webhook URL → `https://<production-domain>/api/paystack-webhook`.
-- [ ] Re-verify the Paystack currencies enabled on your account match the NGN charge.
+- [ ] Confirm NGN **and USD** are both enabled on your Paystack account (Nigeria is charged in NGN, every other region in USD).
 - [ ] Make one real low-value payment yourself, confirm Premium + the `payments` row, then refund/handle it in the dashboard.
 - [ ] Decide your refund policy (see above).
 

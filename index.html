@@ -20,6 +20,7 @@
     --indigo-glow: rgba(108,99,255,0.25);
     --mint: #00D4AA;
     --mint-glow: rgba(0,212,170,0.15);
+    --indigo-rgb: 108,99,255; --mint-rgb: 0,212,170;
     --white: #F8F9FF;
     --muted: #8899AA;
     --danger: #FF6B6B;
@@ -148,7 +149,7 @@
   .plan-badge {
     background: var(--indigo-glow);
     border: 1px solid var(--indigo);
-    color: #a09fff;
+    color: var(--indigo);
     font-size: 11px;
     font-weight: 600;
     padding: 4px 10px;
@@ -211,107 +212,82 @@
   }
 
   /* ── HOME SCREEN ── */
-  .greeting {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 4px;
-  }
+  /* Home design tokens: sm-c1/c2 follow the active theme accent (set by the preset engine on :root);
+     c3-c6 are fixed decorative subject/status hues, with deeper variants in light mode for contrast. */
+  :root { --sm-c1: var(--indigo); --sm-c2: var(--mint); --sm-c3: #4F9DFF; --sm-c4: #FF9F43; --sm-c5: #FF7A8A; --sm-c6: #B38BFF; }
+  [data-theme="light"] { --sm-c3: #1D6FD8; --sm-c4: #B85F00; --sm-c5: #CF3F55; --sm-c6: #6D43CC; }
 
-  .greeting-name {
-    font-family: 'Poppins', sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 20px;
-  }
+  #screen-home { padding: 12px 16px 96px; }
+  .home-bagley-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .home-hello { min-width: 0; }
+  .greeting { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+  .greeting-name { font-family: 'Poppins', sans-serif; font-size: 19px; line-height: 1.2; font-weight: 700; margin-bottom: 0; }
+  .home-bagley-slot { flex: none; cursor: pointer; }
 
-  .quota-card {
-    background: linear-gradient(135deg, #1a2b42, #1e3352);
-    border: 1px solid rgba(108,99,255,0.3);
-    border-radius: var(--radius);
-    padding: 18px;
-    margin-bottom: 20px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .quota-card::after {
-    content: '';
-    position: absolute;
-    top: -30px; right: -30px;
-    width: 120px; height: 120px;
-    background: var(--indigo-glow);
-    border-radius: 50%;
-    pointer-events: none;
-  }
-
-  .quota-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-  .quota-bar-wrap { background: var(--border-08); border-radius: 20px; height: 8px; margin: 8px 0 10px; }
-  .quota-bar { height: 8px; border-radius: 20px; background: linear-gradient(90deg, var(--indigo), var(--mint)); transition: width 0.5s ease; }
-  .quota-count { font-weight: 600; font-size: 13px; }
+  .quota-card { background: var(--navy-card); border: 1px solid var(--border-08); border-radius: 14px; padding: 10px 12px; margin-bottom: 10px; }
+  .qc-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .quota-bar-wrap { background: var(--border-08); border-radius: 20px; height: 6px; margin-top: 8px; overflow: hidden; }
+  .quota-bar { height: 6px; border-radius: 20px; background: linear-gradient(90deg, var(--indigo), var(--mint)); transition: width 0.5s ease; }
+  .quota-count { font-weight: 600; font-size: 12.5px; }
   .quota-count span { color: var(--mint); }
+  .upgrade-btn { flex: none; background: linear-gradient(135deg, var(--sm-fill-a, var(--indigo)), var(--sm-fill-b, var(--mint))); border: none; border-radius: 9px; color: var(--sm-on-accent, #fff); font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 12px; padding: 7px 12px; min-height: 32px; cursor: pointer; transition: opacity .2s, transform .1s; }
+  .upgrade-btn:hover { opacity: .9; }
+  .upgrade-btn:active { transform: scale(.97); }
 
-  .upgrade-btn {
-    display: block;
-    width: 100%;
-    margin-top: 10px;
-    background: linear-gradient(135deg, var(--sm-fill-a, var(--indigo)), var(--sm-fill-b, #8B80FF));
-    border: none;
-    border-radius: 10px;
-    color: white;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    font-size: 13px;
-    padding: 10px;
-    cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s;
-  }
+  .section-title { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 14px; margin: 14px 0 8px; color: var(--white); }
 
-  .upgrade-btn:hover { opacity: 0.9; }
-  .upgrade-btn:active { transform: scale(0.98); }
+  /* shared icon chip: tinted by --ci without color-mix (older Android WebViews) */
+  .ic { position: relative; flex: none; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; line-height: 1; }
+  .ic::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--ci, var(--indigo)); opacity: .18; }
+  .tt { min-width: 0; display: flex; flex-direction: column; text-align: left; }
+  .tt b { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 13px; line-height: 1.25; color: var(--white); }
+  .tt small { font-size: 11px; line-height: 1.3; color: var(--muted); margin-top: 1px; }
+  .tt-badge { font-size: 10px; font-weight: 600; color: var(--muted); margin-top: 3px; }
+  .tt-badge:empty { display: none; }
+  .chev { margin-left: auto; flex: none; color: var(--muted); font-size: 20px; line-height: 1; }
 
-  .section-title {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 700;
-    font-size: 16px;
-    margin-bottom: 14px;
-    color: var(--white);
-  }
+  .home-progress { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; background: var(--navy-card); border: 1px solid var(--border-08); border-radius: 14px; padding: 10px 6px; margin-bottom: 10px; }
+  .hp-item { text-align: center; min-width: 0; }
+  .hp-num { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 17px; line-height: 1.1; color: var(--ci, var(--indigo)); }
+  .hp-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .home-progress.hp-empty { display: block; padding: 10px 12px; font-size: 12px; color: var(--muted); text-align: left; }
+  .home-resume { display: flex; align-items: center; gap: 10px; width: 100%; background: var(--navy-card); border: 1px solid var(--indigo); border-radius: 14px; padding: 9px 12px; margin-bottom: 10px; cursor: pointer; font: inherit; color: inherit; }
 
-  .subjects-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-bottom: 24px;
-  }
+  .ask-bagley { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; margin-bottom: 4px; border-radius: 16px; cursor: pointer; font: inherit; color: inherit; text-align: left;
+    background: linear-gradient(135deg, var(--indigo-glow), var(--mint-glow)), var(--navy-card); border: 1px solid var(--indigo); transition: transform .15s; }
+  .ask-bagley:active { transform: scale(.985); }
+  .ab-orb { flex: none; width: 40px; height: 40px; }
+  .ask-bagley .tt b { font-size: 14.5px; }
 
-  .subject-card {
-    background: var(--navy-card);
-    border: 1px solid var(--border-07);
-    border-radius: var(--radius);
-    padding: 18px 16px;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
+  .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tool-tile { display: flex; align-items: flex-start; gap: 9px; padding: 10px; min-height: 64px; background: var(--navy-card); border: 1px solid var(--border-08); border-radius: 14px; cursor: pointer; font: inherit; color: inherit; transition: transform .15s, border-color .2s; }
+  .tool-tile:hover { border-color: var(--ci, var(--indigo)); }
+  .tool-tile:active { transform: scale(.975); }
 
-  .subject-card:hover { border-color: var(--indigo); transform: translateY(-2px); }
-  .subject-card:active { transform: scale(0.97); }
+  .more-list { background: var(--navy-card); border: 1px solid var(--border-08); border-radius: 14px; overflow: hidden; }
+  .more-list > * + * { border-top: 1px solid var(--border-05); }
+  .more-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; background: none; border: none; cursor: pointer; font: inherit; color: inherit; }
+  .more-row .ic { width: 30px; height: 30px; font-size: 15px; border-radius: 9px; }
+  .more-row .tt small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .more-row:active { background: var(--border-05); }
+  .pm { font-style: normal; font-size: 9px; font-weight: 700; color: var(--gold); margin-left: 4px; white-space: nowrap; }
+  [data-theme="light"] .pm { color: #8a5a00; }
 
-  .subject-emoji { font-size: 28px; margin-bottom: 8px; }
-  .subject-name { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 13px; }
-  .subject-count { font-size: 11px; color: var(--muted); margin-top: 2px; }
-
-  .subject-card.math { border-color: rgba(108,99,255,0.3); }
-  .subject-card.physics { border-color: rgba(0,212,170,0.2); }
-  .subject-card.chem { border-color: rgba(255,209,102,0.2); }
-  .subject-card.bio { border-color: rgba(100,220,100,0.2); }
+  .subjects-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .subject-card { display: flex; align-items: center; gap: 9px; background: var(--navy-card); border: 1px solid var(--border-08); border-radius: 14px; padding: 9px 10px; cursor: pointer; transition: transform .15s, border-color .2s; position: relative; min-width: 0; }
+  .subject-card:hover { border-color: var(--ci, var(--indigo)); }
+  .subject-card:active { transform: scale(.97); }
+  .subject-emoji { position: relative; flex: none; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; margin: 0; }
+  .subject-emoji::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--ci, var(--indigo)); opacity: .18; }
+  .subject-meta { min-width: 0; }
+  .subject-name { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 12.5px; line-height: 1.25; }
+  .subject-count { font-size: 10.5px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* ── ASK SCREEN ── */
   .upload-zone {
-    border: 2px dashed var(--subject-accent-border, rgba(108,99,255,0.4));
+    border: 2px dashed var(--subject-accent-border, rgba(var(--indigo-rgb),0.4));
     border-radius: var(--radius);
-    background: var(--subject-accent-soft, rgba(108,99,255,0.05));
+    background: var(--subject-accent-soft, rgba(var(--indigo-rgb),0.05));
     padding: 40px 20px;
     text-align: center;
     cursor: pointer;
@@ -320,7 +296,7 @@
     position: relative;
   }
 
-  .upload-zone:hover { border-color: var(--subject-accent, var(--indigo)); background: var(--subject-accent-soft, rgba(108,99,255,0.1)); }
+  .upload-zone:hover { border-color: var(--subject-accent, var(--indigo)); background: var(--subject-accent-soft, rgba(var(--indigo-rgb),0.1)); }
 
   .upload-icon { font-size: 48px; margin-bottom: 12px; }
   .upload-title { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 16px; margin-bottom: 6px; }
@@ -421,8 +397,8 @@
     border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
     font-size: 22px;
-    background: var(--subject-accent-soft, rgba(108,99,255,0.18));
-    border: 1px solid var(--subject-accent-border, rgba(108,99,255,0.45));
+    background: var(--subject-accent-soft, rgba(var(--indigo-rgb),0.18));
+    border: 1px solid var(--subject-accent-border, rgba(var(--indigo-rgb),0.45));
     transition: all 0.2s;
   }
   .ask-header-title { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 17px; }
@@ -447,7 +423,7 @@
   .brain-ring {
     width: 100px; height: 100px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(108,99,255,0.3), transparent 70%);
+    background: radial-gradient(circle, rgba(var(--indigo-rgb),0.3), transparent 70%);
     display: flex; align-items: center; justify-content: center;
     font-size: 44px;
     animation: brainPulse 1.4s ease-in-out infinite;
@@ -483,7 +459,7 @@
 
   .answer-card {
     background: var(--navy-card);
-    border: 1px solid rgba(0,212,170,0.2);
+    border: 1px solid rgba(var(--mint-rgb),0.2);
     border-radius: var(--radius);
     padding: 20px;
     margin-bottom: 16px;
@@ -526,7 +502,7 @@
      lines under the concept, never a dashboard. */
   .insight-box {
     margin: 0 0 14px; padding: 10px 12px; border-radius: 12px;
-    background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.22);
+    background: rgba(var(--indigo-rgb),0.08); border: 1px solid rgba(var(--indigo-rgb),0.22);
   }
   .insight-row { display: flex; flex-direction: column; gap: 2px; }
   .insight-row + .insight-row { margin-top: 8px; }
@@ -534,8 +510,8 @@
   .insight-text { font-size: 13px; line-height: 1.5; color: var(--white); overflow-wrap: anywhere; }
 
   .final-answer {
-    background: linear-gradient(135deg, rgba(0,212,170,0.1), rgba(108,99,255,0.1));
-    border: 1px solid rgba(0,212,170,0.3);
+    background: linear-gradient(135deg, rgba(var(--mint-rgb),0.1), rgba(var(--indigo-rgb),0.1));
+    border: 1px solid rgba(var(--mint-rgb),0.3);
     border-radius: var(--radius-sm);
     padding: 16px;
     margin-bottom: 16px;
@@ -618,7 +594,7 @@
   .ask-another {
     width: 100%;
     background: none;
-    border: 1px solid rgba(108,99,255,0.4);
+    border: 1px solid rgba(var(--indigo-rgb),0.4);
     border-radius: 12px;
     color: var(--indigo);
     font-family: 'Poppins', sans-serif;
@@ -840,8 +816,8 @@
   .difficulty-badge.hard { background: rgba(255,107,107,0.15); color: var(--danger); border: 1px solid rgba(255,107,107,0.3); }
 
   .concept-box {
-    background: rgba(108,99,255,0.08);
-    border: 1px solid rgba(108,99,255,0.25);
+    background: rgba(var(--indigo-rgb),0.08);
+    border: 1px solid rgba(var(--indigo-rgb),0.25);
     border-radius: var(--radius-sm);
     padding: 14px;
     margin-bottom: 16px;
@@ -1105,7 +1081,7 @@
     transition: all 0.2s;
   }
 
-  .history-item:hover { border-color: rgba(108,99,255,0.4); transform: translateY(-2px); }
+  .history-item:hover { border-color: rgba(var(--indigo-rgb),0.4); transform: translateY(-2px); }
 
   .history-meta {
     display: flex;
@@ -1179,8 +1155,8 @@
   .modal-sub { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
 
   .pricing-card {
-    background: linear-gradient(135deg, rgba(108,99,255,0.2), rgba(0,212,170,0.1));
-    border: 1px solid rgba(108,99,255,0.5);
+    background: linear-gradient(135deg, rgba(var(--indigo-rgb),0.2), rgba(var(--mint-rgb),0.1));
+    border: 1px solid rgba(var(--indigo-rgb),0.5);
     border-radius: var(--radius);
     padding: 20px;
     margin-bottom: 16px;
@@ -1223,6 +1199,90 @@
     background: none; border: none;
     color: var(--muted); font-size: 13px;
     padding: 12px; cursor: pointer; margin-top: 4px;
+  }
+
+  /* ── PREMIUM SCREEN (paywall) ──
+     Clear separation from the page behind it in BOTH themes (dimmed + blurred backdrop, 1px border, shadow),
+     a sheet that scrolls inside the viewport so Subscribe and "Maybe later" are always reachable on short or
+     narrow Android screens, and light-mode colours chosen for contrast (the brand mint/gold are too pale on white). */
+  #paywall-modal {
+    --pw-accent: var(--mint); --pw-btn-b: var(--mint);
+    --pw-warn: var(--gold); --pw-warn-bg: rgba(255,209,102,0.15); --pw-warn-border: rgba(255,209,102,0.5);
+    --pw-card-bg: linear-gradient(135deg, rgba(var(--indigo-rgb),0.20), rgba(var(--mint-rgb),0.08));
+    --pw-card-border: rgba(var(--indigo-rgb),0.5);
+    --pw-surface: #172337;   /* OPAQUE on purpose: Presets rewrites --navy-card as a translucent colour (alpha .82-.88), which let the page show through the sheet */
+    --pw-backdrop: rgba(5,10,20,0.72);
+    --pw-sheet-shadow: 0 -12px 48px rgba(0,0,0,0.55);
+    --pw-sheet-border: var(--border-15);
+    background: var(--pw-backdrop);
+    -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+    padding: 12px 12px 0; overscroll-behavior: contain;
+  }
+  [data-theme="light"] #paywall-modal {
+    --pw-accent: #067A66; --pw-btn-b: #4338CA;
+    --pw-warn: #7A4F00; --pw-warn-bg: rgba(176,112,0,0.10); --pw-warn-border: rgba(176,112,0,0.45);
+    --pw-card-bg: linear-gradient(135deg, rgba(var(--indigo-rgb),0.10), rgba(0,178,150,0.06));
+    --pw-card-border: rgba(91,82,240,0.38);
+    --pw-surface: #FFFFFF;
+    --pw-backdrop: rgba(15,23,42,0.50);
+    --pw-sheet-shadow: 0 -10px 40px rgba(15,23,42,0.28);
+    --pw-sheet-border: rgba(15,23,42,0.14);
+  }
+  #paywall-modal .paywall-sheet {
+    position: relative; display: flex; flex-direction: column; padding: 0; background: var(--pw-surface);
+    max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px);
+    border: 1px solid var(--pw-sheet-border); border-bottom: none;
+    border-radius: 24px 24px 0 0; box-shadow: var(--pw-sheet-shadow); overflow: hidden;
+  }
+  #paywall-modal .modal-handle { margin: 10px auto 0; flex: 0 0 auto; }
+  #paywall-modal .pw-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 14px 20px 8px; }
+  #paywall-modal .pw-footer {
+    flex: 0 0 auto; padding: 10px 20px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: var(--pw-surface); border-top: 1px solid var(--border-08);
+  }
+  #paywall-modal .paywall-x {
+    position: absolute; top: 8px; right: 10px; z-index: 2; width: 44px; height: 44px;
+    background: none; border: none; color: var(--muted); font-size: 28px; line-height: 1; cursor: pointer; border-radius: 50%;
+  }
+  #paywall-modal .pw-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--pw-accent); margin-bottom: 6px; }
+  #paywall-modal .modal-title { font-size: 24px; line-height: 1.2; padding-right: 40px; }
+  #paywall-modal .modal-sub { font-size: 15px; margin-bottom: 16px; }
+  #paywall-modal .pricing-card { background: var(--pw-card-bg); border-color: var(--pw-card-border); padding: 18px; margin-bottom: 12px; }
+  #paywall-modal .pricing-tag { color: var(--pw-accent); }
+  #paywall-modal .pricing-price { min-height: 40px; font-size: 32px; line-height: 1.2; color: var(--white); }
+  #paywall-modal .pricing-price.is-loading { font-size: 17px; font-weight: 600; color: var(--muted); animation: pwPulse 1.4s ease-in-out infinite; }
+  @keyframes pwPulse { 50% { opacity: .45; } }
+  @media (prefers-reduced-motion: reduce) { #paywall-modal .pricing-price.is-loading { animation: none; } }
+  #paywall-modal .pw-status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 8px; padding: 10px 12px; border-radius: 12px; font-size: 14px; line-height: 1.45; color: var(--white); background: rgba(255,107,107,0.12); border: 1px solid rgba(255,107,107,0.45); }
+  #paywall-modal .pw-status[hidden] { display: none; }
+  #paywall-modal .pw-retry { min-height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--indigo); background: transparent; color: var(--indigo); font-weight: 700; font-size: 14px; cursor: pointer; }
+  [data-theme="light"] #paywall-modal .pw-retry { color: #4338CA; border-color: #4338CA; }
+  #paywall-modal .pricing-features { margin-top: 14px; gap: 10px; }
+  #paywall-modal .pricing-feature { font-size: 14px; line-height: 1.4; align-items: flex-start; color: var(--white); }
+  #paywall-modal .pricing-feature::before { color: var(--pw-accent); flex: 0 0 auto; }
+  #paywall-modal .pw-country { margin: 4px 0 8px; font-size: 14px; line-height: 1.55; color: var(--muted); }
+  #paywall-modal .pw-country:empty { display: none; }
+  #paywall-modal .pw-country .pw-country-line { color: var(--white); font-weight: 600; font-size: 15px; }
+  #paywall-modal .pw-country .pw-change { margin-left: 8px; background: none; border: none; color: var(--indigo); text-decoration: underline; cursor: pointer; font-size: 14px; padding: 12px 6px; }
+  #paywall-modal .pw-country .pw-confirm { display: flex; gap: 12px; align-items: flex-start; margin-top: 10px; padding: 14px; color: var(--white); font-size: 15px; font-weight: 500; line-height: 1.5; border: 1px solid var(--indigo); border-radius: 12px; background: rgba(var(--indigo-rgb),0.10); cursor: pointer; }
+  #paywall-modal .pw-country .pw-confirm input { width: 24px; height: 24px; flex: 0 0 24px; margin: 0; accent-color: var(--indigo); cursor: pointer; }
+  #paywall-modal .pw-billing { font-size: 12.5px; line-height: 1.5; color: var(--muted); margin: 4px 0 8px; }
+  #paywall-modal .pw-link { background: none; border: none; padding: 10px 4px; color: var(--indigo); text-decoration: underline; font-size: 12.5px; cursor: pointer; }
+  [data-theme="light"] #paywall-modal .pw-link, [data-theme="light"] #paywall-modal .pw-country .pw-change { color: #4338CA; }
+  #paywall-modal .pw-test { margin: 0 0 10px; padding: 8px 44px 8px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; background: var(--pw-warn-bg); border: 1px solid var(--pw-warn-border); color: var(--pw-warn); }
+  #paywall-modal .subscribe-btn { margin-top: 0; min-height: 52px; background: linear-gradient(135deg, var(--sm-fill-a, var(--indigo)), var(--sm-fill-b, var(--pw-btn-b))); }
+  #paywall-modal .subscribe-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  #paywall-modal .modal-dismiss { min-height: 44px; font-size: 14px; }
+  @media (max-width: 360px) {
+    #paywall-modal .pw-body { padding: 12px 14px 6px; }
+    #paywall-modal .pw-footer { padding-left: 14px; padding-right: 14px; }
+    #paywall-modal .modal-title { font-size: 21px; }
+    #paywall-modal .pricing-price { font-size: 28px; }
+    #paywall-modal .pricing-card { padding: 14px; }
+  }
+  @media (min-width: 560px) {
+    #paywall-modal { align-items: center; padding: 20px; }
+    #paywall-modal .paywall-sheet { border-bottom: 1px solid var(--pw-sheet-border); border-radius: 24px; }
   }
 
   /* ── PROFILE SCREEN ── */
@@ -1292,7 +1352,7 @@
     bottom: 90px; left: 50%;
     transform: translateX(-50%) translateY(20px);
     background: var(--navy-card2);
-    border: 1px solid rgba(0,212,170,0.4);
+    border: 1px solid rgba(var(--mint-rgb),0.4);
     border-radius: 10px;
     padding: 10px 20px;
     font-size: 13px;
@@ -1304,8 +1364,220 @@
   }
 
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── Compact Ask input (redesign): same elements, tighter rhythm so the Ask button stays in view ── */
+  #screen-ask .upload-zone { padding: 16px 14px; margin-bottom: 10px; border-radius: 16px; }
+  #screen-ask .upload-icon { font-size: 32px; margin-bottom: 6px; }
+  #screen-ask .upload-title { font-size: 14.5px; margin-bottom: 2px; }
+  #screen-ask .upload-sub { font-size: 12px; }
+  #screen-ask .or-divider { font-size: 12px; margin-bottom: 10px; }
+  #screen-ask .text-input-wrap { margin-bottom: 10px; }
+  #screen-ask textarea { min-height: 72px; padding: 12px; font-size: 14px; border-radius: 14px; }
+  #screen-ask .subject-select-wrap { margin-bottom: 12px; }
+
+  /* ── Shared screen header, result hero, breakdown bars, collapsible review ── */
+  :root { --sm-ok: #64DC64; --sm-warn: #FFD166; --sm-bad: #FF6B6B; }
+  [data-theme="light"] { --sm-ok: #1E8A3C; --sm-warn: #8F6200; --sm-bad: #C62F2F; }
+  .scr-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .scr-head .ic { width: 42px; height: 42px; font-size: 21px; border-radius: 13px; }
+  .scr-head h1 { font-family: 'Poppins', sans-serif; font-size: 18px; line-height: 1.2; font-weight: 700; margin: 0; }
+  .scr-head p { font-size: 12px; color: var(--muted); margin: 2px 0 0; }
+  .sess-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--navy-card); border: 1px solid var(--border-08); color: var(--muted); white-space: nowrap; }
+  .pill.on { color: var(--white); border-color: var(--indigo); }
+  .res-hero { text-align: center; padding: 8px 0 4px; }
+  .score-ring { --p: 0; --rc: var(--sm-ok); width: 116px; height: 116px; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;
+    background: conic-gradient(var(--rc) calc(var(--p) * 1%), var(--border-08) 0); position: relative; animation: fadeIn .4s ease; }
+  .score-ring::before { content: ''; position: absolute; inset: 9px; border-radius: 50%; background: var(--navy); }
+  .score-ring b { position: relative; font-family: 'Poppins', sans-serif; font-size: 28px; font-weight: 800; }
+  .res-title { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 2px; }
+  .res-sub { font-size: 12px; color: var(--muted); }
+  .res-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 14px 0; }
+  .res-stat { background: var(--navy-card); border: 1px solid var(--border-08); border-radius: 12px; padding: 8px 4px; text-align: center; }
+  .res-stat b { display: block; font-family: 'Poppins', sans-serif; font-size: 16px; }
+  .res-stat span { font-size: 10.5px; color: var(--muted); }
+  .bd-row { background: var(--navy-card); border: 1px solid var(--border-08); border-radius: 12px; padding: 8px 12px; margin-bottom: 6px; }
+  .bd-top { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; margin-bottom: 6px; }
+  .bd-top span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bd-top span:last-child { font-weight: 600; white-space: nowrap; }
+  .bd-bar { height: 5px; border-radius: 5px; background: var(--border-08); overflow: hidden; }
+  .bd-bar i { display: block; height: 100%; border-radius: 5px; }
+  details.rv-card { background: var(--navy-card); border: 1px solid var(--border-08); border-radius: 12px; margin-bottom: 6px; }
+  details.rv-card > summary { list-style: none; cursor: pointer; display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; font-size: 12px; font-weight: 600; line-height: 1.4; }
+  details.rv-card > summary::-webkit-details-marker { display: none; }
+  details.rv-card > summary::after { content: '▾'; margin-left: auto; color: var(--muted); transition: transform .2s; }
+  details.rv-card[open] > summary::after { transform: rotate(180deg); }
+  .rv-body { padding: 0 12px 12px; }
+  .rv-body .rv-line { font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 4px; }
+
+  .empty-state { text-align: center; padding: 22px 18px; margin-bottom: 12px; background: var(--navy-card); border: 1px dashed var(--border-1); border-radius: 16px; }
+  .empty-state .ic { width: 52px; height: 52px; font-size: 26px; border-radius: 16px; margin: 0 auto 10px; }
+  .empty-state b { display: block; font-family: 'Poppins', sans-serif; font-size: 14px; margin-bottom: 4px; }
+  .empty-state p { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 0; }
+  /* Profile: horizontal identity header */
+  .profile-header { display: grid; grid-template-columns: auto 1fr; column-gap: 14px; align-items: center; text-align: left; padding: 8px 0 14px; }
+  .profile-header .avatar { grid-row: 1 / span 2; width: 60px; height: 60px; font-size: 28px; margin: 0; }
+  .profile-name { font-size: 19px; align-self: end; }
+  .profile-plan { align-self: start; margin-top: 2px; }
+  .stats-row { gap: 8px; margin-bottom: 16px; }
+  .stat-box { padding: 10px 6px; border: 1px solid var(--border-08); border-radius: 14px; }
+  .stat-val { font-size: 19px; }
+  [data-theme="light"] .stat-val.gold { color: #8F6200; }
+
+  /* ── In-session screens: question navigator, tabs, timer, progress ── */
+  .qn-wrap { display: flex; gap: 6px; flex-wrap: wrap; }
+  .qn { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 600; cursor: pointer; background: var(--navy-card); border: 1px solid var(--border-08); color: var(--muted); transition: transform .1s; }
+  .qn:active { transform: scale(.94); }
+  .qn.done { background: rgba(100,220,100,.16); color: var(--sm-ok); border-color: transparent; }
+  [data-theme="light"] .qn.done { background: rgba(30,138,60,.13); }
+  .qn.flag { background: rgba(255,209,102,.24); color: var(--sm-warn); border-color: transparent; }
+  .qn.cur { background: linear-gradient(135deg, var(--sm-fill-a, var(--indigo)), var(--sm-fill-b, var(--mint))); color: var(--sm-on-accent, #fff); border-color: transparent; }
+  .cbt-nav { gap: 5px; max-height: 104px; overflow-y: auto; margin-bottom: 12px; }
+  .cbt-nav .qn { width: 28px; height: 28px; font-size: 10.5px; border-radius: 8px; }
+  .cbt-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 8px; scrollbar-width: none; }
+  .cbt-tabs::-webkit-scrollbar { display: none; }
+  .cbt-tab { flex: none; padding: 7px 12px; border-radius: 20px; font-size: 11.5px; font-weight: 600; cursor: pointer; white-space: nowrap; background: var(--navy-card); border: 1px solid var(--border-08); color: var(--muted); }
+  .cbt-tab.on { color: var(--sm-on-accent, #fff); border-color: transparent; background: linear-gradient(135deg, var(--sm-fill-a, var(--indigo)), var(--sm-fill-b, var(--mint))); }
+  .timer-pill { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--indigo); padding: 4px 10px; border-radius: 20px; background: var(--navy-card); border: 1px solid var(--border-08); }
+  .prog-track { height: 4px; border-radius: 4px; background: var(--border-08); overflow: hidden; margin-bottom: 12px; }
+  .prog-track i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--indigo), var(--mint)); transition: width .3s ease; }
+
+  /* ═════ RESPONSIVE LAYOUT (tablet + desktop) ═════
+     Phone: untouched single column. The home columns are flattened with display:contents and
+     ordered with .hc-N so the phone order is identical to before. */
+  .home-cols { display: flex; flex-direction: column; }
+  .home-main, .home-side { display: contents; }
+  .hc-1 { order: 1; } .hc-2 { order: 2; } .hc-3 { order: 3; } .hc-4 { order: 4; } .hc-5 { order: 5; }
+  .hc-6 { order: 6; } .hc-7 { order: 7; } .hc-8 { order: 8; } .hc-9 { order: 9; }
+
+  @media (min-width: 700px) {
+    .app-shell, .bottom-nav { max-width: 780px; }
+    .topbar { padding-left: 28px; padding-right: 28px; }
+    .screen { padding-left: 28px; padding-right: 28px; }
+    #screen-home { padding: 16px 28px 100px; }
+    .greeting-name { font-size: 24px; }
+    .tool-grid, .subjects-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .home-progress { padding: 14px 10px; }
+    .hp-num { font-size: 21px; }
+    .hp-lbl { font-size: 11px; }
+    .tool-tile { min-height: 72px; padding: 12px; }
+    .section-title { font-size: 15px; }
+    .more-row { padding: 10px 14px; }
+    .scr-head h1 { font-size: 20px; }
+    .qn { width: 36px; height: 36px; font-size: 12.5px; }
+    .cbt-nav .qn { width: 30px; height: 30px; }
+  }
+
+  @media (min-width: 1100px) {
+    /* Navigation moves to a left rail; content is centred in the remaining space. */
+    body { padding-left: 104px; }
+    .bottom-nav { top: 0; bottom: 0; left: 0; transform: none; width: 104px; max-width: none; flex-direction: column; justify-content: flex-start; align-items: stretch; gap: 6px; padding: 20px 10px; border-top: none; border-right: 1px solid var(--border-06); }
+    .nav-item { flex: none; padding: 10px 4px; }
+    .nav-item:hover { background: var(--border-05); }
+    .app-shell { max-width: 1120px; }
+    .screen { padding-bottom: 40px; }
+    #screen-home { padding-bottom: 48px; }
+    /* Single-task screens stay at a comfortable reading width */
+    .screen:not(#screen-home) { max-width: 780px; margin-left: auto; margin-right: auto; width: 100%; }
+    /* Home becomes a two-column dashboard */
+    .home-cols { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 0 28px; align-items: start; }
+    .home-main, .home-side { display: block; min-width: 0; }
+    .home-side .section-title:first-child, .home-side > .section-title { margin-top: 0; }
+    .home-side { position: sticky; top: 84px; }
+    .tool-grid { grid-template-columns: repeat(3, 1fr); }
+    .subjects-grid { grid-template-columns: repeat(3, 1fr); }
+    .greeting-name { font-size: 28px; }
+  }
+  @media (min-width: 1500px) {
+    .app-shell { max-width: 1240px; }
+    .subjects-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  /* ── Forms + lesson/plan/note cards ── */
+  .field { width: 100%; box-sizing: border-box; background: var(--navy-card); border: 1px solid var(--border-1); border-radius: 12px; color: var(--white); padding: 11px 12px; font-family: 'Inter', sans-serif; font-size: 14px; transition: border-color .2s, box-shadow .2s; }
+  .field:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(var(--indigo-rgb), .18); }
+  textarea.field { min-height: 160px; resize: vertical; line-height: 1.5; }
+  .form-grid { display: grid; grid-template-columns: 1fr; gap: 0 12px; }
+  .form-card { background: var(--navy-card); border: 1px solid var(--border-08); border-radius: 16px; padding: 12px 14px 4px; margin-bottom: 12px; }
+  .form-card .select-label { margin-top: 2px; }
+  .lc { background: var(--navy-card); border: 1px solid var(--border-08); border-radius: 16px; padding: 14px; margin-bottom: 10px; animation: fadeIn .25s ease; }
+  .lc-label { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .lc-label .ic { width: 26px; height: 26px; font-size: 13px; border-radius: 8px; }
+  .lc-text { font-size: 14px; line-height: 1.65; }
+  .lc-ex .lc-text { font-size: 13px; }
+  .plan-hero { display: flex; align-items: center; gap: 14px; background: linear-gradient(135deg, rgba(var(--indigo-rgb), .14), rgba(var(--mint-rgb), .08)), var(--navy-card); border: 1px solid rgba(var(--indigo-rgb), .3); border-radius: 16px; padding: 12px 14px; margin-bottom: 14px; }
+  .plan-days { flex: none; text-align: center; min-width: 58px; }
+  .plan-days b { display: block; font-family: 'Poppins', sans-serif; font-size: 30px; line-height: 1; font-weight: 800; color: var(--indigo); }
+  .plan-days span { font-size: 10.5px; color: var(--muted); }
+  .wk-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--navy-card); border: 1px solid var(--border-08); border-radius: 12px; padding: 9px 12px; margin-bottom: 6px; }
+  .wk-row.today { border-color: var(--indigo); background: rgba(var(--indigo-rgb), .08); }
+  .wk-row .wk-d { font-size: 10.5px; color: var(--muted); }
+  .wk-row .wk-t { font-size: 12.5px; }
+  .wk-row .wk-t.done { text-decoration: line-through; color: var(--muted); }
+  .wk-chk { flex: none; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; }
+  .note-card { background: var(--navy-card); border: 1px solid var(--border-08); border-radius: 14px; padding: 11px 13px; margin-bottom: 8px; cursor: pointer; transition: border-color .2s, transform .15s; }
+  .note-card:hover { border-color: var(--indigo); }
+  .note-card:active { transform: scale(.985); }
+  .note-card .nc-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 3px; }
+  .note-card .nc-title { font-size: 13px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .note-card .nc-sub { font-size: 11px; color: var(--indigo); margin-bottom: 4px; }
+  .note-card .nc-body { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+  @media (min-width: 700px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+  #plan-day-chips { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  #plan-day-chips .chip { padding: 8px 0; text-align: center; font-size: 12px; }
+
+  /* ── Tablet/desktop: Ask input side-by-side, CBT two-column ── */
+  @media (min-width: 700px) {
+    #input-section { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; align-items: stretch; }
+    #input-section .upload-zone { grid-column: 1; grid-row: 1 / span 2; margin-bottom: 12px; min-height: 170px; display: flex; align-items: center; justify-content: center; }
+    #input-section .or-divider { display: none; }
+    #input-section .text-input-wrap { grid-column: 2; grid-row: 1 / span 2; margin-bottom: 12px; }
+    #input-section .text-input-wrap textarea { min-height: 170px; height: 100%; }
+    #input-section .subject-select-wrap, #input-section .ask-btn { grid-column: 1 / -1; }
+  }
+  @media (min-width: 1100px) {
+    .screen#screen-cbtmode { max-width: 1040px; }
+    .cbt-layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 0 22px; align-items: start; }
+    .cbt-layout > .sess-bar, .cbt-layout > .cbt-tabs { grid-column: 1 / -1; }
+    .cbt-layout > .cbt-nav { grid-column: 2; grid-row: 3 / span 4; max-height: none; align-content: start; position: sticky; top: 84px; background: var(--navy-card); border: 1px solid var(--border-08); border-radius: 14px; padding: 10px; }
+    .cbt-layout > .answer-card { grid-column: 1; grid-row: 3; }
+    .cbt-layout > :not(.sess-bar):not(.cbt-tabs):not(.cbt-nav):not(.answer-card) { grid-column: 1; }
+  }
+
+  .insight-card { background: rgba(var(--indigo-rgb), .07); border: 1px solid rgba(var(--indigo-rgb), .22); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; }
+  @media (min-width: 1100px) {
+    .screen#screen-progress { max-width: 1040px; }
+    .prog-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 24px; align-items: start; }
+  }
+
+  .deck-row { background: var(--navy-card); border: 1px solid var(--border-08); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; }
+  .fc-card { min-height: 190px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; padding: 20px; cursor: pointer; background: var(--navy-card); border: 1px solid var(--border-1); border-radius: 20px; animation: fcFlip .32s ease; }
+  .fc-card.back { border-color: var(--indigo); background: linear-gradient(135deg, rgba(var(--indigo-rgb), .12), rgba(var(--mint-rgb), .06)), var(--navy-card); }
+  .fc-side { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .fc-text { font-size: 16px; line-height: 1.6; }
+  @keyframes fcFlip { from { opacity: 0; transform: perspective(600px) rotateY(70deg); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .fc-card { animation: none; } }
+
+  .es-bagley { display: block; width: 64px; height: 64px; margin: 0 auto 8px; }
+  @media (min-width: 1100px) {
+    .screen#screen-mockexam { max-width: 1040px; }
+    .mock-layout { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 0 22px; align-items: start; }
+    .mock-layout > .sess-bar, .mock-layout > .prog-track { grid-column: 1 / -1; }
+    .mock-layout > .qn-wrap { grid-column: 2; grid-row: 3 / span 3; position: sticky; top: 84px; background: var(--navy-card); border: 1px solid var(--border-08); border-radius: 14px; padding: 10px; margin-bottom: 0 !important; align-content: start; }
+    .mock-layout > .answer-card { grid-column: 1; grid-row: 3; }
+    .mock-layout > :not(.sess-bar):not(.prog-track):not(.qn-wrap):not(.answer-card) { grid-column: 1; }
+  }
+
+  /* Light-mode readability for text that was a fixed light grey */
+  [data-theme="light"] .step-desc, [data-theme="light"] .term-def { color: #4a5568; }
+  [data-theme="light"] .concept-text, [data-theme="light"] .policy-text { color: #2d3748; }
+
+  .country-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .country-grid .option-item { margin: 0; padding: 10px 12px; }
+  .country-grid .toggle-label { font-size: 13px; }
 </style>
 <link rel="stylesheet" href="personalization.css">
+<link rel="stylesheet" href="features.css">
 </head>
 <body>
 
@@ -1331,130 +1603,73 @@
   <!-- HOME SCREEN -->
   <div class="screen active" id="screen-home">
     <div class="home-bagley-row">
-      <div>
+      <div class="home-hello">
         <p class="greeting">Good day 👋</p>
         <h1 class="greeting-name">Ready to study?</h1>
       </div>
-      <div class="home-bagley-slot" data-sm-bagley data-size="64" onclick="SMPresets.open('bagley')" role="button" tabindex="0" aria-label="Change your Bagley" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();SMPresets.open('bagley')}"></div>
+      <div class="home-bagley-slot" data-sm-bagley data-size="52" onclick="SMPresets.open('bagley')" role="button" tabindex="0" aria-label="Change your Bagley" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();SMPresets.open('bagley')}"></div>
     </div>
 
-    <!-- Academic Intelligence dashboard card — Premium only, populated by
-         renderHomeIntelligenceDashboard(); stays empty/hidden for free
-         users and for anyone without enough data yet. -->
-    <div id="intelligence-dashboard-card"></div>
-
-    <!-- Quota Card -->
+    <!-- Free-plan quota — compact strip; hidden for Premium by applyPremiumUI() (first .quota-card) -->
     <div class="quota-card">
-      <div class="quota-label">Daily Questions Used</div>
-      <div class="quota-bar-wrap">
-        <div class="quota-bar" id="quota-bar" style="width: 0%"></div>
+      <div class="qc-top">
+        <div class="quota-count"><span id="quota-used">0</span> of <span id="quota-max">3</span> questions used today</div>
+        <button class="upgrade-btn" onclick="showPaywall()">⚡ Upgrade</button>
       </div>
-      <div class="quota-count"><span id="quota-used">0</span> of <span id="quota-max">3</span> questions used today</div>
-      <button class="upgrade-btn" onclick="showPaywall()">⚡ Upgrade for Unlimited Questions</button>
+      <div class="quota-bar-wrap"><div class="quota-bar" id="quota-bar" style="width: 0%"></div></div>
     </div>
 
-    <!-- Academic Intelligence Report quick action — free, everyone -->
-    <div class="quota-card" style="cursor:pointer;" onclick="goScreen('progress', document.querySelectorAll('.nav-item')[4]); showAcademicIntelligenceReport();">
-      <div class="quota-label" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>🧠 Academic Intelligence Report</span>
-        <span style="color:var(--indigo); font-size:12px;">Open →</span>
-      </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Your readiness, strongest subject, and biggest opportunity — from your real data.</div>
+    <!-- Resume — only appears when a real session is in progress (renderHomeResume) -->
+    <div id="home-resume"></div>
+
+    <!-- Progress — real stored activity only (renderHomeProgress) -->
+    <div class="home-cols">
+    <div class="home-main">
+    <div class="home-progress hc-1" id="home-progress" aria-label="Your study progress"></div>
+
+    <!-- Academic Intelligence dashboard card — Premium only, populated by renderHomeIntelligenceDashboard() -->
+
+    <!-- Bagley -->
+    <button type="button" class="ask-bagley hc-3" onclick="goScreen('ask', document.querySelectorAll('.nav-item')[1])">
+      <span class="ab-orb" data-sm-bagley data-size="40" aria-hidden="true"></span>
+      <span class="tt"><b>Ask Bagley</b><small>Snap a photo or type any question — step-by-step help</small></span>
+      <span class="chev" aria-hidden="true">›</span>
+    </button>
+
+    <div class="section-title hc-4">Study tools</div>
+    <div class="tool-grid hc-5">
+      <button type="button" class="tool-tile" style="--ci:var(--sm-c1)" onclick="goScreen('practice', document.querySelectorAll('.nav-item')[2])"><span class="ic">🎯</span><span class="tt"><b>Practice</b><small>Graded questions that adapt</small><span class="tt-badge" id="practice-limit-badge"></span></span></button>
+      <button type="button" class="tool-tile" style="--ci:var(--sm-c3)" onclick="goScreen('mockexam', null)"><span class="ic">⏱️</span><span class="tt"><b>Mock Exam</b><small>Timed, results at the end</small><span class="tt-badge" id="mockexam-limit-badge"></span></span></button>
+      <button type="button" class="tool-tile" style="--ci:var(--sm-c4)" onclick="goScreen('flashcards', null)"><span class="ic">🗂️</span><span class="tt"><b>Flashcards</b><small>Spaced repetition</small><span class="tt-badge" id="flashcards-limit-badge"></span></span></button>
+      <button type="button" class="tool-tile" style="--ci:var(--sm-c6)" onclick="goScreen('teachme', null)"><span class="ic">🎓</span><span class="tt"><b>Teach Me</b><small>Guided lesson to mini-test</small><span class="tt-badge" id="teachme-limit-badge"></span></span></button>
+      <button type="button" class="tool-tile" style="--ci:var(--sm-c2)" onclick="goScreen('studyplan', null)"><span class="ic">📅</span><span class="tt"><b>Study Plan</b><small>Built around your exam date</small></span></button>
+      <button type="button" class="tool-tile" style="--ci:var(--sm-c5)" onclick="goScreen('studymaterial', null)"><span class="ic">📝</span><span class="tt"><b>Study Material</b><small>Your notes + AI summaries</small><span class="tt-badge" id="studymaterial-limit-badge"></span></span></button>
     </div>
 
-    <!-- Practice Mode quick action -->
-    <div class="quota-card" style="cursor:pointer;" onclick="goScreen('practice', document.querySelectorAll('.nav-item')[2])">
-      <div class="quota-label" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>🎯 Practice Mode</span>
-        <span style="color:var(--indigo); font-size:12px;">Start →</span>
-      </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">AI-generated questions, real grading, adapts to how you're doing. <span id="practice-limit-badge"></span></div>
-    </div>
-
-    <!-- Mock Exam quick action -->
-    <div class="quota-card" style="cursor:pointer;" onclick="goScreen('mockexam', null)">
-      <div class="quota-label" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>⏱️ Mock Exam</span>
-        <span style="color:var(--indigo); font-size:12px;">Start →</span>
-      </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Timed, multi-question simulation — no feedback until you submit. <span id="mockexam-limit-badge"></span></div>
-    </div>
-
-    <!-- Study Plan quick action -->
-    <div class="quota-card" style="cursor:pointer;" onclick="goScreen('studyplan', null)">
-      <div class="quota-label" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>📅 Study Plan</span>
-        <span style="color:var(--indigo); font-size:12px;">Open →</span>
-      </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">A schedule built around your exam date and your weak spots.</div>
-    </div>
-
-    <!-- Flashcards quick action -->
-    <div class="quota-card" style="cursor:pointer;" onclick="goScreen('flashcards', null)">
-      <div class="quota-label" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>🗂️ Flashcards</span>
-        <span style="color:var(--indigo); font-size:12px;">Open →</span>
-      </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">AI-generated cards with spaced repetition, so weak ones resurface more. <span id="flashcards-limit-badge"></span></div>
-    </div>
-
-    <!-- Teach Me quick action -->
-    <div class="quota-card" style="cursor:pointer;" onclick="goScreen('teachme', null)">
-      <div class="quota-label" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>🎓 Teach Me</span>
-        <span style="color:var(--indigo); font-size:12px;">Open →</span>
-      </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">A full guided lesson: concept → examples → practice → mini-test. <span id="teachme-limit-badge"></span></div>
-    </div>
-
-    <!-- Achievements quick action -->
-    <div class="quota-card" style="cursor:pointer;" onclick="goScreen('achievements', null)">
-      <div class="quota-label" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>🏆 Achievements</span>
-        <span style="color:var(--indigo); font-size:12px;">Open →</span>
-      </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Milestones from your actual activity — no streak-shaming here.</div>
-    </div>
-
-    <!-- Study Material quick action -->
-    <div class="quota-card" style="cursor:pointer;" onclick="goScreen('studymaterial', null)">
-      <div class="quota-label" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>📝 Study Material</span>
-        <span style="color:var(--indigo); font-size:12px;">Open →</span>
-      </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Your notes, plus AI-generated topic summaries. <span id="studymaterial-limit-badge"></span></div>
-    </div>
-
-    <!-- CBT Mode quick action — JAMB simulation, Nigeria only, Premium only -->
-    <div class="quota-card" id="cbt-mode-card" style="cursor:pointer; display:none;" onclick="goScreen('cbtmode', null)">
-      <div class="quota-label" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>🖥️ CBT Mode <span style="font-size:10px; color:var(--gold);">⚡ PREMIUM</span></span>
-        <span style="color:var(--indigo); font-size:12px;">Open →</span>
-      </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Full JAMB UTME simulation — English + 3 subjects, 180 questions, 2-hour timer.</div>
-    </div>
-
-    <!-- What Should I Study Right Now? quick action — Premium only -->
-    <div class="quota-card" style="cursor:pointer;" onclick="goScreen('mission', null)">
-      <div class="quota-label" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>🎯 What Should I Study Right Now? <span style="font-size:10px; color:var(--gold);">⚡ PREMIUM</span></span>
-        <span style="color:var(--indigo); font-size:12px;">Open →</span>
-      </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Tell me how many minutes you've got — I'll plan the highest-impact session.</div>
-    </div>
-
-    <!-- Past-Paper Intelligence quick action — Premium only -->
-    <div class="quota-card" style="cursor:pointer;" onclick="goScreen('pastpaper', null)">
-      <div class="quota-label" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>📄 Past-Paper Intelligence <span style="font-size:10px; color:var(--gold);">⚡ PREMIUM</span></span>
-        <span style="color:var(--indigo); font-size:12px;">Open →</span>
-      </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Upload past papers — see what's actually tested most, and where that overlaps with your weak spots.</div>
+    <!-- Toolkit shortcuts (Formula Book, Calculator, Question Search, History) -->
+    <div class="toolkit hc-5" aria-label="Toolkit">
+      <button type="button" class="tk" style="--ci:var(--sm-c2)" onclick="goScreen('formulas', null)"><span>∑</span><b>Formulas</b></button>
+      <button type="button" class="tk" style="--ci:var(--sm-c3)" onclick="goScreen('calculator', null)"><span>🧮</span><b>Calculator</b></button>
+      <button type="button" class="tk" style="--ci:var(--sm-c6)" onclick="goScreen('search', null)"><span>🔎</span><b>Find</b></button>
+      <button type="button" class="tk" style="--ci:var(--sm-c5)" onclick="SMF.openHistory()"><span>📋</span><b>History</b></button>
     </div>
 
     <!-- Subjects -->
-    <div class="section-title">Pick a Subject</div>
-    <div class="subjects-grid"><!-- populated by renderSubjectsUI() from the selected exam board's curriculum --></div>
+    <div class="section-title hc-8">Pick a subject</div>
+    <div class="subjects-grid hc-9"><!-- populated by renderSubjectsUI() from the selected exam board's curriculum --></div>
+    </div>
+    <div class="home-side">
+    <div id="intelligence-dashboard-card" class="hc-2"></div>
+    <div class="section-title hc-6">More</div>
+    <div class="more-list hc-7">
+      <button type="button" class="more-row" style="--ci:var(--sm-c6)" onclick="goScreen('progress', document.querySelectorAll('.nav-item')[4]); showAcademicIntelligenceReport();"><span class="ic">🧠</span><span class="tt"><b>Academic Intelligence Report</b><small>Readiness, strongest subject, biggest opportunity</small></span><span class="chev" aria-hidden="true">›</span></button>
+      <button type="button" class="more-row" style="--ci:var(--sm-c4)" onclick="goScreen('achievements', null)"><span class="ic">🏆</span><span class="tt"><b>Achievements</b><small>Milestones from your real activity</small></span><span class="chev" aria-hidden="true">›</span></button>
+      <button type="button" class="more-row" style="--ci:var(--sm-c1)" onclick="goScreen('mission', null)"><span class="ic">🎯</span><span class="tt"><b>What Should I Study Right Now? <em class="pm">⚡ PREMIUM</em></b><small>Plan the highest-impact session for your time</small></span><span class="chev" aria-hidden="true">›</span></button>
+      <button type="button" class="more-row" style="--ci:var(--sm-c3)" onclick="goScreen('pastpaper', null)"><span class="ic">📄</span><span class="tt"><b>Past-Paper Intelligence <em class="pm">⚡ PREMIUM</em></b><small>See what's tested most vs. your weak spots</small></span><span class="chev" aria-hidden="true">›</span></button>
+      <div id="cbt-mode-card" style="display:none;"><button type="button" class="more-row" style="--ci:var(--sm-c5)" onclick="goScreen('cbtmode', null)"><span class="ic">🖥️</span><span class="tt"><b>CBT Mode <em class="pm">⚡ PREMIUM</em></b><small>Full JAMB UTME simulation, 2-hour timer</small></span><span class="chev" aria-hidden="true">›</span></button></div>
+    </div>
+    </div><!-- /home-side -->
+    </div><!-- /home-cols -->
   </div>
 
   <!-- ASK SCREEN -->
@@ -1622,7 +1837,7 @@
 
   <!-- HISTORY SCREEN -->
   <div class="screen" id="screen-history">
-    <div class="section-title" style="margin-bottom:14px;">Saved Questions</div>
+    <div class="scr-head"><span class="ic" style="--ci:var(--sm-c5)">💾</span><div><h1>Saved Questions</h1><p>Your saved answers, by subject</p></div></div>
 
     <div class="filter-tabs" id="filter-tabs"><!-- populated by renderSubjectsUI() --></div>
 
@@ -1632,7 +1847,7 @@
   <!-- PROGRESS SCREEN (Weakness Profile Dashboard) -->
   <div class="screen" id="screen-progress">
     <div id="academic-intelligence-report-container"><!-- populated by showAcademicIntelligenceReport() --></div>
-    <div class="section-title" style="margin-bottom:14px;">Your Weakness Profile</div>
+    <div class="scr-head"><span class="ic" style="--ci:var(--sm-c1)">📈</span><div><h1>Your Progress</h1><p>Your Weakness Profile, built from real activity</p></div></div>
     <div id="progress-content"><!-- populated by renderProgressScreen() --></div>
   </div>
 
@@ -1736,6 +1951,11 @@
   </div>
 
   <!-- BOTTOM NAV -->
+  <!-- FORMULA BOOK / CALCULATOR / QUESTION RUNNER (features-*.js) -->
+  <div class="screen" id="screen-formulas"><div id="formulas-content"></div></div>
+  <div class="screen" id="screen-calculator"><div id="calculator-content"></div></div>
+  <div class="screen" id="screen-qrun"><div id="qrun-content"></div></div>
+
   <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
     <button class="nav-item active" onclick="goScreen('home', this)">
       <div class="nav-icon">🏠</div>
@@ -1772,28 +1992,36 @@
 </div>
 
 <!-- PAYWALL MODAL -->
-<div class="modal-overlay" id="paywall-modal" onclick="closePaywall(event)" role="dialog" aria-modal="true" aria-label="Upgrade to Premium" data-i18n-attr="aria-label:pay.aria">
-  <div class="modal" style="position:relative">
+<div class="modal-overlay" id="paywall-modal" onclick="closePaywall(event)" role="dialog" aria-modal="true" aria-labelledby="paywall-title" data-i18n-attr="aria-label:pay.aria">
+  <div class="modal paywall-sheet">
+    <button class="paywall-x" type="button" onclick="closePaywall()" aria-label="Close">×</button>
     <div class="modal-handle"></div>
-    <div class="modal-title" data-i18n="pay.title">Unlock Premium ⚡</div>
-    <div class="modal-sub" data-i18n="pay.sub">Get unlimited access for less than a data subscription</div>
-    <div class="pricing-card">
-      <div class="pricing-tag" data-i18n="pay.tag">Monthly Plan</div>
-      <div class="pricing-price" id="pricing-price-display">… <span>/ month</span></div>
-      <div class="pricing-features">
-        <div class="pricing-feature" data-i18n="pay.f.ask">Unlimited Ask AI questions</div>
-        <div class="pricing-feature" data-i18n="pay.f.practice">Unlimited Practice questions</div>
-        <div class="pricing-feature" data-i18n="pay.f.mock">Unlimited Mock Exams</div>
-        <div class="pricing-feature" data-i18n="pay.f.flash">Unlimited Flashcard decks</div>
-        <div class="pricing-feature" data-i18n="pay.f.teach">Unlimited Teach Me lessons</div>
-        <div class="pricing-feature" data-i18n="pay.f.summary">Unlimited AI-generated summaries</div>
-        <div class="pricing-feature" data-i18n="pay.f.theme">Custom app theme &amp; icon</div>
-        <div class="pricing-feature" data-i18n="pay.f.cbt">CBT Mode — full JAMB UTME simulation (Nigeria)</div>
+    <div class="pw-body">
+      <div class="pw-eyebrow">⚡ Premium</div>
+      <div class="modal-title" id="paywall-title" data-i18n="pay.title">StudyMate Premium</div>
+      <div class="modal-sub" data-i18n="pay.sub">Study without daily limits.</div>
+      <div class="pricing-card">
+        <div class="pricing-tag" data-i18n="pay.tag">Monthly plan</div>
+        <div class="pricing-price" id="pricing-price-display" aria-live="polite" aria-busy="true">…</div>
+        <div class="pw-status" id="pricing-status" role="status" hidden>
+          <span id="pricing-status-text"></span>
+          <button class="pw-retry" id="pricing-retry-btn" type="button" onclick="retryPriceLoad()" data-i18n="pay.retry">Retry</button>
+        </div>
+        <div class="pricing-features">
+          <div class="pricing-feature" data-i18n="pay.f.limits">No daily or weekly limits on Ask AI, Practice, Mock Exams, Flashcards, Teach Me and summaries</div>
+          <div class="pricing-feature" data-i18n="pay.f.paper">Past-paper analysis, up to 5 a week</div>
+          <div class="pricing-feature" data-i18n="pay.f.progress">Progress trends and daily missions</div>
+          <div class="pricing-feature" data-i18n="pay.f.looks">Every background, accent and Bagley look</div>
+          <div class="pricing-feature" data-i18n="pay.f.cbt">JAMB CBT simulation (Nigeria)</div>
+        </div>
       </div>
+      <div id="pricing-country-box" class="pw-country"></div>
+      <div class="pw-billing"><span id="pricing-billing-note"></span> <button class="pw-link" type="button" onclick="openBillingDetails()" data-i18n="pay.billing">Billing details</button></div>
     </div>
-    <div id="pricing-country-box" style="margin:12px 0; font-size:14px; line-height:1.6; color:var(--muted);"></div>
-    <button class="subscribe-btn" id="subscribe-btn" onclick="startCheckout()" data-i18n="pay.subscribe">Subscribe Now</button>
-    <button class="modal-dismiss" onclick="closePaywall()" data-i18n="common.later">Maybe later</button>
+    <div class="pw-footer">
+      <button class="subscribe-btn" id="subscribe-btn" onclick="startCheckout()" disabled data-i18n="pay.loading">Loading your price…</button>
+      <button class="modal-dismiss" onclick="closePaywall()" data-i18n="common.later">Maybe later</button>
+    </div>
   </div>
 </div>
 
@@ -2018,12 +2246,14 @@
 
     const grid = document.querySelector('.subjects-grid');
     if (grid) {
-      grid.innerHTML = names.map(name => {
+      grid.innerHTML = names.map((name, i) => {
         const s = SUBJECTS[name];
-        return `<div class="subject-card" onclick="goAsk('${escapeForInlineHandler(name)}')">
+        return `<div class="subject-card" style="--ci:var(--sm-c${(i % 6) + 1})" onclick="goAsk('${escapeForInlineHandler(name)}')">
           <div class="subject-emoji">${s.emoji}</div>
-          <div class="subject-name">${name}</div>
-          <div class="subject-count">${s.topics ? s.topics.slice(0, 3).map(t => t.name).join(', ') : ''}</div>
+          <div class="subject-meta">
+            <div class="subject-name">${name}</div>
+            <div class="subject-count">${s.topics ? s.topics.slice(0, 3).map(t => t.name).join(', ') : ''}</div>
+          </div>
         </div>`;
       }).join('');
     }
@@ -2061,12 +2291,13 @@
     if (name === 'flashcards') renderFlashcardsHome();
     if (name === 'teachme' && !lessonSession) renderTeachMeSetup();
     if (name === 'achievements') renderAchievementsScreen();
-    if (name === 'home') { updateFeatureLimitBadges(); renderHomeIntelligenceDashboard(); }
+    if (name === 'home') { updateFeatureLimitBadges(); renderHomeIntelligenceDashboard(); renderHomeExtras(); }
     if (name === 'search') renderSearchScreen();
     if (name === 'studymaterial') renderStudyMaterialHome();
     if (name === 'cbtmode' && !cbtSession) renderCbtSetup();
     if (name === 'mission') renderMissionSetup();
     if (name === 'pastpaper') renderPastPaperSetup();
+    if (window.SMF && SMF.onScreen) SMF.onScreen(name); // Formula Book, Calculator, Progress tabs
   }
 
   function goAsk(subject) {
@@ -2316,6 +2547,7 @@
 
     if (step === 'name') {
       content.innerHTML = `
+        <div class="es-bagley" data-sm-bagley data-size="64" aria-hidden="true"></div>
         <div class="modal-title">${SMI18n.t('onb.name.title')}</div>
         <div class="modal-sub">${SMI18n.t('onb.name.sub')}</div>
         <input
@@ -2329,6 +2561,7 @@
         <button class="settings-save-btn" onclick="submitOnboardingName()">${SMI18n.t('onb.name.cta')}</button>
         <button class="modal-dismiss" onclick="skipOnboarding()">${SMI18n.t('common.skip')}</button>
       `;
+      try { SMPresets.refreshSlots(); } catch (_) {}
       setTimeout(() => { const el = document.getElementById('onboarding-name-input'); if (el) el.focus(); }, 100);
 
     } else if (step === 'country') {
@@ -2337,9 +2570,9 @@
         <div class="modal-title">${SMI18n.t('onb.country.title', { name: escapeHtml(state.userName) || SMI18n.t('onb.friend') })}</div>
         <div class="modal-sub">${SMI18n.t('onb.country.sub')}</div>
         <div class="modal-sub" style="font-size:12px; opacity:.85;">${scopeNoteText()}</div>
-        <div class="option-list">
+        <div class="option-list country-grid">
           ${countries.map(c => `
-            <div class="option-item" onclick="selectOnboardingCountry('${c.code}')">
+            <div class="option-item" role="button" tabindex="0" onclick="selectOnboardingCountry('${c.code}')">
               <div>
                 <div class="toggle-label">${c.flag} ${c.name}</div>
               </div>
@@ -2747,6 +2980,73 @@
     return false;
   }
 
+  // ── Theme integration layer ──
+  // The preset engine sets --indigo/--mint as hex on <html>. This mirrors them as RGB triplets
+  // (--indigo-rgb / --mint-rgb) so tinted backgrounds/borders follow the active theme.
+  // Read-only with respect to the theme system: it never writes theme definitions or preferences.
+  (function syncAccentTints() {
+    const root = document.documentElement;
+    function toRgb(v) {
+      v = (v || '').trim();
+      let m = v.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+      if (m) { let h = m[1]; if (h.length === 3) h = h.split('').map(c => c + c).join(''); return [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)).join(','); }
+      m = v.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
+      return m ? m[1] + ',' + m[2] + ',' + m[3] : null;
+    }
+    let busy = false;
+    function sync() {
+      if (busy) return; busy = true;
+      try {
+        const cs = getComputedStyle(root);
+        [['--indigo', '--indigo-rgb'], ['--mint', '--mint-rgb']].forEach(([src, dst]) => {
+          const rgb = toRgb(cs.getPropertyValue(src));
+          if (rgb && root.style.getPropertyValue(dst) !== rgb) root.style.setProperty(dst, rgb);
+        });
+      } finally { busy = false; }
+    }
+    sync();
+    new MutationObserver(sync).observe(root, { attributes: true, attributeFilter: ['style', 'data-theme'] });
+  })();
+
+  // ── HOME: progress strip + resume (real data only — never invented) ──
+  function renderHomeProgress() {
+    const el = document.getElementById('home-progress');
+    if (!el) return;
+    let st = {}, topics = 0;
+    try { st = loadStats() || {}; } catch (_) {}
+    try {
+      topics = WeaknessProfile.getAllSubjects().reduce((n, sub) => n + WeaknessProfile.getTopics(sub).filter(t => t.attempts > 0).length, 0);
+    } catch (_) {}
+    const streak = (typeof lifetimeStats !== 'undefined' && lifetimeStats && lifetimeStats.streak_days != null) ? lifetimeStats.streak_days : (st.currentStreak || 0);
+    const items = [
+      ['var(--sm-c4)', '🔥', 'Day streak', streak],
+      ['var(--sm-c1)', '🎯', 'Practised', st.gradedQuestionsAnswered || 0],
+      ['var(--sm-c3)', '📚', 'Topics', topics],
+      ['var(--sm-c6)', '⏱️', 'Mocks', st.mockExamsCompleted || 0]
+    ];
+    if (!items.some(i => Number(i[3]) > 0)) {
+      el.className = 'home-progress hp-empty';
+      el.textContent = 'Your progress will appear here once you practise or ask a question.';
+      return;
+    }
+    el.className = 'home-progress';
+    el.innerHTML = items.map(([c, ic, lbl, n]) => `<div class="hp-item" style="--ci:${c}"><div class="hp-num">${n}</div><div class="hp-lbl">${ic} ${lbl}</div></div>`).join('');
+  }
+
+  function renderHomeResume() {
+    const el = document.getElementById('home-resume');
+    if (!el) return;
+    const active = [
+      [typeof practiceSession !== 'undefined' && practiceSession, 'Practice', '🎯', "goScreen('practice', document.querySelectorAll('.nav-item')[2])"],
+      [typeof mockExam !== 'undefined' && mockExam, 'Mock Exam', '⏱️', "goScreen('mockexam', null)"],
+      [typeof lessonSession !== 'undefined' && lessonSession, 'Teach Me lesson', '🎓', "goScreen('teachme', null)"],
+      [typeof cbtSession !== 'undefined' && cbtSession, 'CBT Mode', '🖥️', "goScreen('cbtmode', null)"]
+    ].find(a => a[0]);
+    if (!active) { el.innerHTML = ''; return; }
+    el.innerHTML = `<button type="button" class="home-resume" onclick="${active[3]}"><span class="ic" style="--ci:var(--indigo)">${active[2]}</span><span class="tt"><b>Continue ${active[1]}</b><small>Pick up where you left off</small></span><span class="chev" aria-hidden="true">›</span></button>`;
+  }
+  function renderHomeExtras() { renderHomeProgress(); renderHomeResume(); }
+
   function updateFeatureLimitBadges() {
     const badges = [
       { id: 'mockexam-limit-badge', feature: 'mockExam' },
@@ -2761,7 +3061,7 @@
       if (state.premium) { el.textContent = ''; return; }
       const { period, max } = USAGE_LIMITS[feature];
       const remaining = Math.max(0, max - getUsageCount(feature, period));
-      el.textContent = `· ${remaining} left this ${period === 'daily' ? 'day' : 'week'}`;
+      el.textContent = `${remaining} left this ${period === 'daily' ? 'day' : 'week'}`;
     });
   }
 
@@ -3462,7 +3762,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
       </div>` : '';
 
     el.innerHTML = `
-      <div style="margin-top:14px; background:rgba(108,99,255,0.06); border:1px solid rgba(108,99,255,0.25); border-radius:12px; padding:14px;">
+      <div style="margin-top:14px; background:rgba(var(--indigo-rgb),0.06); border:1px solid rgba(var(--indigo-rgb),0.25); border-radius:12px; padding:14px;">
         <div style="font-size:13px; font-weight:600; margin-bottom:10px;">🎯 Quick check — how did that go?</div>
         ${topicPicker}
         <div style="display:flex; gap:8px; margin-top:10px;" id="self-check-buttons">
@@ -3525,14 +3825,20 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   const DIFFICULTY_LEVELS = ['Easy', 'Medium', 'Hard', 'Exam'];
   let practiceSession = null;
 
+  function screenHeader(icon, title, sub, ci) {
+    return `<div class="scr-head"><span class="ic" style="--ci:var(--sm-c${ci || 1})">${icon}</span><div><h1>${title}</h1><p>${sub}</p></div></div>`;
+  }
+  function resultColor(pct) { return pct >= 70 ? 'var(--sm-ok)' : pct >= 40 ? 'var(--sm-warn)' : 'var(--sm-bad)'; }
+
   function renderPracticeSetup() {
+    if (practiceSession && window.SMF) SMF.finishPractice(practiceSession); // keep answers from a session left without pressing End
     practiceSession = null;
     const el = document.getElementById('practice-content');
     if (!el) return;
     const subjectNames = Object.keys(SUBJECTS);
 
     el.innerHTML = `
-      <div class="section-title" style="margin-bottom:14px;">Practice Mode</div>
+      ${screenHeader('🎯', 'Practice', 'Graded questions that adapt to how you do', 1)}
       <div class="select-label">Subject</div>
       <div class="subject-chips" id="practice-subject-chips" style="margin-bottom:16px;">
         ${subjectNames.map((name, i) => `<div class="chip${i === 0 ? ' selected' : ''}" onclick="pickPracticeSubject(this, '${escapeForInlineHandler(name)}')">${name}</div>`).join('')}
@@ -3692,9 +3998,9 @@ The distractorRationale array must be the same length as options, with null in t
     if (!el || !q) return;
 
     el.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-        <div style="font-size:11px; color:var(--muted);">${escapeHtml(practiceSession.subject)} · ${practiceSession.difficulty}</div>
-        <div style="font-size:11px; color:var(--muted);">Score: ${practiceSession.correctCount}/${practiceSession.questionsAnswered}</div>
+      <div class="sess-bar">
+        <span class="pill on">${escapeHtml(practiceSession.subject)} · ${practiceSession.difficulty}</span>
+        <span class="pill">Score ${practiceSession.correctCount}/${practiceSession.questionsAnswered}</span>
       </div>
       <div class="answer-card">
         <div class="final-answer-value" style="font-size:15px; line-height:1.5; margin-bottom:16px;">${escapeHtml(q.question)}</div>
@@ -3735,8 +4041,8 @@ The distractorRationale array must be the same length as options, with null in t
     // Mark options as correct/incorrect
     document.querySelectorAll('#practice-options .option-item').forEach((el, idx) => {
       el.classList.remove('selected');
-      if (idx === q.correctIndex) el.style.cssText += 'border-color:#64DC64; background:rgba(100,220,100,0.1);';
-      else if (idx === practiceSession.selectedIndex) el.style.cssText += 'border-color:#FF6B6B; background:rgba(255,107,107,0.1);';
+      if (idx === q.correctIndex) el.style.cssText += 'border-color:var(--sm-ok); background:rgba(100,220,100,0.1);';
+      else if (idx === practiceSession.selectedIndex) el.style.cssText += 'border-color:var(--sm-bad); background:rgba(255,107,107,0.1);';
     });
     document.getElementById('practice-submit-btn').style.display = 'none';
 
@@ -3755,6 +4061,7 @@ The distractorRationale array must be the same length as options, with null in t
       mistakeType: autoMistakeLabel
     });
     bumpStats({ gradedQuestionsAnswered: 1 });
+    if (window.SMF) SMF.logPracticeQ(practiceSession, q, practiceSession.selectedIndex);
     markMissionProgress('practice', practiceSession.subject);
 
     adaptPracticeDifficulty();
@@ -3774,6 +4081,7 @@ The distractorRationale array must be the same length as options, with null in t
       </div>
       <button class="ask-btn" style="margin-top:12px;" onclick="fetchNextPracticeQuestion()">Next Question →</button>
     `;
+    if (window.SMF) SMF.afterPracticeAnswer(q, practiceSession);
   }
 
   function tagPracticeMistake(el, subject, topic, ts, mistakeType) {
@@ -3797,16 +4105,23 @@ The distractorRationale array must be the same length as options, with null in t
   function endPracticeSession() {
     const el = document.getElementById('practice-content');
     if (!el || !practiceSession) { renderPracticeSetup(); return; }
+    if (window.SMF) SMF.finishPractice(practiceSession);
     const { correctCount, questionsAnswered, subject } = practiceSession;
     const pct = questionsAnswered ? Math.round((correctCount / questionsAnswered) * 100) : 0;
+    const msg = questionsAnswered === 0 ? 'No questions answered this time.' : pct >= 70 ? 'Strong session — keep the momentum.' : pct >= 40 ? 'Good effort — review the ones you missed.' : 'Tough one — every attempt sharpens your profile.';
     el.innerHTML = `
-      <div style="text-align:center; padding:30px 20px;">
-        <div style="font-size:36px; margin-bottom:10px;">${questionsAnswered === 0 ? '👋' : pct >= 70 ? '🎉' : '💪'}</div>
-        <div class="section-title" style="margin-bottom:6px;">Session Complete</div>
-        <div style="font-size:13px; color:var(--muted); margin-bottom:20px;">${escapeHtml(subject)} · ${questionsAnswered} question${questionsAnswered === 1 ? '' : 's'}${questionsAnswered ? ` · ${pct}% correct` : ''}</div>
-        <button class="ask-btn" onclick="renderPracticeSetup()">Practice Again</button>
-        <button class="modal-dismiss" onclick="goScreen('progress', document.querySelectorAll('.nav-item')[4])">View Progress</button>
-      </div>`;
+      <div class="res-hero">
+        <div class="score-ring" style="--p:${pct}; --rc:${resultColor(pct)}"><b>${questionsAnswered ? pct + '%' : '–'}</b></div>
+        <div class="res-title">Session complete</div>
+        <div class="res-sub">${escapeHtml(subject)} · ${msg}</div>
+      </div>
+      <div class="res-stats">
+        <div class="res-stat"><b>${questionsAnswered}</b><span>Answered</span></div>
+        <div class="res-stat"><b style="color:var(--sm-ok)">${correctCount}</b><span>Correct</span></div>
+        <div class="res-stat"><b style="color:var(--sm-bad)">${questionsAnswered - correctCount}</b><span>Missed</span></div>
+      </div>
+      <button class="ask-btn" onclick="renderPracticeSetup()">Practice Again</button>
+      <button class="modal-dismiss" onclick="goScreen('progress', document.querySelectorAll('.nav-item')[4])">View Progress</button>`;
     practiceSession = null;
   }
 
@@ -3828,7 +4143,7 @@ The distractorRationale array must be the same length as options, with null in t
     mockExamSetup.subject = mockExamSetup.subject || subjectNames[0];
 
     el.innerHTML = `
-      <div class="section-title" style="margin-bottom:14px;">Mock Exam</div>
+      ${screenHeader('⏱️', 'Mock Exam', 'Timed simulation — results shown at the end', 3)}
       <div class="select-label">Subject</div>
       <div class="subject-chips" id="mock-subject-chips" style="margin-bottom:16px;">
         ${subjectNames.map(name => `<div class="chip${name === mockExamSetup.subject ? ' selected' : ''}" onclick="pickMockSubject(this, '${escapeForInlineHandler(name)}')">${name}</div>`).join('')}
@@ -4018,7 +4333,7 @@ The distractorRationale array must be the same length as options, with null in t
     const m = Math.floor(mockExam.secondsRemaining / 60);
     const s = mockExam.secondsRemaining % 60;
     timerEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
-    if (mockExam.secondsRemaining <= 60) timerEl.style.color = '#FF6B6B';
+    if (mockExam.secondsRemaining <= 60) timerEl.style.color = 'var(--sm-bad)';
   }
 
   function renderMockExamQuestion() {
@@ -4028,17 +4343,16 @@ The distractorRationale array must be the same length as options, with null in t
     const q = mockExam.questions[i];
     const selected = mockExam.answers[i];
 
+    const answered = mockExam.answers.filter(x => x !== null).length;
     el.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-        <div style="font-size:11px; color:var(--muted);">Question ${i + 1} of ${mockExam.questions.length}</div>
-        ${mockExam.timed ? `<div id="mock-timer" style="font-size:13px; font-weight:700; color:var(--indigo);"></div>` : ''}
+      <div class="mock-layout">
+      <div class="sess-bar">
+        <span class="pill on">Question ${i + 1} of ${mockExam.questions.length}</span>
+        ${mockExam.timed ? `<span id="mock-timer" class="timer-pill"></span>` : `<span class="pill">${answered} answered</span>`}
       </div>
-      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;">
-        ${mockExam.questions.map((_, idx) => `
-          <div onclick="jumpToMockQuestion(${idx})" style="width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer;
-            background:${idx === i ? 'var(--indigo)' : mockExam.answers[idx] !== null ? 'rgba(100,220,100,0.2)' : 'var(--navy-card2)'};
-            color:${idx === i ? '#fff' : mockExam.answers[idx] !== null ? '#64DC64' : 'var(--muted)'};
-            border:1px solid ${idx === i ? 'var(--indigo)' : 'transparent'};">${idx + 1}</div>`).join('')}
+      <div class="prog-track" aria-hidden="true"><i style="width:${Math.round(answered / mockExam.questions.length * 100)}%"></i></div>
+      <div class="qn-wrap" style="margin-bottom:14px;" role="group" aria-label="Jump to question">
+        ${mockExam.questions.map((_, idx) => `<div class="qn${idx === i ? ' cur' : mockExam.answers[idx] !== null ? ' done' : ''}" role="button" tabindex="0" aria-label="Question ${idx + 1}${mockExam.answers[idx] !== null ? ', answered' : ''}" onclick="jumpToMockQuestion(${idx})">${idx + 1}</div>`).join('')}
       </div>
       <div class="answer-card">
         <div class="final-answer-value" style="font-size:15px; line-height:1.5; margin-bottom:16px;">${escapeHtml(q.question)}</div>
@@ -4054,6 +4368,7 @@ The distractorRationale array must be the same length as options, with null in t
         ${i === mockExam.questions.length - 1
           ? `<button class="ask-btn" style="flex:1;" onclick="confirmSubmitMockExam()">Submit Exam</button>`
           : `<button class="ask-btn" style="flex:1;" onclick="nextMockQuestion()">Next →</button>`}
+      </div>
       </div>
     `;
     if (mockExam.timed) updateMockTimerDisplay();
@@ -4115,7 +4430,10 @@ The distractorRationale array must be the same length as options, with null in t
 
     bumpStats({ gradedQuestionsAnswered: mockExam.questions.length, mockExamsCompleted: 1 });
     markMissionProgress('mockexam', mockExam.subject);
+    const mockSubjectForHistory = mockExam.subject; // results rendering clears mockExam
+    if (window.SMF) SMF.recordMock(mockExam, reviewItems);
     renderMockExamResults(correctCount, topicBreakdown, reviewItems);
+    if (window.SMF) SMF.afterMock(reviewItems, mockSubjectForHistory);
   }
 
   function renderMockExamResults(correctCount, topicBreakdown, reviewItems) {
@@ -4129,23 +4447,24 @@ The distractorRationale array must be the same length as options, with null in t
     })).sort((a, b) => a.pct - b.pct);
 
     el.innerHTML = `
-      <div style="text-align:center; padding:20px 0 10px;">
-        <div style="font-size:36px; margin-bottom:8px;">${pct >= 70 ? '🎉' : pct >= 40 ? '💪' : '📚'}</div>
-        <div style="font-size:28px; font-weight:800;">${pct}%</div>
-        <div style="font-size:12px; color:var(--muted);">${correctCount} of ${total} correct · ${escapeHtml(mockExam.subject)} · ${mockExam.difficulty}</div>
+      <div class="res-hero">
+        <div class="score-ring" style="--p:${pct}; --rc:${resultColor(pct)}"><b>${pct}%</b></div>
+        <div class="res-title">${pct >= 70 ? 'Great work!' : pct >= 40 ? 'Solid effort' : 'Keep building'}</div>
+        <div class="res-sub">${correctCount} of ${total} correct · ${escapeHtml(mockExam.subject)} · ${mockExam.difficulty}</div>
       </div>
-      <div class="section-title" style="font-size:13px; margin:18px 0 10px;">Breakdown by Topic</div>
+      <div class="section-title">Breakdown by topic</div>
       ${topics.map(t => `
-        <div style="background:var(--navy-card2); border-radius:10px; padding:10px 14px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
-          <div style="font-size:12px;">${escapeHtml(t.topic)}</div>
-          <div style="font-size:12px; color:${t.pct >= 70 ? '#64DC64' : t.pct >= 40 ? '#FFD166' : '#FF6B6B'};">${t.correct}/${t.total} (${t.pct}%)</div>
+        <div class="bd-row">
+          <div class="bd-top"><span>${escapeHtml(t.topic)}</span><span style="color:${resultColor(t.pct)}">${t.correct}/${t.total} · ${t.pct}%</span></div>
+          <div class="bd-bar"><i style="width:${t.pct}%; background:${resultColor(t.pct)}"></i></div>
         </div>`).join('')}
-      <div class="section-title" style="font-size:13px; margin:18px 0 10px;">Question Review</div>
+      <div class="section-title">Question review <span style="font-weight:400; color:var(--muted); font-size:11px;">· missed ones are open</span></div>
       ${reviewItems.map((q, idx) => `
-        <div style="background:var(--navy-card2); border-radius:10px; padding:12px 14px; margin-bottom:8px;">
-          <div style="font-size:12px; font-weight:600; margin-bottom:4px;">${idx + 1}. ${q.correct ? '✅' : '❌'} ${escapeHtml(q.question)}</div>
-          <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">Your answer: ${q.selected !== null ? escapeHtml(q.options[q.selected]) : '(unanswered)'}${!q.correct ? ` · Correct: ${escapeHtml(q.options[q.correctIndex])}` : ''}</div>
-          <div style="font-size:11px; color:var(--muted); line-height:1.5;">${escapeHtml(q.explanation)}</div>
+        <details class="rv-card"${q.correct ? '' : ' open'}>
+          <summary><span>${q.correct ? '✅' : '❌'}</span><span>${idx + 1}. ${escapeHtml(q.question)}</span></summary>
+          <div class="rv-body">
+          <div class="rv-line">Your answer: ${q.selected !== null ? escapeHtml(q.options[q.selected]) : '(unanswered)'}${!q.correct ? ` · Correct: ${escapeHtml(q.options[q.correctIndex])}` : ''}</div>
+          <div class="rv-line">${escapeHtml(q.explanation)}</div>
           ${(!q.correct && q.weaknessTs) ? `
           <div id="mock-mistake-chips-${idx}" style="margin-top:8px;">
             <div style="font-size:10px; color:var(--muted); margin-bottom:4px;">${q.autoMistakeLabel ? `Looks like: <strong style="color:var(--indigo);">${q.autoMistakeLabel}</strong> — tap below if that's not right:` : 'What went wrong? (optional)'}</div>
@@ -4153,7 +4472,8 @@ The distractorRationale array must be the same length as options, with null in t
               ${MISTAKE_TYPES.map(m => `<div class="chip${m === q.autoMistakeLabel ? ' selected' : ''}" onclick="tagMockMistake(${idx}, '${escapeForInlineHandler(q.weaknessSubject)}', ${q.weaknessTopic ? `'${escapeForInlineHandler(q.weaknessTopic)}'` : 'null'}, ${q.weaknessTs}, '${escapeForInlineHandler(m)}')">${m}</div>`).join('')}
             </div>
           </div>` : ''}
-        </div>`).join('')}
+          </div>
+        </details>`).join('')}
       <button class="ask-btn" style="margin-top:8px;" onclick="renderMockExamSetup()">Take Another Mock Exam</button>
       <button class="modal-dismiss" onclick="goScreen('progress', document.querySelectorAll('.nav-item')[4])">View Progress</button>
     `;
@@ -4201,27 +4521,33 @@ The distractorRationale array must be the same length as options, with null in t
     const subjectNames = Object.keys(SUBJECTS);
 
     el.innerHTML = `
-      <div class="section-title" style="margin-bottom:14px;">${existing ? 'Edit Study Plan' : 'Build a Study Plan'}</div>
-      <div class="select-label">Exam Date</div>
-      <input type="date" id="plan-exam-date" aria-label="Exam date" value="${escapeHtml(planSetupDraft.examDate)}" style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:16px;" onchange="planSetupDraft.examDate = this.value">
+      ${screenHeader('📅', existing ? 'Edit Study Plan' : 'Build a Study Plan', 'A schedule built around your exam date', 2)}
 
-      <div class="select-label">Subjects to Cover</div>
+      <div class="form-card">
+        <div class="form-grid">
+          <div><div class="select-label">Exam Date</div>
+          <input type="date" id="plan-exam-date" aria-label="Exam date" value="${escapeHtml(planSetupDraft.examDate)}" class="field" style="margin-bottom:14px;" onchange="planSetupDraft.examDate = this.value"></div>
+          <div><div class="select-label">Target Score / Grade (optional)</div>
+          <input type="text" id="plan-target-score" aria-label="Target score or grade" value="${escapeHtml(planSetupDraft.targetScore || '')}" placeholder="e.g. A1, 90%, Band 7" class="field" style="margin-bottom:14px;" onchange="planSetupDraft.targetScore = this.value"></div>
+        </div>
+      </div>
+      <div class="form-card"><div class="select-label">Subjects to Cover</div>
       <div class="subject-chips" id="plan-subject-chips" style="margin-bottom:16px;">
         ${subjectNames.map(name => `<div class="chip${planSetupDraft.subjects.includes(name) ? ' selected' : ''}" onclick="togglePlanSubject(this, '${escapeForInlineHandler(name)}')">${name}</div>`).join('')}
       </div>
 
-      <div class="select-label">Which Days Can You Study?</div>
+      </div>
+      <div class="form-card"><div class="select-label">Which Days Can You Study?</div>
       <div class="subject-chips" id="plan-day-chips" style="margin-bottom:16px;">
         ${WEEKDAY_LABELS.map((label, idx) => `<div class="chip${planSetupDraft.days.includes(idx) ? ' selected' : ''}" onclick="togglePlanDay(this, ${idx})">${label}</div>`).join('')}
       </div>
 
-      <div class="select-label">Minutes per Day</div>
+      </div>
+      <div class="form-card"><div class="select-label">Minutes per Day</div>
       <div class="subject-chips" id="plan-minutes-chips" style="margin-bottom:16px;">
         ${[20, 30, 45, 60].map(m => `<div class="chip${planSetupDraft.minutesPerDay === m ? ' selected' : ''}" onclick="pickPlanMinutes(this, ${m})">${m} min</div>`).join('')}
       </div>
 
-      <div class="select-label">Target Score / Grade (optional)</div>
-      <input type="text" id="plan-target-score" aria-label="Target score or grade" value="${escapeHtml(planSetupDraft.targetScore || '')}" placeholder="e.g. A1, 90%, Band 7" style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:20px;" onchange="planSetupDraft.targetScore = this.value">
 
       <button class="ask-btn" onclick="generateStudyPlan()">📅 ${existing ? 'Update Plan' : 'Generate My Plan'}</button>
       ${existing ? `<button class="modal-dismiss" onclick="renderStudyPlanScreen()">Cancel</button>` : ''}
@@ -4362,12 +4688,11 @@ The distractorRationale array must be the same length as options, with null in t
       : `No performance data yet — the plan is broad for now and will personalize as you use Ask AI, Practice, or Mock Exams.`;
 
     el.innerHTML = `
-      <div class="section-title" style="margin-bottom:6px;">Study Plan</div>
-      <div style="font-size:12px; color:var(--muted); margin-bottom:14px;">${phase.daysUntil} day${phase.daysUntil === 1 ? '' : 's'} until your exam</div>
-
-      <div style="background:rgba(108,99,255,0.08); border:1px solid rgba(108,99,255,0.25); border-radius:12px; padding:14px; margin-bottom:16px;">
-        <div style="font-size:13px; font-weight:700; margin-bottom:4px;">${phase.label}</div>
-        <div style="font-size:12px; color:var(--muted); line-height:1.5;">${phase.desc}</div>
+      ${screenHeader('📅', 'Study Plan', `${upcoming.filter(d => cfg.completedTasks[d.toISOString().slice(0, 10)]).length} of ${upcoming.length} sessions done this week`, 2)}
+      <div class="plan-hero">
+        <div class="plan-days"><b>${phase.daysUntil}</b><span>day${phase.daysUntil === 1 ? '' : 's'} to go</span></div>
+        <div><div style="font-size:13px; font-weight:700; margin-bottom:3px;">${phase.label}</div>
+        <div style="font-size:12px; color:var(--muted); line-height:1.5;">${phase.desc}</div></div>
       </div>
 
       <div class="section-title" style="font-size:13px; margin-bottom:10px;">Today</div>
@@ -4390,12 +4715,12 @@ The distractorRationale array must be the same length as options, with null in t
         const done = !!cfg.completedTasks[dStr];
         const isToday = dStr === todayStr;
         return `
-        <div style="display:flex; justify-content:space-between; align-items:center; background:${isToday ? 'rgba(108,99,255,0.08)' : 'var(--navy-card2)'}; border-radius:10px; padding:10px 14px; margin-bottom:6px;">
+        <div class="wk-row${isToday ? ' today' : ''}">
           <div>
-            <div style="font-size:10px; color:var(--muted);">${d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} · ${task.activity}</div>
-            <div style="font-size:12px; ${done ? 'text-decoration:line-through; color:var(--muted);' : ''}">${escapeHtml(task.subject)} · ${escapeHtml(task.topic)}</div>
+            <div class="wk-d">${d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} · ${task.activity}</div>
+            <div class="wk-t${done ? ' done' : ''}">${escapeHtml(task.subject)} · ${escapeHtml(task.topic)}</div>
           </div>
-          <div onclick="markPlanTaskDone('${dStr}')" style="cursor:pointer; font-size:16px;">${done ? '✅' : '⬜'}</div>
+          <div class="wk-chk" role="button" tabindex="0" aria-label="${done ? 'Mark not done' : 'Mark done'}" onclick="markPlanTaskDone('${dStr}')">${done ? '✅' : '⬜'}</div>
         </div>`;
       }).join('')}
 
@@ -4451,23 +4776,26 @@ The distractorRationale array must be the same length as options, with null in t
       const [subject, topic] = key.split('::');
       const dueCount = deck.cards.filter(c => c.nextReview <= todayISO()).length;
       const masteredCount = deck.cards.filter(c => c.box >= 4).length;
+      const masteredPct = deck.cards.length ? Math.round(masteredCount / deck.cards.length * 100) : 0;
       return `
-        <div style="background:var(--navy-card2); border-radius:12px; padding:12px 14px; margin-bottom:8px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
+        <div class="deck-row">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+            <div style="min-width:0;">
               <div style="font-size:13px; font-weight:600;">${escapeHtml(subject)}${topic !== 'General' ? ' · ' + escapeHtml(topic) : ''}</div>
-              <div style="font-size:11px; color:var(--muted); margin-top:2px;">${deck.cards.length} cards · ${masteredCount} mastered</div>
+              <div style="font-size:11px; color:var(--muted); margin-top:2px;">${deck.cards.length} cards · ${masteredCount} mastered${dueCount ? ' · ' + dueCount + ' due' : ''}</div>
             </div>
             <button class="action-btn" onclick="startFlashcardReview('${escapeForInlineHandler(key)}')" ${dueCount === 0 ? 'style="opacity:0.5;"' : ''}>${dueCount > 0 ? `Review (${dueCount})` : 'Up to date'}</button>
           </div>
+          <div class="bd-bar" style="margin-top:8px;" aria-hidden="true"><i style="width:${masteredPct}%; background:var(--sm-ok)"></i></div>
         </div>`;
     }).join('');
 
     el.innerHTML = `
-      <div class="section-title" style="margin-bottom:14px;">Flashcards</div>
-      ${keys.length ? deckRows : `<div style="text-align:center; padding:30px 20px; color:var(--muted); font-size:12px;">No flashcard decks yet — generate your first one below.</div>`}
+      ${screenHeader('🗂️', 'Flashcards', 'Spaced repetition that remembers for you', 4)}
+      ${keys.length ? deckRows : `<div class="empty-state"><span class="es-bagley" data-sm-bagley data-size="64" aria-hidden="true"></span><b>No decks yet</b><p>Generate a deck for any topic — cards come back on a schedule that fits how well you know them.</p></div>`}
       <button class="ask-btn" style="margin-top:10px;" onclick="renderFlashcardSetup()">➕ Generate New Deck</button>
     `;
+    try { SMPresets.refreshSlots(); } catch (_) {}
   }
 
   function renderFlashcardSetup() {
@@ -4476,9 +4804,9 @@ The distractorRationale array must be the same length as options, with null in t
     const weakest = WeaknessProfile.getWeakestTopics(1)[0];
 
     el.innerHTML = `
-      <div class="section-title" style="margin-bottom:14px;">Generate Flashcards</div>
+      ${screenHeader('✨', 'Generate Flashcards', 'AI-built deck for any topic', 4)}
       ${weakest ? `
-        <div style="background:rgba(108,99,255,0.08); border:1px solid rgba(108,99,255,0.25); border-radius:12px; padding:12px 14px; margin-bottom:16px; cursor:pointer;" onclick="generateFlashcardDeck('${escapeForInlineHandler(weakest.subject)}', '${escapeForInlineHandler(weakest.topic)}')">
+        <div style="background:rgba(var(--indigo-rgb),0.08); border:1px solid rgba(var(--indigo-rgb),0.25); border-radius:12px; padding:12px 14px; margin-bottom:16px; cursor:pointer;" onclick="generateFlashcardDeck('${escapeForInlineHandler(weakest.subject)}', '${escapeForInlineHandler(weakest.topic)}')">
           <div style="font-size:12px; font-weight:600; margin-bottom:2px;">🎯 Quick pick: your weakest topic</div>
           <div style="font-size:11px; color:var(--muted);">${escapeHtml(weakest.subject)} · ${escapeHtml(weakest.topic)} (${weakest.accuracyPct}% accuracy) — tap to generate</div>
         </div>` : ''}
@@ -4611,11 +4939,16 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     if (!card) { s.index++; renderFlashcardCard(); return; }
 
     el.innerHTML = `
-      <div style="font-size:11px; color:var(--muted); margin-bottom:14px;">Card ${s.index + 1} of ${s.queue.length}</div>
-      <div class="answer-card" style="min-height:160px; display:flex; align-items:center; justify-content:center; text-align:center; cursor:pointer;" onclick="flipFlashcard()">
-        <div style="font-size:15px; line-height:1.6;">${escapeHtml(s.showingBack ? card.back : card.front)}</div>
+      <div class="sess-bar">
+        <span class="pill on">Card ${s.index + 1} of ${s.queue.length}</span>
+        <span class="pill">${s.gotIt} got it</span>
       </div>
-      <div style="text-align:center; font-size:11px; color:var(--muted); margin:10px 0;">${s.showingBack ? '' : 'Tap the card to reveal the answer'}</div>
+      <div class="prog-track" aria-hidden="true"><i style="width:${Math.round(s.index / s.queue.length * 100)}%"></i></div>
+      <div class="fc-card${s.showingBack ? ' back' : ''}" role="button" tabindex="0" aria-label="${s.showingBack ? 'Answer' : 'Question — tap to reveal the answer'}" onclick="flipFlashcard()">
+        <div class="fc-side">${s.showingBack ? 'Answer' : 'Question'}</div>
+        <div class="fc-text">${escapeHtml(s.showingBack ? card.back : card.front)}</div>
+      </div>
+      <div style="text-align:center; font-size:11px; color:var(--muted); margin:10px 0; min-height:14px;">${s.showingBack ? '' : 'Tap the card to reveal the answer'}</div>
       ${s.showingBack ? `
         <div style="display:flex; gap:8px; margin-top:10px;">
           <button class="action-btn" style="flex:1;" onclick="rateFlashcard(false)">🤔 Still Learning</button>
@@ -4662,13 +4995,14 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     const el = document.getElementById('flashcards-content');
     const s = flashcardSession;
     if (s && s.reviewed > 0) {
+      const pct = Math.round((s.gotIt / s.reviewed) * 100);
       el.innerHTML = `
-        <div style="text-align:center; padding:30px 20px;">
-          <div style="font-size:36px; margin-bottom:10px;">🗂️</div>
-          <div class="section-title" style="margin-bottom:6px;">Session Complete</div>
-          <div style="font-size:13px; color:var(--muted); margin-bottom:20px;">${s.reviewed} card review${s.reviewed === 1 ? '' : 's'}</div>
-          <button class="ask-btn" onclick="renderFlashcardsHome()">Back to Decks</button>
-        </div>`;
+        <div class="res-hero">
+          <div class="score-ring" style="--p:${pct}; --rc:${resultColor(pct)}"><b>${pct}%</b></div>
+          <div class="res-title">Session complete</div>
+          <div class="res-sub">${s.reviewed} card review${s.reviewed === 1 ? '' : 's'} · ${s.gotIt} marked "Got it"</div>
+        </div>
+        <button class="ask-btn" style="margin-top:16px;" onclick="renderFlashcardsHome()">Back to Decks</button>`;
     } else {
       renderFlashcardsHome();
     }
@@ -4691,7 +5025,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     teachMeDraft.subject = teachMeDraft.subject || subjectNames[0];
 
     el.innerHTML = `
-      <div class="section-title" style="margin-bottom:14px;">Teach Me</div>
+      ${screenHeader('🎓', 'Teach Me', 'A guided lesson, then a mini-test', 6)}
       <div class="select-label">Subject</div>
       <div class="subject-chips" id="teach-subject-chips" style="margin-bottom:16px;">
         ${subjectNames.map(name => `<div class="chip${name === teachMeDraft.subject ? ' selected' : ''}" onclick="pickTeachSubject(this, '${escapeForInlineHandler(name)}')">${name}</div>`).join('')}
@@ -4795,10 +5129,14 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   const LESSON_STAGE_ORDER = ['concept', 'explanation', 'examples', 'guided', 'independent', 'test', 'summary'];
   const LESSON_STAGE_LABEL = { concept: 'The Idea', explanation: 'How It Works', examples: 'Worked Examples', guided: 'Guided Practice', independent: 'Your Turn', test: 'Mini-Test' };
 
+  function lessonTopBar(s) {
+    const idx = LESSON_STAGE_ORDER.indexOf(s.stage);
+    return `<div class="sess-bar"><span class="pill on">${escapeHtml(s.subject)} · ${escapeHtml(s.topic)}</span>${idx >= 0 && idx < 6 ? `<span class="pill">Step ${idx + 1} of 6</span>` : ''}</div>`;
+  }
   function lessonProgressBar(stage) {
     const idx = LESSON_STAGE_ORDER.indexOf(stage);
     return `<div style="display:flex; gap:4px; margin-bottom:16px;">
-      ${LESSON_STAGE_ORDER.slice(0, 6).map((s, i) => `<div style="flex:1; height:4px; border-radius:2px; background:${i <= idx ? 'var(--indigo)' : 'var(--border-1)'};"></div>`).join('')}
+      ${LESSON_STAGE_ORDER.slice(0, 6).map((s, i) => `<div style="flex:1; height:5px; border-radius:3px; transition:background .3s; background:${i <= idx ? 'var(--indigo)' : 'var(--border-1)'};"></div>`).join('')}
     </div>`;
   }
 
@@ -4807,19 +5145,19 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     const s = lessonSession;
     if (!s) return;
     const lesson = s.lesson;
-    const header = `<div style="font-size:11px; color:var(--muted); margin-bottom:6px;">${escapeHtml(s.subject)} · ${escapeHtml(s.topic)}</div>${lessonProgressBar(s.stage)}<div class="section-title" style="font-size:14px; margin-bottom:12px;">${LESSON_STAGE_LABEL[s.stage] || ''}</div>`;
+    const header = `${lessonTopBar(s)}${lessonProgressBar(s.stage)}<div class="section-title" style="font-size:14px; margin-bottom:12px;">${LESSON_STAGE_LABEL[s.stage] || ''}</div>`;
 
     if (s.stage === 'concept') {
       el.innerHTML = `${header}
-        <div class="answer-card"><div style="font-size:14px; line-height:1.6;">${escapeHtml(lesson.concept)}</div></div>
+        <div class="lc"><div class="lc-label"><span class="ic" style="--ci:var(--sm-c4)">💡</span>Key idea</div><div class="lc-text">${escapeHtml(lesson.concept)}</div></div>
         <button class="ask-btn" style="margin-top:14px;" onclick="advanceLessonStage('explanation')">Next →</button>`;
     } else if (s.stage === 'explanation') {
       el.innerHTML = `${header}
-        <div class="answer-card"><div style="font-size:14px; line-height:1.6;">${escapeHtml(lesson.explanation)}</div></div>
+        <div class="lc"><div class="lc-label"><span class="ic" style="--ci:var(--sm-c3)">📖</span>How it works</div><div class="lc-text">${escapeHtml(lesson.explanation)}</div></div>
         <button class="ask-btn" style="margin-top:14px;" onclick="advanceLessonStage('examples')">Next →</button>`;
     } else if (s.stage === 'examples') {
       el.innerHTML = `${header}
-        ${lesson.examples.map((ex, i) => `<div class="answer-card" style="margin-bottom:10px;"><div style="font-size:11px; color:var(--muted); margin-bottom:4px;">Example ${i + 1}</div><div style="font-size:13px; line-height:1.6;">${escapeHtml(ex)}</div></div>`).join('')}
+        ${lesson.examples.map((ex, i) => `<div class="lc lc-ex"><div class="lc-label"><span class="ic" style="--ci:var(--sm-c${(i % 4) + 1})">${i + 1}</span>Example ${i + 1}</div><div class="lc-text">${escapeHtml(ex)}</div></div>`).join('')}
         <button class="ask-btn" style="margin-top:4px;" onclick="advanceLessonStage('guided')">Try a Guided Question →</button>`;
     } else if (s.stage === 'guided' || s.stage === 'independent') {
       renderLessonQuestion(s.stage === 'guided' ? lesson.guidedQuestion : lesson.independentQuestion, s.stage);
@@ -4841,7 +5179,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   function renderLessonQuestion(q, stageType) {
     const el = document.getElementById('teachme-content');
     const s = lessonSession;
-    const header = `<div style="font-size:11px; color:var(--muted); margin-bottom:6px;">${escapeHtml(s.subject)} · ${escapeHtml(s.topic)}</div>${lessonProgressBar(s.stage)}<div class="section-title" style="font-size:14px; margin-bottom:12px;">${LESSON_STAGE_LABEL[s.stage]}${stageType === 'test' ? ` (${s.testIndex + 1}/${s.lesson.miniTest.length})` : ''}</div>`;
+    const header = `${lessonTopBar(s)}${lessonProgressBar(s.stage)}<div class="section-title" style="font-size:14px; margin-bottom:12px;">${LESSON_STAGE_LABEL[s.stage]}${stageType === 'test' ? ` (${s.testIndex + 1}/${s.lesson.miniTest.length})` : ''}</div>`;
     const hint = (stageType === 'guided' && q.hint && !s.answered) ? `<div style="font-size:11px; color:var(--indigo); margin-bottom:10px;">💡 Hint: ${escapeHtml(q.hint)}</div>` : '';
 
     el.innerHTML = `${header}
@@ -4871,8 +5209,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
 
     document.querySelectorAll('#lesson-options .option-item').forEach((el, idx) => {
       el.classList.remove('selected');
-      if (idx === q.correctIndex) el.style.cssText += 'border-color:#64DC64; background:rgba(100,220,100,0.1);';
-      else if (idx === s.selectedIndex) el.style.cssText += 'border-color:#FF6B6B; background:rgba(255,107,107,0.1);';
+      if (idx === q.correctIndex) el.style.cssText += 'border-color:var(--sm-ok); background:rgba(100,220,100,0.1);';
+      else if (idx === s.selectedIndex) el.style.cssText += 'border-color:var(--sm-bad); background:rgba(255,107,107,0.1);';
     });
     document.getElementById('lesson-submit-btn').style.display = 'none';
 
@@ -4897,7 +5235,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
       }
     }
     resultArea.innerHTML = `
-      <div style="margin-top:12px; font-size:12px; color:${correct ? '#64DC64' : '#FF6B6B'};">${correct ? '✅ Correct' : '❌ Not quite'}</div>
+      <div style="margin-top:12px; font-size:12px; color:${correct ? 'var(--sm-ok)' : 'var(--sm-bad)'};">${correct ? '✅ Correct' : '❌ Not quite'}</div>
       <button class="ask-btn" style="margin-top:10px;" onclick="${nextAction}">${nextLabel}</button>`;
   }
 
@@ -4921,6 +5259,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     });
     bumpStats({ gradedQuestionsAnswered: s.lesson.miniTest.length, teachMeLessonsCompleted: 1 });
     markMissionProgress('teachme', s.subject);
+    if (window.SMF) SMF.recordLesson(s);
     s.stage = 'summary';
     renderLessonStage();
   }
@@ -4931,15 +5270,21 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     const correct = s.testResults.filter(Boolean).length;
     const total = s.testResults.length;
     const pct = total ? Math.round((correct / total) * 100) : 0;
+    const msg = pct >= 70 ? 'You\'ve got this topic.' : pct >= 40 ? 'Good start — worth another pass.' : 'Re-read the lesson, then try again.';
     el.innerHTML = `
-      <div style="text-align:center; padding:20px;">
-        <div style="font-size:36px; margin-bottom:10px;">${pct >= 70 ? '🎉' : '📚'}</div>
-        <div class="section-title" style="margin-bottom:6px;">Lesson Complete</div>
-        <div style="font-size:13px; color:var(--muted); margin-bottom:6px;">${escapeHtml(s.subject)} · ${escapeHtml(s.topic)}</div>
-        <div style="font-size:24px; font-weight:800; margin-bottom:20px;">${correct}/${total} on the mini-test</div>
-        <button class="ask-btn" onclick="renderTeachMeSetup()">Teach Me Something Else</button>
-        <button class="modal-dismiss" onclick="goScreen('progress', document.querySelectorAll('.nav-item')[4])">View Progress</button>
-      </div>`;
+      <div class="res-hero">
+        <div class="score-ring" style="--p:${pct}; --rc:${resultColor(pct)}"><b>${total ? pct + '%' : '–'}</b></div>
+        <div class="res-title">Lesson complete</div>
+        <div class="res-sub">${escapeHtml(s.subject)} · ${escapeHtml(s.topic)}</div>
+      </div>
+      <div class="res-stats">
+        <div class="res-stat"><b>${total}</b><span>Mini-test</span></div>
+        <div class="res-stat"><b style="color:var(--sm-ok)">${correct}</b><span>Correct</span></div>
+        <div class="res-stat"><b style="color:var(--sm-bad)">${total - correct}</b><span>Missed</span></div>
+      </div>
+      <div class="res-sub" style="text-align:center; margin-bottom:14px;">${msg}</div>
+      <button class="ask-btn" onclick="renderTeachMeSetup()">Teach Me Something Else</button>
+      <button class="modal-dismiss" onclick="goScreen('progress', document.querySelectorAll('.nav-item')[4])">View Progress</button>`;
     lessonSession = null;
   }
 
@@ -4980,6 +5325,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     stats = recordActivityToday(stats);
     saveStats(stats);
     checkAchievements(stats);
+    try { renderHomeProgress(); } catch (_) {}
   }
 
   const ACHIEVEMENT_DEFS = [
@@ -5018,8 +5364,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     const earnedCount = ACHIEVEMENT_DEFS.filter(a => earned[a.id]).length;
 
     el.innerHTML = `
-      <div class="section-title" style="margin-bottom:4px;">Achievements</div>
-      <div style="font-size:12px; color:var(--muted); margin-bottom:16px;">${earnedCount} of ${ACHIEVEMENT_DEFS.length} unlocked${stats.currentStreak > 0 ? ` · 🔥 ${stats.currentStreak}-day streak` : ''}</div>
+      <div class="scr-head"><span class="ic" style="--ci:var(--sm-c4)">🏆</span><div><h1>Achievements</h1><p>${earnedCount} of ${ACHIEVEMENT_DEFS.length} unlocked${stats.currentStreak > 0 ? ` · 🔥 ${stats.currentStreak}-day streak` : ''}</p></div></div>
       ${ACHIEVEMENT_DEFS.map(a => {
         const unlocked = !!earned[a.id];
         return `
@@ -5043,8 +5388,8 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
   function renderSearchScreen() {
     const el = document.getElementById('search-content');
     el.innerHTML = `
-      <div class="section-title" style="margin-bottom:14px;">Search</div>
-      <input type="text" id="search-input" aria-label="Search subjects, topics, exam boards, or your history" placeholder="Search subjects, topics, exams, your history..." oninput="runSearch(this.value)" style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:16px;">
+      ${screenHeader('🔍', 'Search', 'Find saved questions and topics', 3)}
+      <input type="text" id="search-input" aria-label="Search subjects, topics, exam boards, or your history" placeholder="Search subjects, topics, exams, your history..." oninput="runSearch(this.value)" class="field" style="margin-bottom:16px;">
       <div id="search-results"><div style="text-align:center; padding:30px 20px; color:var(--muted); font-size:12px;">Start typing to search subjects, topics, exam boards, and your saved questions.</div></div>
     `;
     setTimeout(() => { const inp = document.getElementById('search-input'); if (inp) inp.focus(); }, 100);
@@ -5172,21 +5517,19 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     const notes = loadNotes().sort((a, b) => b.updatedAt - a.updatedAt);
     const el = document.getElementById('studymaterial-content');
     el.innerHTML = `
-      <div class="section-title" style="margin-bottom:14px;">Study Material</div>
+      ${screenHeader('📝', 'Study Material', 'Your notes and AI summaries', 5)}
       <div style="display:flex; gap:8px; margin-bottom:16px;">
         <button class="ask-btn" style="flex:1;" onclick="renderNoteEditor()">✏️ New Note</button>
         <button class="action-btn" style="flex:1;" onclick="renderAiSummarySetup()">🤖 AI Summary</button>
       </div>
       ${notes.length ? notes.map(n => `
-        <div style="background:var(--navy-card2); border-radius:12px; padding:12px 14px; margin-bottom:8px; cursor:pointer;" onclick="renderNoteEditor('${n.id}')">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-            <div style="font-size:13px; font-weight:600;">${n.title ? escapeHtml(n.title) : '(untitled)'}</div>
-            ${n.aiGenerated ? '<span style="font-size:10px; color:var(--indigo);">🤖 AI</span>' : ''}
-          </div>
-          <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">${escapeHtml(n.subject)}${n.topic ? ' · ' + escapeHtml(n.topic) : ''}</div>
-          <div style="font-size:11px; color:var(--muted); line-height:1.4;">${escapeHtml((n.body || '').slice(0, 100))}${(n.body || '').length > 100 ? '…' : ''}</div>
-        </div>`).join('') : `<div style="text-align:center; padding:30px 20px; color:var(--muted); font-size:12px;">No notes yet — write one, import a .txt file, or generate an AI summary of a topic.</div>`}
+        <div class="note-card" role="button" tabindex="0" onclick="renderNoteEditor('${n.id}')">
+          <div class="nc-top"><div class="nc-title">${n.title ? escapeHtml(n.title) : '(untitled)'}</div>${n.aiGenerated ? '<span class="pill">🤖 AI</span>' : ''}</div>
+          <div class="nc-sub">${escapeHtml(n.subject)}${n.topic ? ' · ' + escapeHtml(n.topic) : ''}</div>
+          <div class="nc-body">${escapeHtml((n.body || '').slice(0, 100))}${(n.body || '').length > 100 ? '…' : ''}</div>
+        </div>`).join('') : `<div class="empty-state"><span class="es-bagley" data-sm-bagley data-size="64" aria-hidden="true"></span><b>No notes yet</b><p>Write one, import a .txt file, or generate an AI summary of a topic.</p></div>`}
     `;
+    try { SMPresets.refreshSlots(); } catch (_) {}
   }
 
   function renderNoteEditor(noteId) {
@@ -5196,13 +5539,13 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     const el = document.getElementById('studymaterial-content');
 
     el.innerHTML = `
-      <div class="section-title" style="margin-bottom:14px;">${note ? 'Edit Note' : 'New Note'}</div>
+      ${screenHeader('✏️', note ? 'Edit Note' : 'New Note', 'Write it once, revise it anywhere', 5)}
       <div class="select-label">Subject</div>
       <div class="subject-chips" id="note-subject-chips" style="margin-bottom:14px;">
         ${subjectNames.map(name => `<div class="chip${(note ? note.subject : subjectNames[0]) === name ? ' selected' : ''}" onclick="pickNoteSubject(this, '${escapeForInlineHandler(name)}')">${name}</div>`).join('')}
       </div>
-      <input type="text" id="note-title-input" aria-label="Note title" placeholder="Title" value="${note ? escapeHtml(note.title) : ''}" style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:10px;">
-      <textarea id="note-body-input" aria-label="Note content" placeholder="Write or paste your notes here..." style="width:100%; box-sizing:border-box; min-height:160px; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:10px; resize:vertical;">${note ? escapeHtml(note.body) : ''}</textarea>
+      <input type="text" id="note-title-input" aria-label="Note title" placeholder="Title" value="${note ? escapeHtml(note.title) : ''}" class="field" style="margin-bottom:10px;">
+      <textarea id="note-body-input" aria-label="Note content" placeholder="Write or paste your notes here..." class="field" style="margin-bottom:10px;">${note ? escapeHtml(note.body) : ''}</textarea>
       <div style="display:flex; gap:8px; align-items:center; margin-bottom:16px;">
         <label class="action-btn" style="flex:1; text-align:center; cursor:pointer;">
           📎 Import .txt/.md
@@ -5299,14 +5642,14 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     noteEditorDraft.topic = null;
 
     el.innerHTML = `
-      <div class="section-title" style="margin-bottom:14px;">AI Topic Summary</div>
+      ${screenHeader('🤖', 'AI Topic Summary', 'A clear summary of any topic', 5)}
       <div class="select-label">Subject</div>
       <div class="subject-chips" id="summary-subject-chips" style="margin-bottom:14px;">
         ${subjectNames.map((name, i) => `<div class="chip${i === 0 ? ' selected' : ''}" onclick="pickSummarySubject(this, '${escapeForInlineHandler(name)}')">${name}</div>`).join('')}
       </div>
       <div id="summary-topic-wrap"></div>
       <div class="select-label" style="margin-top:12px;">Or type any topic</div>
-      <input type="text" id="summary-topic-input" aria-label="Topic to summarize" placeholder="e.g. Photosynthesis, the French Revolution..." oninput="noteEditorDraft.topic = this.value" style="width:100%; box-sizing:border-box; background:var(--navy-card2); border:1px solid var(--border-1); border-radius:10px; color:var(--white); padding:12px; font-family:'Inter',sans-serif; font-size:14px; margin-bottom:20px;">
+      <input type="text" id="summary-topic-input" aria-label="Topic to summarize" placeholder="e.g. Photosynthesis, the French Revolution..." oninput="noteEditorDraft.topic = this.value" class="field" style="margin-bottom:20px;">
       <button class="ask-btn" onclick="generateAiSummary()">🤖 Generate Summary</button>
       <button class="modal-dismiss" onclick="renderStudyMaterialHome()">Cancel</button>
     `;
@@ -5400,8 +5743,7 @@ Respond ONLY in this exact JSON format (no markdown, no backticks, no extra text
     const electiveOptions = Object.keys(SUBJECTS).filter(s => s !== CBT_ENGLISH_SUBJECT);
 
     el.innerHTML = `
-      <div class="section-title" style="margin-bottom:6px;">CBT Mode</div>
-      <div style="font-size:12px; color:var(--muted); margin-bottom:16px;">JAMB UTME format: English (compulsory, 60 questions) + 3 subjects you pick (40 questions each). 180 questions, 2-hour timer.</div>
+      <div class="scr-head" style="align-items:flex-start;"><span class="ic" style="--ci:var(--sm-c5)">🖥️</span><div><h1>CBT Mode</h1><p>JAMB UTME format: English (compulsory, 60 questions) + 3 subjects you pick (40 questions each). 180 questions, 2-hour timer.</p></div></div>
       <div class="select-label">English Language</div>
       <div class="subject-chips" style="margin-bottom:16px;">
         <div class="chip selected" style="pointer-events:none;">✓ English (compulsory)</div>
@@ -5533,7 +5875,7 @@ Each distractorRationale array must be the same length as options, with null in 
     const m = Math.floor(cbtSession.secondsRemaining / 60);
     const s = cbtSession.secondsRemaining % 60;
     timerEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
-    if (cbtSession.secondsRemaining <= 300) timerEl.style.color = '#FF6B6B'; // last 5 minutes
+    if (cbtSession.secondsRemaining <= 300) timerEl.style.color = 'var(--sm-bad)'; // last 5 minutes
   }
 
   function renderCbtQuestion() {
@@ -5549,28 +5891,24 @@ Each distractorRationale array must be the same length as options, with null in 
 
     const tabsHtml = s.subjects.map(sub => {
       const answeredCount = s.answers[sub].filter(a => a !== null).length;
-      const active = sub === subject;
-      return `<div onclick="switchCbtSubject('${escapeForInlineHandler(sub)}')" style="padding:8px 12px; border-radius:8px; cursor:pointer; font-size:11px; white-space:nowrap; background:${active ? 'var(--indigo)' : 'var(--navy-card2)'}; color:${active ? '#fff' : 'var(--muted)'};">${sub} (${answeredCount}/${s.questionsBySubject[sub].length})</div>`;
+      return `<div class="cbt-tab${sub === subject ? ' on' : ''}" role="button" tabindex="0" onclick="switchCbtSubject('${escapeForInlineHandler(sub)}')">${escapeHtml(sub)} (${answeredCount}/${s.questionsBySubject[sub].length})</div>`;
     }).join('');
 
     const navGrid = qList.map((_, i) => {
       const ans = s.answers[subject][i] !== null;
       const flag = s.flagged[subject][i];
-      const cur = i === idx;
-      let bg = 'var(--navy-card2)', color = 'var(--muted)';
-      if (cur) { bg = 'var(--indigo)'; color = '#fff'; }
-      else if (flag) { bg = 'rgba(255,209,102,0.25)'; color = 'var(--gold)'; }
-      else if (ans) { bg = 'rgba(100,220,100,0.2)'; color = '#64DC64'; }
-      return `<div onclick="jumpCbtQuestion(${i})" style="width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:10px; cursor:pointer; background:${bg}; color:${color};">${i + 1}</div>`;
+      const cls = i === idx ? ' cur' : flag ? ' flag' : ans ? ' done' : '';
+      return `<div class="qn${cls}" role="button" tabindex="0" aria-label="Question ${i + 1}${flag ? ', flagged' : ans ? ', answered' : ''}" onclick="jumpCbtQuestion(${i})">${i + 1}</div>`;
     }).join('');
 
     el.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <div style="font-size:11px; color:var(--muted);">Question ${idx + 1} of ${qList.length} · ${escapeHtml(subject)}</div>
-        <div id="cbt-timer" style="font-size:13px; font-weight:700; color:var(--indigo);"></div>
+      <div class="cbt-layout">
+      <div class="sess-bar">
+        <span class="pill on">Question ${idx + 1} of ${qList.length} · ${escapeHtml(subject)}</span>
+        <span id="cbt-timer" class="timer-pill"></span>
       </div>
-      <div style="display:flex; gap:6px; overflow-x:auto; margin-bottom:10px; padding-bottom:4px;">${tabsHtml}</div>
-      <div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:14px; max-height:110px; overflow-y:auto;">${navGrid}</div>
+      <div class="cbt-tabs">${tabsHtml}</div>
+      <div class="qn-wrap cbt-nav">${navGrid}</div>
       <div class="answer-card">
         <div style="font-size:14px; line-height:1.5; margin-bottom:14px;">${escapeHtml(q.question)}</div>
         <div id="cbt-options">
@@ -5583,6 +5921,7 @@ Each distractorRationale array must be the same length as options, with null in 
         <button class="ask-btn" style="flex:1;" onclick="nextCbtQuestion()">Next →</button>
       </div>
       <button class="modal-dismiss" style="margin-top:10px; color:var(--danger);" onclick="confirmSubmitCbt()">Submit Exam</button>
+      </div>
     `;
     updateCbtTimerDisplay();
   }
@@ -5671,6 +6010,7 @@ Each distractorRationale array must be the same length as options, with null in 
     });
 
     bumpStats({ gradedQuestionsAnswered: totalQuestions });
+    if (window.SMF) SMF.recordCbt(s);
     renderCbtResults(subjectResults);
   }
 
@@ -5691,7 +6031,7 @@ Each distractorRationale array must be the same length as options, with null in 
         return `
         <div style="background:var(--navy-card2); border-radius:10px; padding:12px 14px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
           <div style="font-size:13px;">${escapeHtml(subject)}</div>
-          <div style="font-size:12px; color:${r.scaledScore >= 70 ? '#64DC64' : r.scaledScore >= 40 ? '#FFD166' : '#FF6B6B'};">${r.correct}/${r.total} → ${r.scaledScore}/100</div>
+          <div style="font-size:12px; color:${r.scaledScore >= 70 ? 'var(--sm-ok)' : r.scaledScore >= 40 ? 'var(--sm-warn)' : 'var(--sm-bad)'};">${r.correct}/${r.total} → ${r.scaledScore}/100</div>
         </div>`;
       }).join('')}
       <div style="font-size:11px; color:var(--muted); margin-top:16px; line-height:1.5;">A question-by-question review isn't shown here — 180 questions is a lot to scroll through — but every answer has already updated your Weakness Profile, including per-topic breakdowns for each subject.</div>
@@ -5765,8 +6105,7 @@ Each distractorRationale array must be the same length as options, with null in 
     if (!state.premium) { showPaywall(); goScreen('home', document.querySelectorAll('.nav-item')[0]); return; }
     const el = document.getElementById('mission-content');
     el.innerHTML = `
-      <div class="section-title" style="margin-bottom:6px;">What Should I Study Right Now?</div>
-      <div style="font-size:12px; color:var(--muted); margin-bottom:16px;">Tell me how long you've got — I'll plan the highest-impact session from your actual weak spots.</div>
+      <div class="scr-head" style="align-items:flex-start;"><span class="ic" style="--ci:var(--sm-c1)">🎯</span><div><h1>What Should I Study Right Now?</h1><p>Tell me how long you've got — I'll plan the highest-impact session from your actual weak spots.</p></div></div>
       <div class="select-label">Available time</div>
       <div class="subject-chips" id="mission-minutes-chips" style="margin-bottom:20px;">
         ${MISSION_MINUTE_OPTIONS.map(m => `<div class="chip${m === missionMinutesDraft ? ' selected' : ''}" onclick="pickMissionMinutes(this, ${m})">${m} min</div>`).join('')}
@@ -5823,7 +6162,7 @@ Each distractorRationale array must be the same length as options, with null in 
         <div style="font-size:13px; color:var(--muted);">Your ${minutes}-Minute Mission</div>
         <div style="font-size:18px; font-weight:700; margin-top:4px;">${escapeHtml(target.subject)} — ${escapeHtml(target.topic)}</div>
       </div>
-      <div style="background:rgba(108,99,255,0.08); border:1px solid rgba(108,99,255,0.25); border-radius:12px; padding:12px 14px; margin-bottom:16px; font-size:12px; line-height:1.5;">
+      <div style="background:rgba(var(--indigo-rgb),0.08); border:1px solid rgba(var(--indigo-rgb),0.25); border-radius:12px; padding:12px 14px; margin-bottom:16px; font-size:12px; line-height:1.5;">
         Why this? This topic is currently your largest gap — ${target.accuracyPct}% accuracy${target.trend !== 'not enough data' ? `, trending ${target.trend}` : ''}. ${mistakeNote}
       </div>
       ${phases.map((p, i) => `
@@ -5929,7 +6268,7 @@ Each distractorRationale array must be the same length as options, with null in 
 
     if (!r) {
       el.innerHTML = `
-        <div style="background:rgba(108,99,255,0.06); border:1px solid rgba(108,99,255,0.2); border-radius:12px; padding:16px; margin-bottom:16px; text-align:center;">
+        <div style="background:rgba(var(--indigo-rgb),0.06); border:1px solid rgba(var(--indigo-rgb),0.2); border-radius:12px; padding:16px; margin-bottom:16px; text-align:center;">
           <div style="font-size:28px; margin-bottom:8px;">🧠</div>
           <div style="font-size:13px; font-weight:600; margin-bottom:4px;">Not enough data yet for your Academic Intelligence Report</div>
           <div style="font-size:12px; color:var(--muted); line-height:1.5;">Answer some Practice questions or try a Teach Me lesson first — this report is built entirely from your real activity, never guessed.</div>
@@ -5938,7 +6277,7 @@ Each distractorRationale array must be the same length as options, with null in 
     }
 
     el.innerHTML = `
-      <div style="background:linear-gradient(135deg, rgba(108,99,255,0.12), rgba(0,212,170,0.08)); border:1px solid rgba(108,99,255,0.3); border-radius:14px; padding:18px; margin-bottom:20px;">
+      <div style="background:linear-gradient(135deg, rgba(var(--indigo-rgb),0.12), rgba(var(--mint-rgb),0.08)); border:1px solid rgba(var(--indigo-rgb),0.3); border-radius:14px; padding:18px; margin-bottom:20px;">
         <div style="font-size:11px; color:var(--indigo); font-weight:700; letter-spacing:0.5px; margin-bottom:10px;">🧠 YOUR ACADEMIC INTELLIGENCE REPORT</div>
         <div style="font-size:32px; font-weight:800; margin-bottom:2px;">${r.overallReadiness !== null ? r.overallReadiness + '%' : '—'}</div>
         <div style="font-size:11px; color:var(--muted); margin-bottom:16px;">Overall estimated readiness${r.examRangeLow !== null ? ` · projected range ${r.examRangeLow}–${r.examRangeHigh}%` : ''}</div>
@@ -5982,11 +6321,11 @@ Each distractorRationale array must be the same length as options, with null in 
 
     const trend = await getReadinessTrend(r.opportunitySubject);
     const trendHtml = trend
-      ? `<span style="color:${trend.delta >= 0 ? '#64DC64' : '#FF6B6B'};">${trend.delta >= 0 ? '↑' : '↓'} ${Math.abs(trend.delta)}% this month</span>`
+      ? `<span style="color:${trend.delta >= 0 ? 'var(--sm-ok)' : 'var(--sm-bad)'};">${trend.delta >= 0 ? '↑' : '↓'} ${Math.abs(trend.delta)}% this month</span>`
       : `<span style="color:var(--muted);">Trend builds up as you keep practicing</span>`;
 
     el.innerHTML = `
-      <div style="background:linear-gradient(135deg, rgba(108,99,255,0.14), rgba(0,212,170,0.08)); border:1px solid rgba(108,99,255,0.3); border-radius:14px; padding:18px; margin-bottom:16px;">
+      <div style="background:linear-gradient(135deg, rgba(var(--indigo-rgb),0.14), rgba(var(--mint-rgb),0.08)); border:1px solid rgba(var(--indigo-rgb),0.3); border-radius:14px; padding:18px; margin-bottom:16px;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
           <div>
             <div style="font-size:11px; color:var(--muted);">Academic Readiness</div>
@@ -6039,8 +6378,7 @@ Each distractorRationale array must be the same length as options, with null in 
     const remaining = Math.max(0, PAST_PAPER_WEEKLY_LIMIT - getUsageCount('pastPaper', 'weekly'));
 
     el.innerHTML = `
-      <div class="section-title" style="margin-bottom:6px;">Past-Paper Intelligence</div>
-      <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">Upload past papers — I'll find what's actually tested most, and cross-check it against your own weak spots.</div>
+      <div class="scr-head" style="align-items:flex-start;"><span class="ic" style="--ci:var(--sm-c3)">📄</span><div><h1>Past-Paper Intelligence</h1><p>Upload past papers — I'll find what's actually tested most, and cross-check it against your own weak spots.</p></div></div>
       <div style="font-size:11px; color:var(--gold); margin-bottom:16px;">${remaining} of ${PAST_PAPER_WEEKLY_LIMIT} analyses left this week.</div>
       <div class="select-label">Subject</div>
       <div class="subject-chips" id="pastpaper-subject-chips" style="margin-bottom:16px;">
@@ -6252,10 +6590,10 @@ Each distractorRationale array must be the same length as options, with null in 
     el.innerHTML = `
       <div class="section-title" style="margin-bottom:4px;">${escapeHtml(subject)} — Exam Priority Map</div>
       <div style="font-size:11px; color:var(--muted); margin-bottom:12px;">From ${papersAnalyzed} paper${papersAnalyzed === 1 ? '' : 's'} you provided. This reflects what's actually IN those papers, not a prediction of future exams.</div>
-      ${parsed.notes ? `<div style="background:rgba(108,99,255,0.08); border:1px solid rgba(108,99,255,0.2); border-radius:10px; padding:10px 12px; font-size:12px; margin-bottom:8px;">${escapeHtml(parsed.notes)}</div>` : ''}
-      ${section('🔴 HIGH PRIORITY — frequently tested + currently weak', priorityMap.high, '#FF6B6B')}
-      ${section('🟡 MEDIUM PRIORITY', priorityMap.medium, '#FFD166')}
-      ${section('🟢 LOWER PRIORITY — less frequent or already strong', priorityMap.low, '#64DC64')}
+      ${parsed.notes ? `<div style="background:rgba(var(--indigo-rgb),0.08); border:1px solid rgba(var(--indigo-rgb),0.2); border-radius:10px; padding:10px 12px; font-size:12px; margin-bottom:8px;">${escapeHtml(parsed.notes)}</div>` : ''}
+      ${section('🔴 HIGH PRIORITY — frequently tested + currently weak', priorityMap.high, 'var(--sm-bad)')}
+      ${section('🟡 MEDIUM PRIORITY', priorityMap.medium, 'var(--sm-warn)')}
+      ${section('🟢 LOWER PRIORITY — less frequent or already strong', priorityMap.low, 'var(--sm-ok)')}
       <button class="ask-btn" style="margin-top:16px;" onclick="renderPastPaperSetup()">Analyze More Papers</button>
       <button class="modal-dismiss" onclick="goScreen('home', document.querySelectorAll('.nav-item')[0])">Back to Home</button>
     `;
@@ -6363,7 +6701,7 @@ Each distractorRationale array must be the same length as options, with null in 
 
   // ── RESET ASK ──
   function resetAsk() {
-    document.getElementById('input-section').style.display = 'block';
+    document.getElementById('input-section').style.display = '';
     const askHeader = document.getElementById('ask-header');
     if (askHeader) askHeader.style.display = '';
     document.getElementById('answer-section').classList.remove('active');
@@ -6863,6 +7201,7 @@ Each distractorRationale array must be the same length as options, with null in 
     document.getElementById('stat-asked').textContent = (state.totalAsked === null || state.totalAsked === undefined) ? '–' : state.totalAsked;
     document.getElementById('stat-saved').textContent = state.history.length;
     renderLifetimeStats();
+    renderHomeExtras();
 
     const planEl = document.querySelector('.profile-plan');
     if (planEl) {
@@ -6880,10 +7219,15 @@ Each distractorRationale array must be the same length as options, with null in 
     'Not Started': '#6b7280', 'Beginner': '#FF6B6B', 'Developing': '#FFD166',
     'Competent': '#4FC3F7', 'Strong': '#64DC64', 'Mastered': '#00D4AA'
   };
+  const MASTERY_COLOR_LIGHT = {
+    'Not Started': '#4b5563', 'Beginner': '#C62F2F', 'Developing': '#8F6200',
+    'Competent': '#0B6FA0', 'Strong': '#1E8A3C', 'Mastered': '#00806A'
+  };
   const TREND_ICON = { improving: '📈 Improving', declining: '📉 Slipping', stable: '➖ Stable', 'not enough data': '' };
 
   function masteryBadge(mastery) {
-    const color = MASTERY_COLOR[mastery] || '#6b7280';
+    const light = document.documentElement.getAttribute('data-theme') === 'light';
+    const color = (light ? MASTERY_COLOR_LIGHT : MASTERY_COLOR)[mastery] || (light ? '#4b5563' : '#6b7280');
     return `<span style="background:${hexToRgba(color, 0.15)}; color:${color}; border:1px solid ${hexToRgba(color, 0.4)}; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600;">${mastery}</span>`;
   }
 
@@ -6893,11 +7237,8 @@ Each distractorRationale array must be the same length as options, with null in 
 
     if (!WeaknessProfile.hasAnyData()) {
       el.innerHTML = `
-        <div style="text-align:center; padding:40px 20px; color:var(--muted);">
-          <div style="font-size:36px; margin-bottom:12px;">📊</div>
-          <div style="font-size:14px; margin-bottom:6px; color:var(--white);">Not enough data yet</div>
-          <div style="font-size:12px; line-height:1.6;">Ask a few questions in Ask AI and answer the quick "how did that go?" check after each one — your Weakness Profile builds itself from there.</div>
-        </div>`;
+        <div class="empty-state"><span class="es-bagley" data-sm-bagley data-size="64" aria-hidden="true"></span><b>Not enough data yet</b><p>Ask a few questions in Ask AI and answer the quick "how did that go?" check after each one — your Weakness Profile builds itself from there.</p></div>`;
+      try { SMPresets.refreshSlots(); } catch (_) {}
       return;
     }
 
@@ -6907,9 +7248,9 @@ Each distractorRationale array must be the same length as options, with null in 
     const insights = WeaknessProfile.getInsights();
     const INSIGHT_ICON = { positive: '📈', watch: '🔍', neutral: '💡' };
     const insightsHtml = insights.length ? `
-      <div class="section-title" style="font-size:13px; margin-bottom:10px;">Insights</div>
+      <div class="section-title" style="margin-top:0;">Insights</div>
       ${insights.map(i => `
-        <div style="background:rgba(108,99,255,0.06); border:1px solid rgba(108,99,255,0.2); border-radius:12px; padding:12px 14px; margin-bottom:8px; display:flex; gap:10px; align-items:flex-start;">
+        <div class="insight-card">
           <div style="font-size:16px;">${INSIGHT_ICON[i.kind] || '💡'}</div>
           <div style="font-size:12px; line-height:1.5;">${i.text}</div>
         </div>`).join('')}
@@ -6918,42 +7259,47 @@ Each distractorRationale array must be the same length as options, with null in 
     // Weakest topics across everything the student has data for.
     const weakest = WeaknessProfile.getWeakestTopics(5);
     const weakestHtml = weakest.length ? `
-      <div class="section-title" style="font-size:13px; margin-bottom:10px;">Priority Topics</div>
+      <div class="section-title">Priority topics</div>
       ${weakest.map((t, i) => `
-        <div style="background:var(--navy-card2); border-radius:12px; padding:12px 14px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <div style="font-size:10px; color:var(--muted); margin-bottom:2px;">Priority ${i + 1} · ${t.subject}</div>
-            <div style="font-size:13px; font-weight:600;">${escapeHtml(t.topic)}</div>
-            <div style="font-size:11px; color:var(--muted); margin-top:2px;">${t.accuracyPct}% · ${t.attempts} check-in${t.attempts === 1 ? '' : 's'} ${TREND_ICON[t.trend] || ''}</div>
+        <div class="bd-row">
+          <div class="bd-top">
+            <span><span style="color:var(--muted); font-size:10.5px;">${i + 1} · ${escapeHtml(t.subject)}</span><br><b style="font-size:13px;">${escapeHtml(t.topic)}</b></span>
+            ${masteryBadge(t.mastery)}
           </div>
-          ${masteryBadge(t.mastery)}
+          <div class="bd-bar"><i style="width:${t.accuracyPct}%; background:${resultColor(t.accuracyPct)}"></i></div>
+          <div style="font-size:11px; color:var(--muted); margin-top:5px;">${t.accuracyPct}% · ${t.attempts} check-in${t.attempts === 1 ? '' : 's'} ${TREND_ICON[t.trend] || ''}</div>
         </div>`).join('')}
     ` : '';
 
-    // Per-subject summary for every subject with data.
+    // Per-subject summary for every subject with data (collapsible; the first stays open).
     const subjects = WeaknessProfile.getAllSubjects();
-    const subjectsHtml = `
-      <div class="section-title" style="font-size:13px; margin:18px 0 10px;">By Subject</div>
-      ${subjects.map(subject => {
-        const summary = WeaknessProfile.getSubjectSummary(subject);
-        const topics = WeaknessProfile.getTopics(subject).filter(t => t.attempts > 0);
-        return `
-        <div style="background:var(--navy-card2); border-radius:12px; padding:14px; margin-bottom:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:${topics.length ? '10px' : '0'};">
-            <div style="font-size:13px; font-weight:600;">${escapeHtml(subject)}</div>
-            ${masteryBadge(summary.mastery)}
+    let totalCheckins = 0, totalTopics = 0;
+    const subjectCards = subjects.map((subject, idx) => {
+      const summary = WeaknessProfile.getSubjectSummary(subject);
+      const topics = WeaknessProfile.getTopics(subject).filter(t => t.attempts > 0);
+      totalCheckins += summary.attempts || 0; totalTopics += topics.length;
+      return `
+        <details class="rv-card"${idx === 0 ? ' open' : ''}>
+          <summary><span style="min-width:0;">${escapeHtml(subject)}<br><span style="font-weight:400; color:var(--muted); font-size:11px;">${summary.accuracyPct}% overall · ${summary.attempts} check-ins</span></span><span style="margin-left:auto;">${masteryBadge(summary.mastery)}</span></summary>
+          <div class="rv-body">
+            ${topics.map(t => `
+              <div style="padding:6px 0; border-top:1px solid var(--border-05);">
+                <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>${escapeHtml(t.topic)}</span><span style="color:var(--muted); font-size:11px;">${t.accuracyPct}% ${TREND_ICON[t.trend] || ''}</span></div>
+                <div class="bd-bar"><i style="width:${t.accuracyPct}%; background:${resultColor(t.accuracyPct)}"></i></div>
+              </div>`).join('')}
           </div>
-          <div style="font-size:11px; color:var(--muted); margin-bottom:${topics.length ? '10px' : '0'};">${summary.accuracyPct}% overall · ${summary.attempts} check-ins</div>
-          ${topics.map(t => `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-top:1px solid var(--border-05);">
-              <div style="font-size:12px;">${escapeHtml(t.topic)}</div>
-              <div style="font-size:11px; color:var(--muted);">${t.accuracyPct}% ${TREND_ICON[t.trend] || ''}</div>
-            </div>`).join('')}
-        </div>`;
-      }).join('')}
-    `;
+        </details>`;
+    }).join('');
+    const subjectsHtml = `<div class="section-title">By subject</div>${subjectCards}`;
 
-    el.innerHTML = insightsHtml + weakestHtml + subjectsHtml + `
+    const strip = `
+      <div class="res-stats" style="margin-top:0;">
+        <div class="res-stat"><b>${totalCheckins}</b><span>Check-ins</span></div>
+        <div class="res-stat"><b>${subjects.length}</b><span>Subjects</span></div>
+        <div class="res-stat"><b>${totalTopics}</b><span>Topics</span></div>
+      </div>`;
+
+    el.innerHTML = strip + `<div class="prog-cols"><div class="prog-main">${insightsHtml}${weakestHtml}</div><div class="prog-side">${subjectsHtml}</div></div>` + `
       <div style="text-align:center; margin-top:8px;">
         <button class="modal-dismiss" onclick="confirmResetWeaknessProfile()">Reset Weakness Profile</button>
       </div>`;
@@ -6992,72 +7338,61 @@ Each distractorRationale array must be the same length as options, with null in 
   const PAYSTACK_IS_LIVE = PAYSTACK_PUBLIC_KEY.startsWith('pk_live_');
 
   function formatQuote(q) {
+    const whole = q.amountMinor % 100 === 0;   // ₦2,000 / $4 — but $4.36 keeps its cents
+    const digits = { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 };
     try {
-      return new Intl.NumberFormat(getUserLocale(), { style: 'currency', currency: q.currency, maximumFractionDigits: 0 }).format(q.amountMinor / 100);
-    } catch (_) { return (q.amountMinor / 100).toLocaleString(getUserLocale()) + ' ' + q.currency; }
+      return new Intl.NumberFormat(getUserLocale(), { style: 'currency', currency: q.currency, ...digits }).format(q.amountMinor / 100);
+    } catch (_) { return (q.amountMinor / 100).toLocaleString(getUserLocale(), digits) + ' ' + q.currency; }
   }
-  // ── PAYWALL DISPLAY CURRENCY — PRESENTATION ONLY ──
-  // The big price at the top is shown in the student's own kind of currency (₹ India, £ UK, € Europe, each African
-  // country's own, $ everywhere else). It is an ESTIMATE converted from the server's NGN quote. It is never sent
-  // anywhere: the charge, the expected-amount check and the Subscribe button all keep using the exact NGN quote
-  // (state.priceQuote), and the screen says so right under the price.
-  // Rates: ECB/Banque de France reference rates 16 Oct 2026 (EUR, GBP, INR, ZAR), Central Bank of Kenya via KRA
-  // 12–18 Oct 2026 (KES, GHS), USD/NGN market ≈ 1,330. They drift — if they are older than maxAgeDays the screen
-  // falls back to the exact naira price instead of showing a stale estimate. Review asOf + the numbers monthly.
-  const DISPLAY_RATES = {
-    asOf: '2026-10-16', maxAgeDays: 60, ngnPerUsd: 1330,
-    perUsd: { USD: 1, EUR: 0.8886, GBP: 0.7507, INR: 94.97, GHS: 11.75, KES: 129.9, ZAR: 16.43 } // units of currency per 1 USD
-  };
-  const DISPLAY_CURRENCY_BY_COUNTRY = { gb: 'GBP', in: 'INR', ng: 'NGN', gh: 'GHS', ke: 'KES', za: 'ZAR' };
-  // Euro display for European countries. (The country picker currently offers none besides the UK, so this only
-  // takes effect once European countries are added to it.)
-  const EUROPE_EURO_DISPLAY = ['ad', 'al', 'at', 'ba', 'be', 'bg', 'by', 'ch', 'cy', 'cz', 'de', 'dk', 'ee', 'es', 'fi', 'fr', 'gr', 'hr', 'hu', 'ie', 'is', 'it', 'li', 'lt', 'lu', 'lv', 'mc', 'md', 'me', 'mk', 'mt', 'nl', 'no', 'pl', 'pt', 'ro', 'rs', 'ru', 'se', 'si', 'sk', 'sm', 'ua', 'va', 'xk'];
-  const DISPLAY_WHOLE_UNIT_CURRENCIES = ['INR', 'GHS', 'KES', 'ZAR', 'NGN'];
-
-  function displayCurrencyFor(q) {
-    // same country the screen already names (locked region, else the SELECTED country, else the quote region)
-    const code = q.locked ? q.region : (q.selectedCountry && q.selectedCountry !== 'intl' ? q.selectedCountry : q.region);
-    if (EUROPE_EURO_DISPLAY.includes(code)) return 'EUR';
-    return DISPLAY_CURRENCY_BY_COUNTRY[code] || 'USD'; // North America, Australia, UAE, international, anything unlisted → dollars
-  }
-
-  // → { text, estimated } ; text is what goes in the big price. Falls back to the exact quote when no safe estimate exists.
-  function formatDisplayPrice(q, now) {
-    const exact = { text: formatQuote(q), estimated: false };
-    try {
-      const cur = displayCurrencyFor(q);
-      if (q.currency !== 'NGN' || cur === 'NGN') return exact;                       // already naira, or not an NGN quote: nothing to convert
-      const rate = DISPLAY_RATES.perUsd[cur];
-      const ageDays = ((now === undefined ? Date.now() : now) - Date.parse(DISPLAY_RATES.asOf)) / 864e5;
-      if (!rate || !(ageDays <= DISPLAY_RATES.maxAgeDays) || !(ageDays >= -1)) return exact; // unknown or stale rate → honest naira price
-      const value = (q.amountMinor / 100) / DISPLAY_RATES.ngnPerUsd * rate;
-      const whole = DISPLAY_WHOLE_UNIT_CURRENCIES.includes(cur);
-      const opts = { style: 'currency', currency: cur, currencyDisplay: 'narrowSymbol', minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 };
-      let text;
-      try { text = new Intl.NumberFormat(getUserLocale(), opts).format(value); }
-      catch (_) { text = new Intl.NumberFormat('en', { style: 'currency', currency: cur, minimumFractionDigits: opts.minimumFractionDigits, maximumFractionDigits: opts.maximumFractionDigits }).format(value); }
-      return { text, estimated: true };
-    } catch (_) { return exact; }
-  }
-
   function checkoutBase() { return getAiEndpoint().replace(/\/api\/ask$/, ''); }
 
   // Fetches the server's quote for the signed-in account (null on failure).
-  async function loadPriceQuote() {
-    if (!window.sbAuthSession) { state.priceQuote = null; return null; }
-    try {
-      const res = await fetch(`${checkoutBase()}/api/checkout`, {
-        headers: { Authorization: `Bearer ${window.sbAuthSession.access_token}` }, cache: 'no-store'
-      });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const d = await res.json();
-      state.priceQuote = d && d.quote && typeof d.quote.amountMinor === 'number' ? d.quote : null;
-    } catch (err) {
-      console.error('[StudyMate] Could not load price quote:', err && err.message);
-      state.priceQuote = null;
-    }
-    return state.priceQuote;
+  // The paywall can never hang on "Loading…": every outcome — success, HTTP error, bad body, network failure or a
+  // 10-second timeout — ends in state.priceStatus 'ready' or 'error', and 'error' shows a Retry button. Concurrent
+  // calls share one request, so repeated taps cannot stack up requests.
+  const PRICE_TIMEOUT_MS = 10000;
+  state.priceStatus = 'idle';          // 'idle' | 'loading' | 'ready' | 'error'
+  let priceLoadPromise = null;
+  function loadPriceQuote() {
+    if (priceLoadPromise) return priceLoadPromise;
+    state.priceStatus = 'loading';
+    state.priceQuote = null;
+    renderPaywallPrice();
+    const run = (async () => {
+      let timer = null;
+      try {
+        if (!window.sbAuthSession) throw new Error('signed out');
+        const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+        const timeout = new Promise((_, reject) => {
+          timer = setTimeout(() => { try { if (ctrl) ctrl.abort(); } catch (_) {} reject(new Error('timeout')); }, PRICE_TIMEOUT_MS);
+        });
+        const request = (async () => {
+          const res = await fetch(`${checkoutBase()}/api/checkout`, {
+            headers: { Authorization: `Bearer ${window.sbAuthSession.access_token}` }, cache: 'no-store',
+            signal: ctrl ? ctrl.signal : undefined
+          });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const d = await res.json();
+          const q = d && d.quote;
+          if (!q || typeof q.amountMinor !== 'number' || !(q.amountMinor > 0) || typeof q.currency !== 'string') throw new Error('unexpected response');
+          return q;
+        })();
+        request.catch(() => {});       // if the timeout wins, the late failure must not surface as an unhandled rejection
+        state.priceQuote = await Promise.race([request, timeout]);
+        state.priceStatus = 'ready';
+      } catch (err) {
+        console.error('[StudyMate] Could not load price quote:', err && err.message);
+        state.priceQuote = null;
+        state.priceStatus = 'error';
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+      return state.priceQuote;
+    })();
+    priceLoadPromise = run.then(q => { priceLoadPromise = null; renderPaywallPrice(); return q; });
+    return priceLoadPromise;
   }
+  function retryPriceLoad() { loadPriceQuote(); }
 
   // The server's pricing country, spelled out so the student always sees which
   // country they are about to be charged for (and never a detected one).
@@ -7084,41 +7419,49 @@ Each distractorRationale array must be the same length as options, with null in 
 
   function renderPaywallPrice() {
     const q = state.priceQuote;
+    const status = q ? 'ready' : (state.priceStatus === 'loading' ? 'loading' : 'error');
     const priceEl = document.getElementById('pricing-price-display');
+    const statusEl = document.getElementById('pricing-status');
+    const statusTextEl = document.getElementById('pricing-status-text');
+    const noteEl = document.getElementById('pricing-billing-note');
     const btnEl = document.getElementById('subscribe-btn');
     const boxEl = document.getElementById('pricing-country-box');
     const blocked = !!q && q.restricted;
     const needsConfirm = !!q && q.confirmationRequired;
     const modeBad = paystackModeMismatch(q);
-    const ready = !!q && (PAYSTACK_IS_TEST || PAYSTACK_IS_LIVE) && !blocked && !modeBad && (!needsConfirm || state.countryConfirmed);
+    const ready = !!q && (PAYSTACK_IS_TEST || PAYSTACK_IS_LIVE) && !blocked && !modeBad && (!needsConfirm || state.countryConfirmed) && !checkoutInFlight;
+
+    // The headline is ALWAYS the server's exact charge (amount + currency); no converted or estimated figure is shown.
     if (priceEl) {
-      if (!q) priceEl.innerHTML = `… <span>/ month</span>`;
-      else {
-        const shown = formatDisplayPrice(q);
-        // textContent-built (no HTML from data); the exact NGN charge is always stated when the big price is an estimate
-        priceEl.textContent = '';
-        priceEl.appendChild(document.createTextNode((shown.estimated ? '≈ ' : '') + shown.text + ' '));
-        const per = document.createElement('span'); per.textContent = '/ month'; priceEl.appendChild(per);
-        if (shown.estimated) {
-          const exact = document.createElement('div');
-          exact.style.cssText = 'font-family:inherit; font-size:12px; font-weight:500; color:var(--muted); margin-top:6px; line-height:1.5;';
-          exact.textContent = `Estimate. You will be charged ${formatQuote(q)} / month (Nigerian Naira) — the amount shown on the payment page.`;
-          priceEl.appendChild(exact);
-        }
+      priceEl.textContent = '';
+      priceEl.classList.toggle('is-loading', status === 'loading');
+      priceEl.setAttribute('aria-busy', status === 'loading' ? 'true' : 'false');
+      if (status === 'ready') {
+        priceEl.appendChild(document.createTextNode(formatQuote(q) + ' '));
+        const per = document.createElement('span'); per.textContent = SMI18n.t('pay.perMonth'); priceEl.appendChild(per);
+      } else if (status === 'loading') {
+        priceEl.textContent = SMI18n.t('pay.loading');
+      } else {
+        priceEl.textContent = '—';
       }
     }
+    if (statusEl) {
+      statusEl.hidden = status !== 'error';
+      if (statusTextEl) statusTextEl.textContent = status === 'error' ? SMI18n.t('pay.error') : '';
+    }
+    if (noteEl) noteEl.textContent = status === 'ready' ? SMI18n.t('pay.billedIn', { currency: q.currency }) : '';
 
     if (boxEl) {
       boxEl.textContent = '';
       if (q) {
         const line = document.createElement('div');
-        line.style.cssText = 'color:var(--text); font-weight:600; font-size:16px;';
+        line.className = 'pw-country-line';
         line.textContent = (q.locked ? 'Your pricing region: ' : 'Pricing country: ') + pricingCountryLabel(q);
         if (!q.locked && !blocked) {
           const link = document.createElement('button');
           link.type = 'button';
+          link.className = 'pw-change';
           link.textContent = 'Change';
-          link.style.cssText = 'margin-left:8px; background:none; border:none; color:var(--indigo,#8b85ff); text-decoration:underline; cursor:pointer; font-size:14px; padding:6px 4px;';
           link.onclick = changePricingCountry;
           line.appendChild(link);
         }
@@ -7132,10 +7475,9 @@ Each distractorRationale array must be the same length as options, with null in 
         } else if (needsConfirm) {
           add("We noticed your selected country differs from your detected region. Please confirm your country before continuing.");
           const lab = document.createElement('label');
-          lab.style.cssText = 'display:flex; gap:12px; align-items:flex-start; margin-top:10px; padding:14px; color:var(--text); font-size:15px; font-weight:500; line-height:1.5; border:1px solid var(--indigo,#8b85ff); border-radius:12px; background:rgba(108,99,255,0.10); cursor:pointer;';
+          lab.className = 'pw-confirm';
           const cb = document.createElement('input');
           cb.type = 'checkbox'; cb.checked = !!state.countryConfirmed;
-          cb.style.cssText = 'width:24px; height:24px; flex:0 0 24px; margin:0; accent-color:var(--indigo,#8b85ff); cursor:pointer;';
           cb.onchange = () => onCountryConfirmToggle(cb.checked);
           const sp = document.createElement('span');
           sp.textContent = `I confirm that ${pricingCountryLabel(q).replace(/^\S+ /, '').replace(/ — international pricing$/, '')} is my country of residence.`;
@@ -7145,38 +7487,33 @@ Each distractorRationale array must be the same length as options, with null in 
       }
     }
     if (btnEl) {
-      btnEl.textContent = q
-        ? (PAYSTACK_IS_TEST ? `Subscribe (TEST MODE) — ${formatQuote(q)}/month` : `Subscribe Now — ${formatQuote(q)}/month`)
-        : 'Loading your price…';
+      btnEl.textContent = status === 'ready'
+        ? (PAYSTACK_IS_TEST ? `${SMI18n.t('pay.subscribe')} (TEST) — ${formatQuote(q)}${SMI18n.t('pay.perMonth').replace(/^\/ ?/, '/')}` : `${SMI18n.t('pay.subscribe')} — ${formatQuote(q)}${SMI18n.t('pay.perMonth').replace(/^\/ ?/, '/')}`)
+        : (status === 'loading' ? SMI18n.t('pay.loading') : SMI18n.t('pay.priceUnavailable'));
       btnEl.disabled = !ready;
+      btnEl.setAttribute('aria-busy', checkoutInFlight ? 'true' : 'false');
     }
   }
 
   function showPaywall() {
     const priceEl = document.getElementById('pricing-price-display');
-    renderPaywallPrice();
     state.countryConfirmed = false;
-    (lastProfileSave || Promise.resolve()).catch(() => {}).then(loadPriceQuote).then(renderPaywallPrice);
-    // Honest billing note under the price (created once).
-    let note = document.getElementById('pricing-billing-note');
-    if (!note && priceEl) {
-      note = document.createElement('div');
-      note.id = 'pricing-billing-note';
-      note.style.cssText = 'font-size:11px; color:var(--muted); margin-top:6px; line-height:1.5;';
-      priceEl.insertAdjacentElement('afterend', note);
-    }
-    if (note) {
-      note.textContent = 'Billed in Nigerian Naira (₦) via Paystack. If your card is in another currency, your bank converts it at its own rate and may add fees. The price is set by StudyMate\'s server, not your device.';
-    }
+    // Always start from a fresh, server-provided quote (never a stale one), shown as "Loading…" right away.
+    // A just-changed country is given up to 4 s to reach the server first, so the quote matches it — but a
+    // profile save that hangs can never keep the screen loading: the quote request has its own timeout too.
+    state.priceQuote = null; state.priceStatus = 'loading'; renderPaywallPrice();
+    const profileSaved = (lastProfileSave || Promise.resolve()).catch(() => {});
+    Promise.race([profileSaved, new Promise(r => setTimeout(r, 4000))]).then(loadPriceQuote);
     // Loud TEST banner so a test checkout can never be mistaken for a real one.
+    const card = priceEl && priceEl.closest('.pw-body');
     let banner = document.getElementById('paystack-test-banner');
     if (PAYSTACK_IS_TEST) {
-      if (!banner && priceEl) {
+      if (!banner && card) {
         banner = document.createElement('div');
         banner.id = 'paystack-test-banner';
-        banner.style.cssText = 'margin:8px 0; padding:8px 10px; border-radius:8px; font-size:12px; font-weight:600; background:rgba(255,209,102,0.15); border:1px solid rgba(255,209,102,0.5); color:var(--gold);';
+        banner.className = 'pw-test';
         banner.textContent = '🧪 TEST MODE — checkout uses Paystack test cards. No real money is charged.';
-        priceEl.insertAdjacentElement('beforebegin', banner);
+        card.insertBefore(banner, card.firstChild);
       }
     } else if (banner) {
       banner.remove();
@@ -7188,6 +7525,30 @@ Each distractorRationale array must be the same length as options, with null in 
     if (!e || e.target.id === 'paywall-modal') {
       document.getElementById('paywall-modal').classList.remove('active');
     }
+  }
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape' && document.getElementById('paywall-modal').classList.contains('active') &&
+        !document.getElementById('settings-modal').classList.contains('active')) closePaywall();
+  });
+
+  // Long billing/currency explanation lives here (opened from "Billing details"), not on the paywall itself.
+  function openBillingDetails() {
+    openSettingsModal(`
+      <div class="modal-title">Billing details 🧾</div>
+      <div class="policy-text">
+        <h4>What you pay</h4>
+        <p>The price shown on the Premium screen is calculated by StudyMate's server for your account. It is not set by your device, and the amount and currency shown are exactly what the payment page charges.</p>
+        <h4>Currency</h4>
+        <p>Payments are processed by Paystack. Students in Nigeria are charged in Nigerian Naira (₦); students everywhere else are charged in US dollars ($). If your card is in a different currency, your bank or card issuer converts the amount at its own rate and may add fees. We don't control or see those.</p>
+        <h4>Your pricing country</h4>
+        <p>Your price depends on the country selected in your profile. The country you pay under on your first purchase is kept for renewals. If your selected country differs from the region detected for your connection, we may ask you to confirm it before checkout.</p>
+        <h4>What a payment buys</h4>
+        <p>Each payment activates Premium for 30 days from confirmation. Premium is only activated after the payment is verified with Paystack; if confirmation is delayed, access is applied automatically once it arrives.</p>
+        <h4>Your card details</h4>
+        <p>Card and bank details are entered in Paystack's window and are never seen or stored by StudyMate. See the Privacy Policy for what StudyMate stores about payments.</p>
+      </div>
+      <button class="modal-dismiss" onclick="closeSettingsModal()">Close</button>
+    `);
   }
 
   function applyPremiumUI() {
@@ -7272,15 +7633,18 @@ Each distractorRationale array must be the same length as options, with null in 
       showToast(SMI18n.t('err.paymentLoad'));
       return;
     }
-    if (!state.priceQuote) { showToast(SMI18n.t('err.priceLoading')); loadPriceQuote().then(renderPaywallPrice); return; }
+    if (!state.priceQuote) { showToast(SMI18n.t('err.priceLoading')); if (state.priceStatus !== 'loading') loadPriceQuote(); return; }
     if (paystackModeMismatch(state.priceQuote)) {
       showToast(SMI18n.t('err.paymentConfig'));
       return;
     }
 
+    // One checkout at a time: the flag stays set until the request fails or the Paystack window reports back
+    // (success / cancel / error), with a 45 s safety release in case the popup never calls back.
     checkoutInFlight = true;
-    const btnEl = document.getElementById('subscribe-btn');
-    if (btnEl) btnEl.disabled = true;
+    let popupOpened = false, releaseTimer = null;
+    const releaseCheckout = () => { if (releaseTimer) clearTimeout(releaseTimer); releaseTimer = null; checkoutInFlight = false; renderPaywallPrice(); };
+    renderPaywallPrice();
     try {
       // The SERVER creates the transaction at the price IT computes. The two
       // expected* fields only say which price this student was shown.
@@ -7313,9 +7677,12 @@ Each distractorRationale array must be the same length as options, with null in 
 
       let paid = false;
       const popup = new PaystackPop();
+      popupOpened = true;
+      releaseTimer = setTimeout(releaseCheckout, 45000);
       popup.resumeTransaction(data.accessCode, {
         onSuccess: function (tx) {
           paid = true;
+          releaseCheckout();
           const reference = (tx && tx.reference) || data.reference;
           // Remember the reference BEFORE verifying: if verification fails
           // (network, server hiccup) the app retries it automatically next
@@ -7324,9 +7691,11 @@ Each distractorRationale array must be the same length as options, with null in 
           verifyPaymentWithBackend(reference);
         },
         onCancel: function () {
+          releaseCheckout();
           if (!paid) showToast('Checkout cancelled — you have not been charged.');
         },
         onError: function (err) {
+          releaseCheckout();
           console.error('[StudyMate] Paystack popup error', err && err.message);
           if (!paid) showToast("Payment wasn't completed. No Premium access was activated.");
         }
@@ -7335,8 +7704,7 @@ Each distractorRationale array must be the same length as options, with null in 
       console.error('startCheckout error', err);
       showToast(SMI18n.t('err.checkoutNetwork'));
     } finally {
-      checkoutInFlight = false;
-      renderPaywallPrice();
+      if (!popupOpened) releaseCheckout();   // failed before the Paystack window opened; otherwise its callbacks release it
     }
   }
 
@@ -8405,7 +8773,7 @@ Each distractorRationale array must be the same length as options, with null in 
         <p>Video suggestions are found by sending a short search phrase about the concept to the YouTube Data API through StudyMate's server (using StudyMate's shared key), or directly from your device if you add your own API key in Settings (that key is stored on your device only). Search phrases and public results may be cached in a shared table that is not linked to your identity. Opening a video takes you to YouTube, which has its own privacy policy.</p>
 
         <h4>Payments</h4>
-        <p>Premium is paid through Paystack. Checkout happens in Paystack's window: your card or bank details go to Paystack and are never seen or stored by StudyMate. StudyMate sends Paystack your account email, the amount and the currency, and stores your subscription status, plan, amount and currency charged, billing-period dates and the payment reference in the database. Charges are made in Nigerian Naira (NGN); your card issuer may convert them to your own currency and may add fees.</p>
+        <p>Premium is paid through Paystack. Checkout happens in Paystack's window: your card or bank details go to Paystack and are never seen or stored by StudyMate. StudyMate sends Paystack your account email, the amount and the currency, and stores your subscription status, plan, amount and currency charged, billing-period dates and the payment reference in the database. Charges are made in Nigerian Naira (NGN) for students in Nigeria and in US dollars (USD) for everyone else; your card issuer may convert them to your own currency and may add fees.</p>
 
         <h4>Services that process data for the app</h4>
         <p>Supabase (accounts and database), Google (Gemini AI and YouTube), Anthropic (Claude AI), Paystack (payments), and the hosting provider that runs the app and its server functions. The app also loads fonts from Google Fonts and code libraries from jsDelivr and Paystack, which can see your IP address and device information, as any website you visit can.</p>
@@ -8541,5 +8909,9 @@ Each distractorRationale array must be the same length as options, with null in 
   // just as full of div[onclick] chips/option-items as the main screens.
   a11yObserver.observe(document.body, { childList: true, subtree: true });
 </script>
+<script src="calc-engine.js"></script>
+<script src="features.js"></script>
+<script src="features-formulas.js"></script>
+<script src="features-study.js"></script>
 </body>
 </html>
