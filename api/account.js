@@ -45,6 +45,7 @@ const EXPORT_TABLES = [
   { table: 'payment_intents', key: 'user_id', select: 'reference,status,pricing_region,currency,amount_minor,created_at,paid_at' },
   { table: 'ai_usage', key: 'user_id' },
   { table: 'saved_questions', key: 'user_id' },
+  { table: 'study_sessions', key: 'user_id' },
   { table: 'weakness_profiles', key: 'user_id' },
   { table: 'review_schedule', key: 'user_id' },
   { table: 'readiness_snapshots', key: 'user_id' },
