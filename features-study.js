@@ -26,7 +26,8 @@
 
   // ═══════════════════════════ SAVED QUESTIONS ═══════════════════════════
   const notesKey = () => 'sm_saved_notes:' + uid();
-  const getNote = id => (lsGet(notesKey(), {}) || {})[id] || '';
+  const notesObj = () => { const v = lsGet(notesKey(), {}); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; };
+  const getNote = id => { const n = notesObj()[id]; return typeof n === 'string' ? n : ''; };
   const SQ = { q: '', subject: 'All', topic: 'All', kind: 'All' };
 
   const isMcq = h => h && h.kind === 'mcq' && Array.isArray(h.options);
@@ -55,13 +56,13 @@
       const { error } = await window.sbClient.from('saved_questions').delete().eq('id', id).eq('user_id', state.activeUserId);
       if (error) throw error;
       state.history = state.history.filter(x => String(x.id) !== String(id));
-      const n = lsGet(notesKey(), {}) || {}; delete n[id]; lsSet(notesKey(), n);
+      const n = notesObj(); delete n[id]; lsSet(notesKey(), n);
       closeSheet(); toast('Removed'); renderSaved(); try { updateProfile(); } catch (_) { }
     } catch (e) { toast('Couldn’t remove it — try again.'); }
   };
   SMF.saveNote = async function (id) {
     const ta = $('sq-note'); if (!ta) return; const note = ta.value.slice(0, 1000);
-    const n = lsGet(notesKey(), {}) || {}; if (note.trim()) n[id] = note; else delete n[id]; lsSet(notesKey(), n);   // always keep a device copy
+    const n = notesObj(); if (note.trim()) n[id] = note; else delete n[id]; lsSet(notesKey(), n);   // always keep a device copy
     let cloud = false;
     try { const { error } = await window.sbClient.from('saved_questions').update({ note: note.trim() ? note : null }).eq('id', id).eq('user_id', state.activeUserId); cloud = !error; } catch (_) { }
     toast(cloud ? 'Note saved' : 'Note saved on this device'); renderSaved();
@@ -70,7 +71,7 @@
     try {
       if (!window.sbClient || !state.activeUserId) return;
       const { data, error } = await window.sbClient.from('saved_questions').select('id, note').eq('user_id', state.activeUserId).not('note', 'is', null).limit(300);
-      if (error || !data) return; const n = lsGet(notesKey(), {}) || {}; data.forEach(r => { if (r.note) n[r.id] = r.note; }); lsSet(notesKey(), n);
+      if (error || !data) return; const n = notesObj(); data.forEach(r => { if (r.note) n[r.id] = r.note; }); lsSet(notesKey(), n);
     } catch (_) { }
   };
 
@@ -451,7 +452,7 @@
   if (typeof orig !== 'function') return;
   window.loadSavedQuestions = async function () {
     const r = await orig.apply(this, arguments);
-    try { await Promise.all([SMF.Sessions.pull(), SMF.pullNotes()]); if (document.getElementById('screen-history').classList.contains('active')) SMF.renderSaved(); } catch (_) { }
+    try { SMF.purgeForeignData(); await Promise.all([SMF.Sessions.pull(), SMF.pullNotes()]); if (document.getElementById('screen-history').classList.contains('active')) SMF.renderSaved(); } catch (_) { }
     return r;
   };
 })();

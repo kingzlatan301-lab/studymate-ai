@@ -7,6 +7,9 @@
   const uid = () => { try { return state.activeUserId || 'anon'; } catch (_) { return 'anon'; } };
   const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) { } };
+  // Stored values can be corrupted or edited: always validate the shape before use.
+  const lsArr = (k) => { const v = lsGet(k, []); return Array.isArray(v) ? v : []; };
+  const lsNum = (k) => { const v = lsGet(k, 0); return typeof v === 'number' && Number.isFinite(v) ? v : 0; };
   const toast = m => { try { showToast(m); } catch (_) { } };
   const copy = async t => { try { if (typeof copyTextToClipboard === 'function') return await copyTextToClipboard(t); } catch (_) { } try { await navigator.clipboard.writeText(t); return true; } catch (_) { return false; } };
   const Calc = () => window.SMCalc;
@@ -16,7 +19,7 @@
   const FB = { subject: 'All', tab: 'browse', q: '', open: null, limit: 30, loading: false, failed: false };
   const SUBJ_ICON = { Mathematics: '➗', 'Further Mathematics': '∑', Physics: '⚛️', Chemistry: '🧪' };
   const favKey = () => 'sm_fav_formulas:' + uid(), recKey = () => 'sm_recent_formulas:' + uid();
-  const favs = () => lsGet(favKey(), []), recents = () => lsGet(recKey(), []);
+  const favs = () => lsArr(favKey()).filter(x => typeof x === 'string'), recents = () => lsArr(recKey()).filter(x => typeof x === 'string');
 
   function loadData(cb) {
     if (window.SM_FORMULAS) return cb(true);
@@ -152,9 +155,10 @@
   }
 
   // ═══════════════════════════ SCIENTIFIC CALCULATOR ═══════════════════════════
-  const CS = { angle: 'DEG', ans: 0, hasAns: false, memory: lsGet('sm_calc_mem', 0), formula: null, histOpen: false, fracOn: false, justEq: false };
+  const CS = { angle: 'DEG', ans: 0, hasAns: false, memory: 0, formula: null, histOpen: false, fracOn: false, justEq: false };
   const histKey = () => 'sm_calc_hist:' + uid();
-  const history = () => lsGet(histKey(), []);
+  const memKey = () => 'sm_calc_mem:' + uid();
+  const history = () => lsArr(histKey()).filter(x => x && typeof x.e === 'string' && typeof x.r === 'string' && Number.isFinite(x.v));
 
   const KEYS = [
     ['fn', 'sin', 'sin('], ['fn', 'cos', 'cos('], ['fn', 'tan', 'tan('], ['fn', 'ln', 'ln('], ['fn', 'log', 'log('],
@@ -171,6 +175,7 @@
     const el = $('calculator-content'); if (!el) return;
     if (!window.SMCalc) { el.innerHTML = '<div class="sm-err">Calculator failed to load. Reload the app and try again.</div>'; return; }
     if (el.dataset.ready !== '1') { buildCalc(el); el.dataset.ready = '1'; }
+    CS.memory = lsNum(memKey()); updateMemInd();   // per account, re-read on every open (account may have changed)
     renderFormulaPanel(); renderHistory(); refreshPreview();
   };
 
@@ -276,7 +281,7 @@
     else if (op === 'MR') { insert(String(CS.memory)); }
     else if (op === 'M+') { if (!r.ok && ($('calc-in').value || '').trim()) { toast('Fix the expression first'); return; } CS.memory = Calc().cleanNoise(CS.memory + cur); }
     else if (op === 'M-') { if (!r.ok && ($('calc-in').value || '').trim()) { toast('Fix the expression first'); return; } CS.memory = Calc().cleanNoise(CS.memory - cur); }
-    lsSet('sm_calc_mem', CS.memory); updateMemInd();
+    lsSet(memKey(), CS.memory); updateMemInd();
     if (op !== 'MR') toast(op === 'MC' ? 'Memory cleared' : 'Memory: ' + Calc().format(CS.memory));
   };
   SMF.calcHist = function () { CS.histOpen = !CS.histOpen; renderHistory(); };

@@ -23,7 +23,7 @@ const APP_FILES = [
   '/curriculum-data.js', '/weakness-profile.js', '/bagley-context.js', '/math-text.js',
   '/personalization.css', '/personalization-art.js', '/personalization-data.js', '/personalization.js', '/manifest.webmanifest', '/icons/icon.svg',
   '/icons/icon-192.png', '/icons/icon-512.png', '/personalization-scenes.js',
-  '/features.css', '/calc-engine.js', '/features.js', '/features-formulas.js', '/features-study.js', '/formula-data.js'
+  '/features.css', '/light-mode.css', '/calc-engine.js', '/features.js', '/features-formulas.js', '/features-study.js', '/onboarding-theme.js', '/formula-data.js'
 ];
 
 self.addEventListener('install', (event) => {

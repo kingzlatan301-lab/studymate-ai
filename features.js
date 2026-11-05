@@ -33,13 +33,14 @@
   const SESS_MAX_LOCAL = 300;
   const Sessions = SMF.Sessions = {
     _key() { return 'sm_sessions:' + uid(); },
-    list() { return (lsGet(this._key(), []) || []).slice().sort((a, b) => String(b.completedAt).localeCompare(String(a.completedAt))); },
+    _arr() { const v = lsGet(this._key(), []); return Array.isArray(v) ? v.filter(x => x && typeof x === 'object' && typeof x.clientId === 'string' && Array.isArray(x.questions)) : []; },
+    list() { return this._arr().slice().sort((a, b) => String(b.completedAt).localeCompare(String(a.completedAt))); },
     _save(arr) { lsSet(this._key(), arr.slice(-SESS_MAX_LOCAL)); },
     // Validates, de-duplicates by clientId, never overwrites an existing record.
     add(rec) {
       const r = Sessions.normalise(rec);
       if (!r) return null;
-      const arr = lsGet(this._key(), []) || [];
+      const arr = this._arr();
       if (arr.some(x => x.clientId === r.clientId)) return null;
       arr.push(r); this._save(arr);
       Sessions._push(r);
@@ -68,12 +69,13 @@
     async _push(r) {
       try {
         if (!window.sbClient || !state.activeUserId) return;
+        if (SMF._cloudRetryAfter && Date.now() < SMF._cloudRetryAfter) return;   // back-off after a failure (pull() retries later)
         const { error } = await window.sbClient.from('study_sessions').insert({
           user_id: state.activeUserId, client_id: r.clientId, type: r.type, subject: r.subject, topics: r.topics, difficulty: r.difficulty,
           style: r.style, total: r.total, correct: r.correct, duration_sec: r.durationSec, completed_at: r.completedAt, questions: r.questions
         });
         if (error && error.code !== '23505') throw error;
-      } catch (e) { SMF._cloudSessionsOk = false; console.warn('[StudyMate] session cloud sync skipped:', e && e.message); }
+      } catch (e) { SMF._cloudRetryAfter = Date.now() + 60000; console.warn('[StudyMate] session cloud sync skipped:', e && e.message); }
     },
     // Merges cloud rows into the local cache (idempotent by clientId). Local-only records are kept.
     async pull() {
@@ -85,7 +87,7 @@
           .eq('user_id', me).order('completed_at', { ascending: false }).limit(300);
         if (error) throw error;
         if (state.activeUserId !== me) return;
-        const arr = lsGet(this._key(), []) || [];
+        const arr = this._arr();
         const have = new Set(arr.map(x => x.clientId));
         (data || []).forEach(d => {
           if (have.has(d.client_id)) return;
@@ -95,7 +97,13 @@
           if (clean && clean.clientId === d.client_id) arr.push(clean);
         });
         this._save(arr);
-      } catch (e) { console.warn('[StudyMate] could not load session history:', e && e.message); }
+        // Upload anything recorded while offline / before the table existed (idempotent: unique(user_id, client_id)).
+        if (!SMF._cloudRetryAfter || Date.now() >= SMF._cloudRetryAfter) {
+          const inCloud = new Set((data || []).map(d => d.client_id));
+          const pending = arr.filter(x => !inCloud.has(x.clientId)).sort((a, b) => String(b.completedAt).localeCompare(String(a.completedAt))).slice(0, 25);
+          for (const r of pending) { if (SMF._cloudRetryAfter && Date.now() < SMF._cloudRetryAfter) break; await this._push(r); }
+        }
+      } catch (e) { SMF._cloudRetryAfter = Date.now() + 60000; console.warn('[StudyMate] could not load session history:', e && e.message); }
     }
   };
 
@@ -151,7 +159,18 @@
     } catch (e) { console.warn('[StudyMate] could not record lesson quiz', e && e.message); }
   };
 
-  SMF.onAccount = function () { Sessions.pull(); };
+  // Shared-device privacy: another account's study data (history, notes, favourites, calculator history/memory) must not linger
+  // on this device once a different student signs in. Keys are uid-scoped, so this only removes OTHER accounts' keys.
+  SMF.purgeForeignData = function () {
+    try {
+      const me = state && state.activeUserId; if (!me) return 0; let n = 0;
+      const re = /^(sm_sessions|sm_saved_notes|sm_fav_formulas|sm_recent_formulas|sm_calc_hist|sm_calc_mem):(.+)$/;
+      for (const k of Object.keys(localStorage)) { const m = re.exec(k); if (m && m[2] !== me) { localStorage.removeItem(k); n++; } }
+      localStorage.removeItem('sm_calc_mem');   // legacy un-scoped key from the first build
+      return n;
+    } catch (_) { return 0; }
+  };
+  SMF.onAccount = function () { SMF.purgeForeignData(); Sessions.pull(); };
   SMF.onScreen = function (name) {
     try {
       if (name === 'formulas') SMF.openFormulas();

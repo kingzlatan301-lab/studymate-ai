@@ -1,0 +1,83 @@
+/* StudyMate AI — Light mode refresh.
+   Scope: ONLY [data-theme="light"]. Dark mode, the preset catalogue (backgrounds/accents/Bagleys) and the theme engine are untouched.
+   Goals: (1) the chosen background is actually visible, (2) text is darker and bolder, (3) cards/controls separate clearly from the page.
+   Loaded after personalization.css so equal-specificity rules here win; card tokens use !important only because the theme engine
+   writes them inline on :root. */
+
+/* ── 1. Tokens: darker text, stronger borders, real shadows ─────────────────────────────── */
+[data-theme="light"] {
+  --white: #0A1020;                 /* body text (was #141A2B) — 17:1 on white */
+  --muted: #3B465A;                 /* secondary text (was #5B6472) — 9:1 on white */
+  --border-04: rgba(15,23,42,.10);  --border-05: rgba(15,23,42,.11);  --border-06: rgba(15,23,42,.12);
+  --border-07: rgba(15,23,42,.13);  --border-08: rgba(15,23,42,.14);  --border-1: rgba(15,23,42,.18);
+  --border-12: rgba(15,23,42,.20);  --border-15: rgba(15,23,42,.24);  --border-2: rgba(15,23,42,.28);
+  --border-25: rgba(15,23,42,.34);
+  --shadow: 0 12px 32px rgba(18,28,56,.16);
+  --sm-light-lift: 0 1px 2px rgba(18,28,56,.10), 0 6px 18px rgba(18,28,56,.09);
+  --navy-card: rgba(255,255,255,.96) !important;
+  --navy-card2: rgba(242,246,253,.97) !important;
+  --navy-card-alpha: rgba(255,255,255,.97) !important;
+}
+[data-theme="light"] body { font-weight: 500; -webkit-font-smoothing: antialiased; }
+[data-theme="light"] ::placeholder { color: #566177; opacity: 1; }
+
+/* ── 2. The background must SHOW. Veil strength follows the user's Clarity setting (--sm-veil:
+      soft .6 / balanced .42 / vivid .26); the art is lifted slightly so a night scene reads as a soft, luminous backdrop. ── */
+[data-theme="light"] #sm-env .sm-env-art { filter: saturate(1.3) brightness(1.4) contrast(1.04); }
+[data-theme="light"] #sm-env .sm-env-veil {
+  background: linear-gradient(180deg,
+    rgba(246,249,255, calc(var(--sm-veil, .42) * 1.1)) 0%,
+    rgba(246,249,255, calc(var(--sm-veil, .42) * 1.6)) 38%,
+    rgba(246,249,255, min(.94, calc(var(--sm-veil, .42) * 2.2))) 100%);
+}
+/* Text that sits directly on the scene (not on a card) gets a soft light halo so it stays crisp over any background. */
+[data-theme="light"] :is(.scr-head h1,.scr-head p,.section-title,.select-label,.greeting,.greeting-name,.es-title) {
+  text-shadow: 0 0 10px rgba(255,255,255,.95), 0 0 3px rgba(255,255,255,.95), 0 1px 1px rgba(255,255,255,.9);
+}
+[data-theme="light"] body.sm-has-env .topbar { border-bottom: 1px solid var(--border-1); box-shadow: 0 2px 12px rgba(18,28,56,.08); }
+[data-theme="light"] body.sm-has-env .bottom-nav { border-top: 1px solid var(--border-1); box-shadow: 0 -4px 18px rgba(18,28,56,.10); }
+
+/* ── 3. Cards and controls lift off the page ─────────────────────────────────────────────── */
+[data-theme="light"] :is(.tool-tile,.subject-card,.answer-card,.home-progress,.home-resume,.quota-card,.stat-box,.res-stat,.history-item,
+    .settings-item,.more-list,.note-card,.fc-card,.deck-row,.form-card,.video-card,.lc,.wk-row,.bd-row,.ans-hero,.ans-insight,.ans-details,
+    .field,.empty-state,.fb-row,.sm-card,.ss-card,.h-card,.calc-disp,.calc-formula,.calc-histbox,.pf-kpis div,.tk) {
+  border-color: var(--border-1);
+  box-shadow: var(--sm-light-lift);
+}
+[data-theme="light"] :is(.chip,.filter-tab,.cbt-tab,.pill,.sm-chip,.timer-pill) { border-color: var(--border-2); font-weight: 600; }
+[data-theme="light"] :is(.chip.selected,.chip.active,.filter-tab.active,.sm-chip.on,.pill.on) { font-weight: 700; }
+[data-theme="light"] :is(.ck) { border-color: var(--border-2); box-shadow: 0 1px 0 rgba(18,28,56,.14); font-weight: 700; }
+[data-theme="light"] .ck.fn { color: #2F3A4F; }
+[data-theme="light"] :is(.ask-btn,.settings-save-btn,.subscribe-btn,.upgrade-btn,.sm-btn.primary) { box-shadow: 0 6px 16px rgba(18,28,56,.20); }
+[data-theme="light"] :is(.sm-btn,.modal-dismiss) { font-weight: 700; }
+[data-theme="light"] :is(input,select,textarea):not([type=checkbox]):not([type=radio]) { border-color: var(--border-2); }
+
+/* ── 4. Bolder text where it carries meaning ─────────────────────────────────────────────── */
+[data-theme="light"] :is(h1,h2,h3,.section-title,.modal-title,.scr-head h1,.profile-name,.greeting-name,.fb-detail h2,.sm-card h3,.fb-sec h3) { font-weight: 800; }
+[data-theme="light"] :is(.toggle-label,.settings-label,.tool-name,.subject-name,.fb-row-main b,.history-subject,.h-main b) { font-weight: 700; }
+[data-theme="light"] :is(.modal-sub,.tool-sub,.tool-desc,.settings-sub,.toggle-sub,.history-time,.fb-x,.h-main small,.pf-trow small,.sm-note,.cf-note) { color: var(--muted); font-weight: 500; }
+[data-theme="light"] .fb-expr { font-weight: 600; border-color: var(--border-2); }
+[data-theme="light"] .calc-res { font-weight: 800; }
+[data-theme="light"] .calc-in { font-weight: 600; }
+[data-theme="light"] .nav-item span, [data-theme="light"] .nav-label { font-weight: 700; }
+
+/* ── 5. Small text that sits straight on the scene: full-strength dark ink, heavier, with the halo above ── */
+[data-theme="light"] :is(.greeting,.select-label,.scr-head p,.es-sub) { color: #17213A; font-weight: 700; }
+[data-theme="light"] .scr-head p { font-size: 12.5px; }
+
+/* ── 6. Selected states must be opaque (the accent glow is translucent, so the scene bled through): glow layered over white ── */
+[data-theme="light"] :is(.chip.selected,.chip.active,.option-item.selected,.filter-tab.active,.cbt-tab.active,.pill.on,.qn.current) {
+  background: linear-gradient(var(--indigo-glow), var(--indigo-glow)), #fff;
+  border-color: var(--indigo);
+  color: var(--white);
+  font-weight: 700;
+}
+
+/* ── 7. Sweep fixes (pixel-measured over all screens × the five free backgrounds) ───────────────────────────── */
+/* Small badges / pills / tabs sit on the scene: give them a solid light backing so they never depend on what is behind. */
+[data-theme="light"] :is(.plan-badge,.calc-mode,.pr-pill,.filter-tab:not(.active),.cbt-tab:not(.active),.timer-pill) { background: rgba(255,255,255,.95); }
+/* Remaining small text that sits directly on the scene: dark ink + the same halo as headings. */
+[data-theme="light"] :is(.ask-header-sub,.upload-sub,.or-divider,.profile-plan,.history-empty-text,.sm-empty,.fb-group,.sm-note,.res-sub,.mission-sub,.scr-head small) {
+  color: #17213A; font-weight: 600;
+  text-shadow: 0 0 10px rgba(255,255,255,.95), 0 0 3px rgba(255,255,255,.95), 0 1px 1px rgba(255,255,255,.9);
+}

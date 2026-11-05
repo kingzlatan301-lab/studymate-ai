@@ -1578,6 +1578,7 @@
 </style>
 <link rel="stylesheet" href="personalization.css">
 <link rel="stylesheet" href="features.css">
+<link rel="stylesheet" href="light-mode.css">
 </head>
 <body>
 
@@ -2532,6 +2533,8 @@
   // browser's localStorage. See loadProfileForSession() below.
   function startOnboardingForProfile() {
     if (state.onboardingComplete || state.onboardingDismissedThisSession) return;
+    // New look default: a student who has never chosen an appearance starts in Light (existing choices are never touched).
+    if (!localStorage.getItem('sm_display_mode')) { state.displayMode = 'light'; localStorage.setItem('sm_display_mode', 'light'); applyDisplayMode(); updateAppearanceBadge(); }
     renderOnboardingStep(state.userName ? 'country' : 'name');
     document.getElementById('onboarding-modal').classList.add('active');
   }
@@ -2628,6 +2631,9 @@
         </div>
       `;
 
+    } else if (step === 'theme') {
+      SMOnbTheme.render(content);
+
     } else if (step === 'plan') {
       content.innerHTML = `
         <div class="modal-title">${SMI18n.t('onb.plan.title')}</div>
@@ -2686,7 +2692,7 @@
   function selectOnboardingRoutine(key) {
     state.studyRoutine = key;
     saveProfileQuietly({ study_routine: key });
-    renderOnboardingStep('plan');
+    renderOnboardingStep('theme');
   }
 
   function generateBagleyPlanMessage() {
@@ -8913,5 +8919,6 @@ Each distractorRationale array must be the same length as options, with null in 
 <script src="features.js"></script>
 <script src="features-formulas.js"></script>
 <script src="features-study.js"></script>
+<script src="onboarding-theme.js"></script>
 </body>
 </html>
