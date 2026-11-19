@@ -9,3 +9,6 @@ ios/App/Pods/
 .vercel/
 *.keystore
 *.jks
+__pycache__/
+*.pyc
+.DS_Store

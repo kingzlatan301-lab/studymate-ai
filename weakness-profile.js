@@ -34,6 +34,21 @@ window.WeaknessProfile = (function () {
   const BAD_NAMES = new Set(['__proto__', 'constructor', 'prototype']);
   const okName = n => typeof n === 'string' && n.length > 0 && n.length <= 120 && !BAD_NAMES.has(n);
 
+  // ── Topic names typed by students ("osmosis", "Osmosis ", "osmosis.") must count as ONE topic ──
+  // Compare on letters/digits only, ignoring case, spacing, punctuation and a trailing plural 's'.
+  // An existing bucket always wins (its spelling is kept); otherwise the cleaned name is used.
+  const topicKey = n => String(n || '').toLowerCase().replace(/[^a-z0-9\u00c0-\uffff]+/g, '').replace(/(?<=\w{4})s$/, '');
+  const cleanTopic = n => String(n == null ? '' : n).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+  function canonicalTopic(data, subject, raw) {
+    const t = cleanTopic(raw);
+    if (!t || t === 'General') return t || 'General';
+    const buckets = (data.subjects[subject] && data.subjects[subject].topics) || {};
+    if (Object.prototype.hasOwnProperty.call(buckets, t)) return t;
+    const k = topicKey(t);
+    const hit = k && Object.keys(buckets).find(name => topicKey(name) === k);
+    return hit || t;
+  }
+
   // Selects which account's cache is active. The first account to sign in on a
   // device adopts any legacy (pre-scoping) data once, then the legacy key is removed.
   function setAccount(uid) {
@@ -45,6 +60,7 @@ window.WeaknessProfile = (function () {
         if (!localStorage.getItem(storageKey())) localStorage.setItem(storageKey(), legacy);
         localStorage.removeItem(LEGACY_KEY);
       }
+      consolidate();
     } catch (_) { /* cache only */ }
   }
   const RECENT_WINDOW = 10;     // attempts considered for the current mastery score
@@ -73,9 +89,9 @@ window.WeaknessProfile = (function () {
 
   function recordAttempt({ subject, topic, level, difficulty, mistakeType }) {
     if (!okName(subject) || !LEVEL_SCORE.hasOwnProperty(level)) return null;
-    const t = topic || 'General';
-    if (!okName(t)) return null;
     const data = load();
+    const t = canonicalTopic(data, subject, topic || 'General');
+    if (!okName(t)) return null;
     const bucket = getTopicBucket(data, subject, t);
     // Guard against timestamp collisions when several attempts are recorded
     // synchronously in the same millisecond (e.g. grading a whole mock exam
@@ -101,8 +117,8 @@ window.WeaknessProfile = (function () {
   // not just whichever happens to be most recent.
   function tagMistake({ subject, topic, ts, mistakeType }) {
     if (!subject || !ts || !mistakeType) return false;
-    const t = topic || 'General';
     const data = load();
+    const t = canonicalTopic(data, subject, topic || 'General');
     const bucket = data.subjects[subject] && data.subjects[subject].topics[t];
     if (!bucket) return false;
     const attempt = bucket.attempts.find(a => a.ts === ts);
@@ -123,7 +139,7 @@ window.WeaknessProfile = (function () {
     const incoming = [];
     rows.forEach(r => {
       if (!r || !okName(r.subject) || !LEVEL_SCORE.hasOwnProperty(r.level)) return;
-      const t = r.topic || 'General';
+      const t = canonicalTopic(data, r.subject, r.topic || 'General');
       if (!okName(t) || !Number.isFinite(r.ts)) return;
       const bucket = getTopicBucket(data, r.subject, t);
       const existing = bucket.attempts.find(a => a.ts === r.ts);
@@ -395,12 +411,45 @@ window.WeaknessProfile = (function () {
     return `Your ${subject} readiness is an estimated ${r.readinessPct}% — based on ${avgAccuracy}% average accuracy ${coverageNote}, with ${consistencyPct}% of those topics stable or improving rather than declining.`;
   }
 
+  // One-time tidy for accounts that already hold near-duplicate topics ("osmosis" + "Osmosis"):
+  // merges their attempts (de-duplicated by timestamp, newest 50 kept) under the busiest spelling.
+  function consolidate() {
+    const data = load();
+    let changed = false;
+    Object.keys(data.subjects).forEach(subject => {
+      const topics = data.subjects[subject].topics || {};
+      const groups = {};
+      Object.keys(topics).forEach(name => {
+        const k = name === 'General' ? 'General' : topicKey(name);
+        (groups[k] = groups[k] || []).push(name);
+      });
+      Object.keys(groups).forEach(k => {
+        const names = groups[k];
+        if (names.length < 2) return;
+        names.sort((a, b) => topics[b].attempts.length - topics[a].attempts.length || a.localeCompare(b));
+        const keep = names[0];
+        const seen = new Set(topics[keep].attempts.map(a => a.ts));
+        names.slice(1).forEach(n => {
+          topics[n].attempts.forEach(a => { if (!seen.has(a.ts)) { seen.add(a.ts); topics[keep].attempts.push(a); } });
+          delete topics[n];
+        });
+        topics[keep].attempts.sort((a, b) => a.ts - b.ts);
+        if (topics[keep].attempts.length > 50) topics[keep].attempts = topics[keep].attempts.slice(-50);
+        changed = true;
+      });
+    });
+    if (changed) save(data);
+    return changed;
+  }
+
   function reset() {
     try { localStorage.removeItem(storageKey()); } catch (_) { /* cache only */ }
   }
 
   return {
     setAccount,
+    canonicalTopic: (subject, raw) => canonicalTopic(load(), subject, raw),
+    consolidate,
     importAttempts,
     recordAttempt,
     tagMistake,

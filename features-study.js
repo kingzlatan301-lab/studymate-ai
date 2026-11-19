@@ -7,7 +7,7 @@
   const uid = () => { try { return state.activeUserId || 'anon'; } catch (_) { return 'anon'; } };
   const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) { } };
-  const toast = m => { try { showToast(m); } catch (_) { } };
+  const toast = m => { try { showToast(window.SMI18nUI ? SMI18nUI.t(m) : m); } catch (_) { } };
   const pct = (c, t) => t ? Math.round(c / t * 100) : 0;
   const Sess = () => SMF.Sessions;
   const TYPE_LABEL = { practice: 'Practice', mock: 'Mock exam', cbt: 'CBT simulation', quiz: 'Lesson quiz', retry: 'Retry' };
@@ -51,7 +51,7 @@
   };
   SMF.removeSaved = async function (id) {
     const h = (state.history || []).find(x => String(x.id) === String(id)); if (!h) return;
-    if (!confirm('Remove this question from your saved list?')) return;
+    if (!confirm(window.SMI18nUI ? SMI18nUI.t('Remove this question from your saved list?') : 'Remove this question from your saved list?')) return;
     try {
       const { error } = await window.sbClient.from('saved_questions').delete().eq('id', id).eq('user_id', state.activeUserId);
       if (error) throw error;
@@ -201,7 +201,7 @@
     const it = RUN.items[RUN.i], ok = RUN.sel === it.ci; RUN.results[RUN.i] = { sel: RUN.sel, ok };
     document.querySelectorAll('#qr-opts .option-item').forEach((e, k) => { e.classList.remove('selected'); if (k === it.ci) e.style.cssText += 'border-color:var(--sm-ok);'; else if (k === RUN.sel) e.style.cssText += 'border-color:var(--sm-bad);'; });
     $('qr-submit').style.display = 'none';
-    try { if (window.WeaknessProfile && it.subject) WeaknessProfile.recordAttempt({ subject: it.subject, topic: it.topic && it.topic !== 'General' ? it.topic : null, level: ok ? 'knew' : 'lost', difficulty: 'Review', mistakeType: null }); } catch (_) { }
+    try { if (window.WeaknessProfile && it.subject) WeaknessProfile.recordAttempt({ subject: it.subject, topic: it.topic && it.topic !== 'General' ? it.topic : null, level: ok ? 'knew' : 'lost', difficulty: 'Review', mistakeType: null, tool: 'revision', stage: 'reinforce' }); } catch (_) { }
     const last = RUN.i === RUN.items.length - 1, saved = SMF.isSaved(it.subject, it.q);
     $('qr-result').innerHTML = `<div class="qr-fb ${ok ? 'ok' : 'bad'}"><b>${ok ? '✅ Correct' : '❌ Not quite'}</b>${ok ? '' : `<div>Correct answer: <b>${esc(it.o[it.ci])}</b></div>`}<div class="qr-ex">${esc(it.ex || '')}</div></div>
       <button class="sm-btn block" id="qr-save" onclick="SMF.saveMcq(SMF._runItem(),this)">${saved ? '🔖 Saved' : '🔖 Save question'}</button>

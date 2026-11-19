@@ -88,3 +88,52 @@ cleanup paths), data-corruption and offline tests, and re-verification of the wh
 
 ## Results
 `npm test` 245/245 · `npm run test:e2e` 19/19 · syntax clean · no secrets in browser files · production build OK.
+
+---
+# Update 4 — dark-mode legibility (5 Nov 2026)
+
+## What changed
+New `dark-mode.css` (linked after `light-mode.css`, added to the service-worker precache; cache version bumped to v48). Scoped to dark only
+(`:root:not([data-theme="light"])`, which also covers the first paint before JS sets `data-theme`). **No theme file, preset, or light-mode rule was edited.**
+- **Small grey helper text:** `--muted` #8899AA → #B7C4D2. Worst case over all 100 accents × 100 backgrounds on page, card and card2 surfaces: ≥ 4.5:1 (was 3.3:1).
+- **Selected chips / active filter tabs:** text is now the normal body-text colour instead of the raw accent on its own 25% tint (was ≈ 2.8:1 on green). The accent still shows in the border, tint and weight.
+- **Small accent-coloured labels/links** (concept labels, "Retry"/paywall links, answer labels, term names, quota count, Ask header subject, etc.) use a text-safe tint of the accent (accent mixed 55% toward white).
+- Solid-filled controls (`.sm-chip.on`, buttons) are unchanged — they already use the theme engine's on-accent contrast token.
+
+## Results
+`npm test` 245/245 · `npm run test:e2e` 20/20 (new test: 7 dark-mode text checks × 10 000 accent×background combinations, 0 below 4.5:1; fails if `dark-mode.css` is removed — mutation-checked) ·
+theme files still byte-identical to the baseline · production build includes `dark-mode.css`.
+Screen sweep (`tools/dark-sweep.js`, computed styles, 18 screens): before 8 failing selectors, after 4 — the remaining 4 are measurement artefacts (gradient-filled buttons, an emoji avatar, and the stub's disabled "Price unavailable" button).
+
+## Not verified
+Real devices; the sweep reads CSS colours, not rendered pixels, so text drawn directly over a busy background image is not measured; screens that need live data (Results, Mock Exam in progress) were not swept.
+
+---
+# Update 5 — the three remaining items (6 Nov 2026)
+
+## 1. New screens in French / Spanish / Portuguese
+New `i18n-features.js` (source table: `tools/ui-dict.py`, regenerate with `python3 tools/build-ui-dict.py`; precached; cache v49).
+It translates the *finished* text of the Formula Book, Calculator, Saved Questions, History, Performance, Search results and the bottom sheets
+(exact phrases + counts/names/dates such as "3 recorded sessions", "Show more (103 left)"), plus the toasts and the remove-confirmation.
+textContent/setAttribute only (no markup injection); unknown text stays English; switching language re-translates live, including re-rendered
+content, and switching back to English restores everything (a French→Spanish switch bug found by the new browser test was fixed).
+**Not translated on purpose:** formula names/descriptions/worked examples (content for subject-teacher review), subject names, question text, AI text, dates.
+**All fr/es/pt wording is first-pass and needs native-speaker review** (tracked as `needs-native-review`, same as `i18n.js`). 175 phrases ×3 languages.
+Harvest check (`tools/harvest-ui-strings.js fr`): every visible interface label on those screens is translated; what stays English is formula content,
+subjects, question text and words identical in French ("Type", "Questions", "Conditions", "Expression").
+
+## 2. Light mode on all 100 backgrounds
+`tools/light-bg-sweep.js` + `tools/light-bg-analyze.py`: screenshots with glyphs hidden (halos kept) and the worst 5% of pixels under each text run vs the text colour.
+Home, Ask, Progress, Profile × 100 backgrounds = 2 000 text runs (text on opaque cards is background-independent and excluded).
+One real failure on every background: the subject name in the Ask header (accent on the scene, ≈1.1–2:1). Fixed in `light-mode.css` (accent mixed 45% toward ink);
+re-sweep of Ask over all 100 backgrounds: 900 runs, 0 below AA. Theme files remain byte-identical to the baseline. Animated backgrounds were measured with motion reduced.
+
+## 3. Sign-in screen on a new device
+A device that has never chosen a look now shows the sign-in in Light (visual only, nothing saved: `state.gateLook`). New student → onboarding saves Light (as before);
+returning student on such a device → released to the old Dark default once the profile loads; an explicit choice (Settings/onboarding) always wins.
+
+## Results
+`npm test` 251/251 · `npm run test:e2e` 22/22 (new: language switching ×3 locales, sign-in look ×4 cases).
+## Still not verified
+Real devices/real screen readers; text drawn on the 95 premium backgrounds on screens other than Home/Ask/Progress/Profile (Practice, Flashcards, Mock Exam, Teach Me);
+premium *dark* variants beyond the contrast token checks; native-speaker review of the translations.

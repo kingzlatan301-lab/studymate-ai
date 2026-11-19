@@ -1,0 +1,30 @@
+/* StudyMate AI — Dark mode legibility pass.
+   Scope: ONLY dark mode (":root:not([data-theme="light"])" also covers the first paint before JS sets data-theme).
+   Light mode, the preset catalogue (backgrounds/accents/Bagleys) and the theme engine files are untouched.
+   Two changes, both token-level so every premium theme keeps its own look:
+   (1) --muted (small grey helper text) lifted from #8899AA to #B7C4D2  → ≥ 4.5:1 on every theme page/card/card2 surface.
+   (2) Accent-coloured SMALL text (selected chips, active tabs, labels, links) uses a text-safe tint of the accent
+       (the accent mixed toward white) instead of the raw accent. Borders, glows and fills still use the raw accent.
+   Loaded after personalization.css/features.css so equal-specificity rules here win. */
+
+:root:not([data-theme="light"]) {
+  --muted: #B7C4D2;
+  --sm-accent-text: color-mix(in srgb, var(--indigo) 55%, #ffffff);
+  --sm-accent2-text: color-mix(in srgb, var(--mint) 55%, #ffffff);
+}
+
+/* Selected / active controls: text was the raw accent on its own 25% tint (e.g. green on green ≈ 2.8:1).
+   Now the normal body-text colour; the accent still shows in the border, the tint and the heavier weight. */
+:root:not([data-theme="light"]) :is(.chip.selected, .filter-tab.active) { color: var(--white); }
+:root:not([data-theme="light"]) .timer-pill { color: var(--white); }
+
+/* Small accent labels, links and secondary text that sit on cards. */
+:root:not([data-theme="light"]) :is(.concept-label, .note-card .nc-sub, .pw-retry, .pw-link, .pw-change,
+    #paywall-modal .pw-retry, #paywall-modal .pw-link, #paywall-modal .pw-country .pw-change,
+    .action-btn:hover, .nav-item.active) { color: var(--sm-accent-text); }
+:root:not([data-theme="light"]) :is(.final-answer-label, .term-name, .history-answer-preview, .pricing-tag, .quota-count span,
+    .topic-chip::before, .topic-chip:hover, .action-btn.saved, .ans-save.saved, .option-check, .policy-text h4, .preview-btn:hover) { color: var(--sm-accent2-text); }
+:root:not([data-theme="light"]) .ans-insight .ans-eyebrow, :root:not([data-theme="light"]) .ans-hero .concept-label { color: var(--sm-accent-text); }
+
+/* Subject name in the Ask header uses the per-subject colour (4.3:1 on the page) — same text-safe tint. */
+:root:not([data-theme="light"]) .ask-header-title span { color: color-mix(in srgb, var(--subject-accent, var(--indigo)) 55%, #ffffff); }

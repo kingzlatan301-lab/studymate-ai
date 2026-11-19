@@ -37,6 +37,26 @@
   const HIGH = new Set(['Strong', 'Mastered']);
   const STOP = new Set(['the', 'and', 'of', 'in', 'to', 'a', 'an', 'for', 'with', 'on', 'by', 'from', 'basic', 'basics', 'introduction']);
 
+  // Fixed wording per StudyEngine method key (client-built prompts for Teach Me / Practice / Flashcards).
+  const METHOD_BRIEF = {
+    simple: 'explain simply first, short sentences, define every term.',
+    worked_steps: 'teach through a fully worked example, step by step, giving the reason for each step.',
+    analogy: 'anchor the idea in a familiar real-world analogy before the formal explanation.',
+    socratic: 'use short guiding questions so the student reasons toward the idea.',
+    summary: 'give a tight summary of the few points that matter most.',
+    retrieval: 'ask the student to recall first, then fill the gaps briefly.',
+    exam_focus: 'teach it the way exams test it: common traps and how marks are earned.',
+    cause_effect: 'organise as cause, event and consequence, with evidence for each link.',
+    visual: 'describe the idea as a simple labelled diagram in text, then explain each part briefly.',
+    derivation: 'show where the formula or rule comes from, one logical step at a time, then apply it.'
+  };
+
+  const METHOD_KEYS = new Set(['simple', 'worked_steps', 'analogy', 'socratic', 'summary', 'retrieval', 'exam_focus', 'cause_effect', 'visual', 'derivation']);
+  const PACE_KEYS = new Set(['gentle', 'steady', 'fast']);
+  const DETAIL_KEYS = new Set(['short', 'balanced', 'detailed']);
+  const PACE_BRIEF = { gentle: 'go slowly and check understanding after every step.', steady: '', fast: 'be brisk and skip basics the student has already shown they know.' };
+  const DETAIL_BRIEF = { short: 'keep explanations short.', balanced: '', detailed: 'give fuller explanations with the reasoning.' };
+
   const ROUTINES = {
     daily: 'studies daily',
     often: 'studies a few times a week',
@@ -194,6 +214,32 @@
     if (saved.length) act.recentSavedQuestions = saved;
     if (Object.keys(act).length) ctx.recentActivity = act;
 
+    // ── Teaching plan (StudyEngine): only when there is real evidence, never a guess ──
+    const SE = root.StudyEngine;
+    let plan = null;
+    try {
+      if (SE && attempts.length >= MIN_ATTEMPTS_FOR_BAND) {
+        const pool = matched ? attempts.filter(a => a.topic === matched) : attempts;
+        const ev = SE.topicEvidence(pool, input.now);
+        const FOCUS = { slipping: 'review', struggling: 'fix', developing: 'practise', solid: 'practise' };
+        if (ev.state !== 'not_started' && ev.state !== 'early') {
+          plan = { method: SE.suggestMethod(subject, ev), difficulty: SE.suggestDifficulty(ev) };
+          if (FOCUS[ev.state]) plan.focus = FOCUS[ev.state];
+        }
+      }
+    } catch (_) { plan = null; }
+
+    // The student's own choices ("how I like to learn") and, when there is real evidence, the method that has worked for them.
+    // Order: a corrective walk-through for a repeated mistake > what the student chose > what has actually worked > the default table.
+    const prefs = input.preferences && typeof input.preferences === 'object' ? input.preferences : null;
+    const chosen = prefs && METHOD_KEYS.has(prefs.preferred_method) ? prefs.preferred_method : null;
+    const learned = !chosen && METHOD_KEYS.has(input.learnedMethod) ? input.learnedMethod : null;
+    const corrective = !!(perf.repeatedMistake && plan && plan.focus === 'fix');
+    if ((chosen || learned) && !corrective) { plan = plan || {}; plan.method = chosen || learned; }
+    if (prefs && PACE_KEYS.has(prefs.pace)) { plan = plan || {}; plan.pace = prefs.pace; }
+    if (prefs && DETAIL_KEYS.has(prefs.answer_detail)) { plan = plan || {}; plan.detail = prefs.answer_detail; }
+    if (plan) ctx.plan = plan;
+
     // ── Current request ──
     const cur = {};
     if (subject) cur.subject = subject;
@@ -208,7 +254,12 @@
   // Reuses build() so there is exactly one place that decides what "weak" means.
   function toBrief(ctx) {
     const perf = ctx && ctx.performance;
-    if (!perf) return '';
+    const planBits = [];
+    if (ctx && ctx.plan && ctx.plan.method && METHOD_BRIEF[ctx.plan.method]) planBits.push(`Teaching approach that suits this student now: ${METHOD_BRIEF[ctx.plan.method]}`);
+    if (ctx && ctx.plan && ctx.plan.pace && PACE_BRIEF[ctx.plan.pace]) planBits.push(`Pace the student prefers: ${PACE_BRIEF[ctx.plan.pace]}`);
+    if (ctx && ctx.plan && ctx.plan.detail && DETAIL_BRIEF[ctx.plan.detail]) planBits.push(`Detail the student prefers: ${DETAIL_BRIEF[ctx.plan.detail]}`);
+    const planLine = planBits.join('\n');
+    if (!perf) return planLine ? `\n\nStudent context for this topic (use only to calibrate the teaching style; never mention it to the student):\n${planLine}` : '';
     const lines = [];
     if (perf.weakTopics && perf.weakTopics.length) {
       lines.push(`Struggling with: ${perf.weakTopics.slice(0, 3).map(t => `${t.topic} (${t.accuracyPct}% recent accuracy)`).join(', ')}.`);
@@ -219,7 +270,8 @@
     if (perf.recentMistakes && perf.recentMistakes.length) {
       lines.push(`Recent mistake patterns noticed: ${perf.recentMistakes.slice(0, 3).join(', ')}.`);
     }
-    if (!(perf.weakTopics && perf.weakTopics.length) && !(perf.strongTopics && perf.strongTopics.length)) return '';
+    if (planLine) lines.push(planLine);
+    if (!lines.length) return '';
     return `\n\nStudent context for this subject (use only to calibrate depth and target likely confusion naturally — never quote these stats verbatim to the student, and never claim certainty about something not listed here):\n${lines.join('\n')}`;
   }
 

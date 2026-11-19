@@ -7,5 +7,11 @@ android
 ios
 assets
 *.sql
-README.md
+*.md
 capacitor.config.json
+# Internal documentation, generators and syllabus sources: never publicly downloadable
+docs
+tools
+curriculum-imports
+FINAL-AUDIT.md
+SIX-FEATURES.md

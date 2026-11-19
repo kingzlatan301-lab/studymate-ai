@@ -81,3 +81,7 @@
   color: #17213A; font-weight: 600;
   text-shadow: 0 0 10px rgba(255,255,255,.95), 0 0 3px rgba(255,255,255,.95), 0 1px 1px rgba(255,255,255,.9);
 }
+
+/* Ask header: the subject name is accent-coloured text sitting directly on the scene (≈1.1–2:1 on mid-tone backgrounds).
+   Darken the accent toward the ink colour so it stays legible on every background; still clearly the subject's colour. */
+[data-theme="light"] .ask-header-title span { color: color-mix(in srgb, var(--subject-accent, var(--indigo)) 45%, #0A1020); }

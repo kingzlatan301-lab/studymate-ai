@@ -1,0 +1,42 @@
+/* StudyMate AI -- Classroom Notes. Colours come ONLY from existing theme tokens (--indigo accent, --navy-card*, --white, --muted,
+   --border-*, --sm-ok) so every light/dark mode and premium preset restyles it. No colour is hard-coded here. */
+.cn-root { font-size: calc(1rem * var(--cn-scale, 1)); }
+.cn-back { background: none; border: 0; color: var(--indigo); font: inherit; min-height: 44px; padding: 0 4px; cursor: pointer; }
+.cn-title { margin: 4px 0; font-size: 1.25em; color: var(--white); overflow-wrap: anywhere; }
+.cn-sub, .cn-muted { color: var(--muted); font-size: .88em; margin: 4px 0 10px; }
+.cn-wide { width: 100%; margin: 8px 0; min-height: 44px; }
+.cn-search, .cn-find { width: 100%; margin: 8px 0; }
+.cn-goal { display: inline-flex; align-items: center; gap: 2px; margin: 0 6px 6px 0; }
+.cn-x { background: none; border: 0; color: var(--muted); min-width: 36px; min-height: 36px; cursor: pointer; }
+.cn-bm { display: block; width: 100%; text-align: left; margin-bottom: 8px; }
+.cn-toprow { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.cn-tools { display: flex; gap: 4px; flex: none; }
+.cn-ib { min-width: 40px; min-height: 40px; border-radius: 10px; border: 1px solid var(--border-1); background: var(--navy-card2); color: var(--white); cursor: pointer; }
+.cn-ib.on { border-color: var(--indigo); color: var(--indigo); }
+.cn-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0; }
+.cn-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 52px; padding: 6px 2px; font-size: .74em; border-radius: 12px; border: 1px solid var(--border-1); background: var(--navy-card); color: var(--muted); cursor: pointer; }
+.cn-tab.on { border-color: var(--indigo); color: var(--indigo); font-weight: 600; }
+.cn-meta { font-size: .78em; color: var(--muted); margin: 6px 0; }
+.cn-body { background: var(--navy-card); border: 1px solid var(--border-1); border-radius: 14px; padding: 12px 14px; line-height: 1.6; color: var(--white); overflow-wrap: anywhere; }
+.cn-body p { margin: 0 0 .7em; }
+.cn-h { margin: 1em 0 .4em; font-size: 1.05em; color: var(--indigo); }
+.cn-ul { margin: 0 0 .8em; padding-left: 1.2em; }
+.cn-body mark { background: var(--indigo); color: var(--navy-card); border-radius: 3px; padding: 0 2px; }
+.cn-tablewrap { overflow-x: auto; margin: .6em 0; -webkit-overflow-scrolling: touch; }
+.cn-table { border-collapse: collapse; min-width: 100%; font-size: .9em; }
+.cn-table th, .cn-table td { border: 1px solid var(--border-1); padding: 6px 8px; text-align: left; vertical-align: top; }
+.cn-table th { background: var(--navy-card2); }
+.cn-mynote { width: 100%; min-height: 90px; }
+.cn-bar { height: 8px; border-radius: 99px; background: var(--navy-card2); overflow: hidden; margin: 8px 0 2px; }
+.cn-bar i { display: block; height: 100%; background: var(--sm-ok); }
+.cn-nav { display: flex; justify-content: space-between; gap: 8px; margin: 12px 0 24px; }
+.cn-nav .action-btn { flex: 1; min-height: 44px; }
+
+/* typeset maths + step-by-step solutions (theme tokens only) */
+.cn-math { font-size: 1.08em; }
+.cn-mathblock { overflow-x: auto; padding: 6px 0; margin: 4px 0 8px; text-align: center; -webkit-overflow-scrolling: touch; }
+.cn-mathblock math { font-size: 1.2em; }
+.cn-tex { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .92em; color: var(--muted); }
+.cn-step { display: flex; gap: 10px; align-items: flex-start; margin: 8px 0; }
+.cn-stepn { flex: none; min-width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: .8em; font-weight: 700; border: 1px solid var(--indigo); color: var(--indigo); }
+.cn-answer { margin: 10px 0; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--sm-ok); background: var(--navy-card2); }

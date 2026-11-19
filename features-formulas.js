@@ -10,7 +10,7 @@
   // Stored values can be corrupted or edited: always validate the shape before use.
   const lsArr = (k) => { const v = lsGet(k, []); return Array.isArray(v) ? v : []; };
   const lsNum = (k) => { const v = lsGet(k, 0); return typeof v === 'number' && Number.isFinite(v) ? v : 0; };
-  const toast = m => { try { showToast(m); } catch (_) { } };
+  const toast = m => { try { showToast(window.SMI18nUI ? SMI18nUI.t(m) : m); } catch (_) { } };
   const copy = async t => { try { if (typeof copyTextToClipboard === 'function') return await copyTextToClipboard(t); } catch (_) { } try { await navigator.clipboard.writeText(t); return true; } catch (_) { return false; } };
   const Calc = () => window.SMCalc;
   const jid = v => String(v == null ? '' : v).replace(/[^A-Za-z0-9_:.\-]/g, '');

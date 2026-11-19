@@ -17,7 +17,7 @@
   const $ = id => document.getElementById(id);
   const esc = s => (typeof escapeHtml === 'function' ? escapeHtml(String(s == null ? '' : s)) : String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
   const attr = s => esc(s).replace(/`/g, '&#96;');
-  const toast = m => { try { showToast(m); } catch (_) { } };
+  const toast = m => { try { showToast(window.SMI18nUI ? SMI18nUI.t(m) : m); } catch (_) { } };
   const uid = () => { try { return (state && state.activeUserId) || 'anon'; } catch (_) { return 'anon'; } };
   const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (_) { return false; } };
@@ -164,7 +164,7 @@
   SMF.purgeForeignData = function () {
     try {
       const me = state && state.activeUserId; if (!me) return 0; let n = 0;
-      const re = /^(sm_sessions|sm_saved_notes|sm_fav_formulas|sm_recent_formulas|sm_calc_hist|sm_calc_mem):(.+)$/;
+      const re = /^(sm_sessions|sm_lesson_resume|sm_practice_resume|sm_mock_resume|sm_cbt_resume|sm_resume_tomb|sm_saved_notes|sm_fav_formulas|sm_recent_formulas|sm_calc_hist|sm_calc_mem):(.+)$/;
       for (const k of Object.keys(localStorage)) { const m = re.exec(k); if (m && m[2] !== me) { localStorage.removeItem(k); n++; } }
       localStorage.removeItem('sm_calc_mem');   // legacy un-scoped key from the first build
       return n;

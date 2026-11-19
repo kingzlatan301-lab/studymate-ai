@@ -73,6 +73,7 @@
     "pay.error": "We couldn’t load your price. Check your connection and try again.",
     "pay.retry": "Retry",
     "pay.billedIn": "Charged in {currency} through Paystack.",
+    "pay.billedConverted": "Charged in naira: {amount} through Paystack. The dollar price is for reference — your bank may apply its own exchange rate.",
     "pay.billing": "Billing details",
     "pay.priceUnavailable": "Price unavailable",
     "auth.title": "Welcome to StudyMate AI 🎓",
@@ -162,6 +163,7 @@
       "pay.error": "Impossible de charger ton prix. Vérifie ta connexion et réessaie.",
       "pay.retry": "Réessayer",
       "pay.billedIn": "Facturé en {currency} via Paystack.",
+      "pay.billedConverted": "Facturé en nairas : {amount} via Paystack. Le prix en dollars est indicatif — ta banque peut appliquer son propre taux de change.",
       "pay.billing": "Détails de facturation",
       "pay.priceUnavailable": "Prix indisponible",
       "auth.title": "Bienvenue sur StudyMate AI 🎓",
@@ -249,6 +251,7 @@
       "pay.error": "No pudimos cargar tu precio. Revisa tu conexión e inténtalo de nuevo.",
       "pay.retry": "Reintentar",
       "pay.billedIn": "Se cobra en {currency} a través de Paystack.",
+      "pay.billedConverted": "Se cobra en nairas: {amount} a través de Paystack. El precio en dólares es orientativo: tu banco puede aplicar su propio tipo de cambio.",
       "pay.billing": "Detalles de facturación",
       "pay.priceUnavailable": "Precio no disponible",
       "auth.title": "Te damos la bienvenida a StudyMate AI 🎓",
@@ -336,6 +339,7 @@
       "pay.error": "Não foi possível carregar o teu preço. Verifica a ligação e tenta novamente.",
       "pay.retry": "Tentar novamente",
       "pay.billedIn": "Cobrado em {currency} através do Paystack.",
+      "pay.billedConverted": "Cobrado em nairas: {amount} através do Paystack. O preço em dólares é indicativo — o teu banco pode aplicar a sua própria taxa de câmbio.",
       "pay.billing": "Detalhes de faturação",
       "pay.priceUnavailable": "Preço indisponível",
       "auth.title": "Bem-vindo ao StudyMate AI 🎓",
@@ -412,6 +416,6 @@
     return locale;
   }
 
-  var api = { t: t, apply: apply, setLocale: setLocale, locales: function () { return Object.keys(dictionaries); }, _dictionaries: dictionaries, _rtl: RTL_LOCALES, reviewStatus: REVIEW_STATUS };
+  var api = { t: t, apply: apply, setLocale: setLocale, locale: function () { return locale; }, locales: function () { return Object.keys(dictionaries); }, _dictionaries: dictionaries, _rtl: RTL_LOCALES, reviewStatus: REVIEW_STATUS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.SMI18n = api;
 })(typeof window !== 'undefined' ? window : globalThis);

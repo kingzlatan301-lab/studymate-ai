@@ -70,13 +70,14 @@
 
   WeaknessProfile.recordAttempt = function (args) {
     const ts = originalRecordAttempt(args);
-    if (ts) syncAttemptToCloud({ ...args, ts }); // fire-and-forget; never blocks the caller
+    // Upload under the CANONICAL topic name ("osmosis" and "Osmosis" are one topic), the same name the local cache holds.
+    if (ts) syncAttemptToCloud({ ...args, topic: WeaknessProfile.canonicalTopic ? WeaknessProfile.canonicalTopic(args.subject, args.topic || 'General') : args.topic, ts }); // fire-and-forget; never blocks the caller
     return ts;
   };
 
   WeaknessProfile.tagMistake = function (args) {
     const ok = originalTagMistake(args);
-    if (ok) syncMistakeTagToCloud(args);
+    if (ok) syncMistakeTagToCloud({ ...args, topic: WeaknessProfile.canonicalTopic ? WeaknessProfile.canonicalTopic(args.subject, args.topic || 'General') : args.topic });
     return ok;
   };
 

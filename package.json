@@ -8,9 +8,12 @@
     "android": "npm run build:web && cap sync android && cap run android",
     "open:android": "cap open android",
     "open:ios": "cap open ios",
-    "test": "node tests/bagley-context.test.js && node --test tests/api-load.test.js tests/pricing-integrity.test.js tests/quota.test.js tests/curriculum-security.test.js tests/audit-regressions.test.js tests/safety-ratelimit.test.js tests/i18n.test.js tests/payment-providers.test.js tests/account.test.js tests/gemini-reliability.test.js tests/math-format.test.js tests/usage-server-only.test.js tests/paywall-display.test.js tests/formula-book.test.js tests/features-logic.test.js tests/api-libs-guard.test.js",
+    "test": "node tests/bagley-context.test.js && node --test tests/api-load.test.js tests/pricing-integrity.test.js tests/quota.test.js tests/curriculum-security.test.js tests/audit-regressions.test.js tests/safety-ratelimit.test.js tests/i18n.test.js tests/i18n-features.test.js tests/payment-providers.test.js tests/account.test.js tests/gemini-reliability.test.js tests/backend-repair.test.js tests/charge-currency.test.js tests/math-format.test.js tests/usage-server-only.test.js tests/paywall-display.test.js tests/formula-book.test.js tests/features-logic.test.js tests/api-libs-guard.test.js tests/classroom-notes.test.js tests/study-engine.test.js tests/typed-topics.test.js tests/schema-21.test.js tests/i18n-study-partner.test.js tests/syllabus-enrichment.test.js tests/learning-journey.test.js tests/resume-lesson.test.js tests/resume-sync.test.js",
     "build:web": "node scripts/build-web.js",
-    "test:e2e": "node --test tests/e2e/ui.e2e.test.js"
+    "test:e2e": "node --test tests/e2e/ui.e2e.test.js tests/e2e/classroom-notes.e2e.test.js tests/e2e/study-partner.e2e.test.js tests/e2e/resume-lesson.e2e.test.js tests/e2e/smoke-tools.e2e.test.js tests/e2e/exam-resume.e2e.test.js tests/e2e/study-partner-themes.e2e.test.js tests/e2e/button-contrast.e2e.test.js",
+    "syllabus:import": "node scripts/import-syllabus.js",
+    "syllabus:check": "node scripts/import-syllabus.js --check",
+    "syllabus:publish": "node scripts/publish-syllabus.js"
   },
   "dependencies": {
     "@capacitor/core": "^6.0.0",

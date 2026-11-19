@@ -61,7 +61,7 @@
   }
 
   function setMode(mode) {
-    state.displayMode = mode;
+    state.displayMode = mode; state.gateLook = false;
     try { localStorage.setItem('sm_display_mode', mode); } catch (_) { }
     applyDisplayMode();
     if (typeof updateAppearanceBadge === 'function') updateAppearanceBadge();

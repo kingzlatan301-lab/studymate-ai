@@ -1,7 +1,8 @@
 {
   "functions": {
     "api/ask.js": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "includeFiles": "{curriculum-data.js,curriculum-imports.js,classroom-notes.js,math-render.js}"
     },
     "api/youtube.js": {
       "maxDuration": 15
@@ -23,6 +24,16 @@
     },
     "api/account.js": {
       "maxDuration": 20
+    },
+    "api/classroom.js": {
+      "maxDuration": 10,
+      "includeFiles": "{curriculum-data.js,curriculum-imports.js,classroom-notes.js,math-render.js}"
+    },
+    "api/curriculum.js": {
+      "maxDuration": 10
+    },
+    "api/i18n.js": {
+      "maxDuration": 10
     }
   },
   "headers": [
