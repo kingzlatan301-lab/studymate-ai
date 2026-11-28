@@ -9,7 +9,10 @@ StudyMate AI is a mobile-first exam-prep tutor for students worldwide (WAEC, JAM
 ```bash
 npm install
 npm run serve        # http://localhost:5173
-npm test             # all automated tests (mocked backends — NOT live integration tests)
+npm test             # local regression contract checks; no live services contacted
+# Preview deployment smoke checks (public GET requests only):
+$env:STUDYMATE_PREVIEW_URL = 'https://<branch-preview>.vercel.app'
+npm run test:e2e
 ```
 
 Sign-in is required: a verified Supabase identity is what lets the Free/Premium split be enforced on the server (`enforceAuthGate()` in `index.html`). There is no guest mode.
@@ -213,9 +216,12 @@ commit, or release on failure. The browser only displays usage (`/api/usage`).
 - Tune risk thresholds in `api/_lib/risk.js` (`MEDIUM`, `HIGH`, `COOLDOWN_MS`); every intent stores its
   `risk_score` / `risk_flags` for review.
 
-**Tests.** `npm test` runs everything. The pricing/quota tests run the real handlers against
-`tests/helpers/fake-backend.js`, a JavaScript port of the SQL rules — it is NOT a database, so verify
-schemas/triggers/RLS in Supabase and run one real Paystack test-mode purchase before launch.
+**Tests.** `npm test` runs focused regression contract checks for Bagley context, pricing, quota,
+curriculum access, provider routing and audit regressions. These are static/source-level checks, not
+live Supabase, AI provider or payment tests. `npm run test:e2e` makes public GET requests against the
+branch Preview named by `STUDYMATE_PREVIEW_URL`, checking the HTML shell, manifest/icons and service
+worker. It does not sign in, call AI, touch payment flows, or test rendered mobile layouts. Use only a
+non-production Preview URL for this check.
 
 **XSS hardening.** Every AI-, user- or storage-controlled value that reaches `innerHTML` goes through
 `escapeHtml()` (text/attributes) or `escapeForInlineHandler()` (arguments inside `onclick="…"`).
