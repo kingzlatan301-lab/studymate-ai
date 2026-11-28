@@ -147,6 +147,15 @@ describe('audit-regressions', () => {
     }
   });
 
+  it('removes anonymous RPC access from trigger-only SECURITY DEFINER functions', () => {
+    const migration = read('supabase-schema-23-restrict-trigger-rpc.sql');
+    assert.match(migration, /revoke execute on function public\\.handle_new_user\\(\\) from public, anon, authenticated/i);
+    assert.match(migration, /revoke execute on function public\\.log_profile_country_change\\(\\) from public, anon, authenticated/i);
+    assert.match(migration, /has_function_privilege\\('anon',[\\s\\S]*execute/i);
+    assert.match(migration, /on_auth_user_created/);
+    assert.match(migration, /profiles_country_change_log/);
+  });
+
   it('pins Node to the tested Vercel major version', () => {
     const pkg = JSON.parse(read('package.json'));
     assert.equal(pkg.engines.node, '24.x');
