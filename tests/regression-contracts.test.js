@@ -159,6 +159,6 @@ describe('audit-regressions', () => {
   it('pins Node to the tested Vercel major version', () => {
     const pkg = JSON.parse(read('package.json'));
     assert.equal(pkg.engines.node, '24.x');
-    assert.equal(pkg.scripts.test, 'node --test');
+    assert.equal(pkg.scripts.test, 'node --test tests/regression-contracts.test.js');
   });
 });
