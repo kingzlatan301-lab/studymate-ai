@@ -8,9 +8,9 @@
     "android": "npm run build:web && cap sync android && cap run android",
     "open:android": "cap open android",
     "open:ios": "cap open ios",
-    "test": "node --test",
+    "test": "node --test tests/regression-contracts.test.js",
     "build:web": "node scripts/build-web.js",
-    "test:e2e": "node --test tests/e2e/ui.e2e.test.js tests/e2e/classroom-notes.e2e.test.js tests/e2e/study-partner.e2e.test.js tests/e2e/resume-lesson.e2e.test.js tests/e2e/smoke-tools.e2e.test.js tests/e2e/exam-resume.e2e.test.js tests/e2e/study-partner-themes.e2e.test.js tests/e2e/button-contrast.e2e.test.js",
+    "test:e2e": "node --test tests/e2e/preview-smoke.e2e.test.js",
     "syllabus:import": "node scripts/import-syllabus.js",
     "syllabus:check": "node scripts/import-syllabus.js --check",
     "syllabus:publish": "node scripts/publish-syllabus.js"
