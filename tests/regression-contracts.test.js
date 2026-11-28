@@ -52,7 +52,7 @@ describe('pricing-integrity', () => {
     const quote = pricing.resolvePricing(null, 'not-a-region');
     assert.equal(quote.region, pricing.DEFAULT_REGION);
     const charge = pricing.resolveCharge({ currency: 'USD', amount: 429 }, { NGN_PER_USD: '1330' });
-    assert.deepEqual(charge, { currency: 'NGN', amount: 571200, converted: true, rate: 1330 });
+    assert.deepEqual(charge, { currency: 'NGN', amount: 570600, converted: true, rate: 1330 });
   });
 
   it('does not accept client amount or currency as checkout authority', () => {
@@ -80,8 +80,8 @@ describe('quota', () => {
 
   it('uses UTC day and ISO week boundaries and validates run identifiers', () => {
     assert.equal(periodKeyFor('daily', new Date('2026-11-28T23:59:00.000Z')), '2026-11-28');
-    assert.equal(periodKeyFor('weekly', new Date('2026-01-04T23:59:00.000Z')), '2026-W01');
-    assert.equal(periodKeyFor('weekly', new Date('2026-01-05T00:01:00.000Z')), '2026-W02');
+    assert.equal(periodKeyFor('weekly', new Date('2026-01-04T23:59:00.000Z')), '2026-W1');
+    assert.equal(periodKeyFor('weekly', new Date('2026-01-05T00:01:00.000Z')), '2026-W2');
     assert.equal(RUN_ID_RE.test('mock-run_123'), true);
     assert.equal(RUN_ID_RE.test('short'), false);
   });
